@@ -178,6 +178,3 @@ def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, 
     t_stop = perf_counter()
     print("Elapsed time during bulk cropping in seconds for {} labels:".format(counter - 1),
                                         t_stop-t_start)
-
-
-# bulk_extract_crops(csv_export_path, gsv_pano_path, destination_path, mark_label=False)

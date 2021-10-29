@@ -3,6 +3,7 @@ import os
 import subprocess
 from time import perf_counter
 from itertools import islice
+from datatypes import Label, Panorama
 
 def bulk_scrape_panos(n, path_to_labeldata_csv, local_dir, remote_dir, output_csv_name):
     # TODO: find way to clear to pano_downloads folder and batch.txt file
@@ -20,7 +21,7 @@ def bulk_scrape_panos(n, path_to_labeldata_csv, local_dir, remote_dir, output_cs
     path_to_output_csv = os.path.join(local_dir, output_csv_name)
     csv_output = open(path_to_output_csv, 'w')
     csv_w = csv.writer(csv_output)
-    fields = ['gsv_panorama_id', 'sv_image_x', 'sv_image_y', 'label_type_id', 'photographer_heading', 'heading', 'pitch', 'label_id']
+    fields = Label.header_row()
     csv_w.writerow(fields)
     # accumulate list of pano ids to gather from sftp
     for row in islice(csv_f, start_row, start_row + row_count):
