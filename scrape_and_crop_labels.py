@@ -1,14 +1,14 @@
-from PanoScrapper import bulk_scrape_panos
+from PanoScraper import bulk_scrape_panos
 from CropRunner import bulk_extract_crops
 
 import os
 
 # Scrape panos from SFTP server
 n = 10
-path_to_labeldata_csv = "rawdata/seattle-labels-cv-10-21-2021.csv"
+path_to_labeldata_csv = "rawdata/seattle-labels.csv"
 
 # local directory to write to (relative to shell root)
-local_dir = '/home/micdun/sidewalk-cv-2021/pano-downloads/'
+local_dir = 'pano-downloads/'
 if not os.path.isdir(local_dir):
     os.makedirs(local_dir)
 

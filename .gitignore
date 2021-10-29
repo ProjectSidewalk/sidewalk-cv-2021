@@ -21,3 +21,6 @@ crop.log
 
 # Ignore pycache
 __pycache__
+
+# Ignore .DS_Store
+.DS_Store
