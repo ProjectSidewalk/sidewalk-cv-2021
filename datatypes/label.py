@@ -1,4 +1,4 @@
-from datatypes import Point
+from .point import Point
 
 class Label(object):
     def __init__(self, row):
@@ -8,6 +8,8 @@ class Label(object):
         self.label_type = int(row[3])
         self.photographer_heading = float(row[4]) if row[4] is not None else None
         self.heading = float(row[5]) if row[5] is not None and len(row[5]) > 1 else None
+        self.pitch = float(row[6]) if row[6] is not None else None
+        self.label_id = int(row[7]) if row[7] is not None else None
         
     def to_row(self):
         row = []
@@ -17,6 +19,8 @@ class Label(object):
         row.append(self.label_type)
         row.append(self.photographer_heading)
         row.append(self.heading)
+        row.append(self.pitch)
+        row.append(self.label_id)
         return row
     
     def point(self):

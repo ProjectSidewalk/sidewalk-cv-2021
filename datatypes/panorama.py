@@ -1,4 +1,4 @@
-from datatypes import Label
+from .label import Label
 
 class Panorama(object): 
     def __init__(self):
@@ -15,7 +15,7 @@ class Panorama(object):
         if self.photog_heading is None:
             self.photog_heading = feat.photographer_heading
         
-        if self.feats.get(feat.label_type):
+        if feat.label_type not in self.feats:
             self.feats[feat.label_type] = []
 
         self.feats[feat.label_type].append(feat)
@@ -25,7 +25,7 @@ class Panorama(object):
     
     def all_feats(self):
         ''' iterate over all features, regardless of type '''
-        for _, features in self.feats.iteritems():
+        for _, features in self.feats.items():
             for feature in features:
                 yield feature
     

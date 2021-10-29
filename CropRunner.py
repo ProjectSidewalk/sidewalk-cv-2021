@@ -65,7 +65,7 @@ def predict_crop_size(sv_image_y):
 
     return crop_size
 
-def make_single_crop(path_to_image, sv_image_x, sv_image_y, PanoYawDeg, output_filename, draw_mark=False):
+def make_single_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, crop_destination, draw_mark=False):
     """
     Makes a crop around the object of interest
     :param path_to_image: where the GSV pano is stored
@@ -76,12 +76,12 @@ def make_single_crop(path_to_image, sv_image_x, sv_image_y, PanoYawDeg, output_f
     :param draw_mark: if a dot should be drawn in the centre of the object/image
     :return: none
     """
-    im = Image.open(path_to_image)
+    im = Image.open(pano_img_path)
     draw = ImageDraw.Draw(im)
 
     im_width = im.size[0]
     im_height = im.size[1]
-    print(im_width, im_height)
+    # print(im_width, im_height)
 
     predicted_crop_size = predict_crop_size(sv_image_y)
     crop_width = predicted_crop_size
@@ -92,23 +92,21 @@ def make_single_crop(path_to_image, sv_image_x, sv_image_y, PanoYawDeg, output_f
     sv_image_x *= scaling_factor
     sv_image_y *= scaling_factor
 
-    x = ((float(PanoYawDeg) / 360) * im_width + sv_image_x) % im_width
+    x = ((float(pano_yaw_deg) / 360) * im_width + sv_image_x) % im_width
     y = im_height / 2 - sv_image_y
 
     r = 10
     if draw_mark:
         draw.ellipse((x - r, y - r, x + r, y + r), fill=128)
 
-    print("Plotting at " + str(x) + "," + str(y) + " using yaw " + str(PanoYawDeg))
+    # print("Plotting at " + str(x) + "," + str(y) + " using yaw " + str(pano_yaw_deg))
 
-    print(x, y)
+    # print(x, y)
     top_left_x = x - crop_width / 2
     top_left_y = y - crop_height / 2
     cropped_square = im.crop((top_left_x, top_left_y, top_left_x + crop_width, top_left_y + crop_height))
-    cropped_square.save(output_filename)
-
+    cropped_square.save(crop_destination)
     return
-
 
 def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, mark_label=False):
     t_start = perf_counter()
@@ -133,21 +131,17 @@ def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, 
             continue
 
         pano_id = row[0]
-        print(pano_id)
+        # print(pano_id)
         sv_image_x = float(row[1])
         sv_image_y = float(row[2])
         label_type = int(row[3])
         photographer_heading = float(row[4])
-        heading = float(row[5])
-        label_id = int(row[7])
 
         pano_img_path = os.path.join(path_to_gsv_scrapes, pano_id + ".jpg")
 
-        print("Photographer heading is " + str(photographer_heading))
-        print("Viewer heading is " + str(heading))
+        # print("Photographer heading is " + str(photographer_heading))
         pano_yaw_deg = 180 - photographer_heading
-
-        print("Yaw:" + str(pano_yaw_deg))
+        # print("Yaw:" + str(pano_yaw_deg))
 
         # Extract the crop
         if os.path.exists(pano_img_path):
@@ -156,14 +150,19 @@ def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, 
             if not os.path.isdir(destination_folder):
                 os.makedirs(destination_folder)
 
-            crop_name = str(label_id) + ".jpg"
+            if not label_type == 0:
+                label_id = int(row[7])
+                crop_name = str(label_id) + ".jpg"  
+            else:
+                crop_name = "null_" + str(counter) + ".jpg"
+
             crop_destination = os.path.join(destination_dir, crop_name)
 
             if not os.path.exists(crop_destination):
                 make_single_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, crop_destination, draw_mark=mark_label)
                 print("Successfully extracted crop to " + crop_name)
                 logging.info(crop_name + " " + pano_id + " " + str(sv_image_x)
-                             + " " + str(sv_image_y) + " " + str(pano_yaw_deg) + " " + str(label_id))
+                             + " " + str(sv_image_y) + " " + str(pano_yaw_deg))
                 logging.info("---------------------------------------------------")
 
             csv_w.writerow([crop_name, label_type])
