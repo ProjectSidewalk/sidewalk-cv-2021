@@ -1,0 +1,23 @@
+# Ignore sftp permissions folder
+alphie-sftp
+
+# Ignore rawdata folder
+rawdata
+
+# Ignore generated batch sftp commands file
+batch.txt
+
+# Ignore pano-downloads folder
+pano-downloads
+
+# Ignore generated csv files
+*.csv
+
+# Ignore generated crops
+crops
+
+# Ignore crop log
+crop.log
+
+# Ignore pycache
+__pycache__
