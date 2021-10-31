@@ -4,8 +4,8 @@ from CropRunner import bulk_extract_crops
 import os
 
 # Scrape panos from SFTP server
-n = 10
-path_to_labeldata_csv = "rawdata/seattle-labels.csv"
+n = 20000
+path_to_labeldata_csv = "rawdata/seattle-labels-cv-10-29-2021.csv"
 
 # local directory to write to (relative to shell root)
 local_dir = 'pano-downloads/'
