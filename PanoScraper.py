@@ -14,13 +14,13 @@ GSV_IMAGE_HEIGHT = 6656
 # null crops per pano
 NULLS_PER_PANO = 3
 
-def bulk_scrape_panos(n, path_to_labeldata_csv, local_dir, remote_dir, output_csv_name):
+def bulk_scrape_panos(n, start_row, path_to_labeldata_csv, local_dir, remote_dir, output_csv_name):
     # TODO: find way to clear to pano_downloads folder and batch.txt file
     # on execution.
     t_start = perf_counter()
     panos = {}
     row_count = n
-    start_row = 1 # 1-indexed, ignore the header row
+    start_row = start_row # 1-indexed, ignore the header row
 
     # create a csv reader to read input csv
     csv_file = open(path_to_labeldata_csv)
@@ -32,6 +32,7 @@ def bulk_scrape_panos(n, path_to_labeldata_csv, local_dir, remote_dir, output_cs
     csv_w = csv.writer(csv_output)
     fields = Label.header_row()
     csv_w.writerow(fields)
+
     # accumulate list of pano ids to gather from sftp
     for row in islice(csv_f, start_row, start_row + row_count):
         print(row[0])
@@ -41,13 +42,12 @@ def bulk_scrape_panos(n, path_to_labeldata_csv, local_dir, remote_dir, output_cs
             if not pano_id in panos:
                 panos[pano_id] = Panorama()
             panos[pano_id].add_feature(row)
+
     # get null rows from panos
     for pano_id in panos:
         null_rows = get_null_rows(panos[pano_id])
         for null_row in null_rows:
             csv_w.writerow(null_row)
-
-    print(len(panos))
 
     # create collection of commands
     # set remote and local working directories

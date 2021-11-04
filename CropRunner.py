@@ -169,7 +169,10 @@ def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, 
         else:
             no_pano_fail += 1
             print("Panorama image not found.")
-            logging.warning("Skipped label id " + str(label_id) + " due to missing image.")
+            try:
+                logging.warning("Skipped label id " + str(label_id) + " due to missing image.")
+            except NameError:
+                logging.warning("Skipped null crop " + str(counter) + " due to missing image.")
 
     print("Finished.")
     print(str(no_pano_fail) + " extractions failed because panorama image was not found.")
