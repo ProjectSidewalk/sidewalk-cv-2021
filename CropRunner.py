@@ -20,6 +20,9 @@ from time import perf_counter
 from PIL import Image, ImageDraw
 import os
 
+from PIL import ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
+
 # *****************************************
 # Update paths below                      *
 # *****************************************
@@ -77,7 +80,7 @@ def make_single_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, crop_d
     :return: none
     """
     im = Image.open(pano_img_path)
-    draw = ImageDraw.Draw(im)
+    # draw = ImageDraw.Draw(im)
 
     im_width = im.size[0]
     im_height = im.size[1]
@@ -96,8 +99,8 @@ def make_single_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, crop_d
     y = im_height / 2 - sv_image_y
 
     r = 10
-    if draw_mark:
-        draw.ellipse((x - r, y - r, x + r, y + r), fill=128)
+    # if draw_mark:
+    #     draw.ellipse((x - r, y - r, x + r, y + r), fill=128)
 
     # print("Plotting at " + str(x) + "," + str(y) + " using yaw " + str(pano_yaw_deg))
 
@@ -106,6 +109,7 @@ def make_single_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, crop_d
     top_left_y = y - crop_height / 2
     cropped_square = im.crop((top_left_x, top_left_y, top_left_x + crop_width, top_left_y + crop_height))
     cropped_square.save(crop_destination)
+    im.close()
     return
 
 def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, mark_label=False):

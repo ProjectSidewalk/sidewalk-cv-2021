@@ -57,7 +57,7 @@ def bulk_scrape_panos(n, start_row, path_to_labeldata_csv, local_dir, remote_dir
         two_chars = pano_id[:2]
 
         # get jpg for pano id
-        sftp_command_list.append('-get {prefix}/{full_id}.jpg'.format(prefix=two_chars, full_id=pano_id))
+        sftp_command_list.append('-get \"{prefix}/{full_id}.jpg\"'.format(prefix=two_chars, full_id=pano_id))
 
     bash_command = "sftp -b batch.txt -P 9000 -i alphie-sftp/alphie_pano ml-sftp@sftp.cs.washington.edu"
     with open('batch.txt', 'w') as sftp_file:
