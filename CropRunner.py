@@ -79,37 +79,42 @@ def make_single_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, crop_d
     :param draw_mark: if a dot should be drawn in the centre of the object/image
     :return: none
     """
-    im = Image.open(pano_img_path)
-    # draw = ImageDraw.Draw(im)
+    try: 
+        im = Image.open(pano_img_path)
+        # draw = ImageDraw.Draw(im)
 
-    im_width = im.size[0]
-    im_height = im.size[1]
-    # print(im_width, im_height)
+        im_width = im.size[0]
+        im_height = im.size[1]
+        # print(im_width, im_height)
 
-    predicted_crop_size = predict_crop_size(sv_image_y)
-    crop_width = predicted_crop_size
-    crop_height = predicted_crop_size
+        predicted_crop_size = predict_crop_size(sv_image_y)
+        crop_width = predicted_crop_size
+        crop_height = predicted_crop_size
 
-    # Work out scaling factor based on image dimensions
-    scaling_factor = im_width / 13312
-    sv_image_x *= scaling_factor
-    sv_image_y *= scaling_factor
+        # Work out scaling factor based on image dimensions
+        scaling_factor = im_width / 13312
+        sv_image_x *= scaling_factor
+        sv_image_y *= scaling_factor
 
-    x = ((float(pano_yaw_deg) / 360) * im_width + sv_image_x) % im_width
-    y = im_height / 2 - sv_image_y
+        x = ((float(pano_yaw_deg) / 360) * im_width + sv_image_x) % im_width
+        y = im_height / 2 - sv_image_y
 
-    r = 10
-    # if draw_mark:
-    #     draw.ellipse((x - r, y - r, x + r, y + r), fill=128)
+        r = 10
+        # if draw_mark:
+        #     draw.ellipse((x - r, y - r, x + r, y + r), fill=128)
 
-    # print("Plotting at " + str(x) + "," + str(y) + " using yaw " + str(pano_yaw_deg))
+        # print("Plotting at " + str(x) + "," + str(y) + " using yaw " + str(pano_yaw_deg))
 
-    # print(x, y)
-    top_left_x = x - crop_width / 2
-    top_left_y = y - crop_height / 2
-    cropped_square = im.crop((top_left_x, top_left_y, top_left_x + crop_width, top_left_y + crop_height))
-    cropped_square.save(crop_destination)
-    im.close()
+        # print(x, y)
+        top_left_x = x - crop_width / 2
+        top_left_y = y - crop_height / 2
+        cropped_square = im.crop((top_left_x, top_left_y, top_left_x + crop_width, top_left_y + crop_height))
+        cropped_square.save(crop_destination)
+        im.close()
+    except Exception as e:
+        print(e)
+        print("Error for {}".format(pano_img_path))
+
     return
 
 def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, mark_label=False):

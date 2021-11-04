@@ -12,7 +12,7 @@ GSV_IMAGE_WIDTH  = 13312
 GSV_IMAGE_HEIGHT = 6656
 
 # null crops per pano
-NULLS_PER_PANO = 3
+NULLS_PER_PANO = 2
 
 def bulk_scrape_panos(n, start_row, path_to_labeldata_csv, local_dir, remote_dir, output_csv_name):
     # TODO: find way to clear to pano_downloads folder and batch.txt file
@@ -57,7 +57,7 @@ def bulk_scrape_panos(n, start_row, path_to_labeldata_csv, local_dir, remote_dir
         two_chars = pano_id[:2]
 
         # get jpg for pano id
-        sftp_command_list.append('-get \"{prefix}/{full_id}.jpg\"'.format(prefix=two_chars, full_id=pano_id))
+        sftp_command_list.append('-get ./{prefix}/{full_id}.jpg'.format(prefix=two_chars, full_id=pano_id))
 
     bash_command = "sftp -b batch.txt -P 9000 -i alphie-sftp/alphie_pano ml-sftp@sftp.cs.washington.edu"
     with open('batch.txt', 'w') as sftp_file:

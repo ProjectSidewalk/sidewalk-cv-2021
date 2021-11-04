@@ -4,7 +4,7 @@ from CropRunner import bulk_extract_crops
 import os
 
 # Scrape panos from SFTP server
-n = 1000
+n = 10
 start_row = 1
 path_to_labeldata_csv = "rawdata/seattle-labels-cv-10-29-2021.csv"
 
