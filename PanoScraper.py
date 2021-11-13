@@ -1,6 +1,5 @@
 import csv
 import os
-import psutil
 import subprocess
 import multiprocessing as mp
 from time import perf_counter
@@ -52,7 +51,8 @@ def bulk_scrape_panos(n, start_row, path_to_labeldata_csv, local_dir, remote_dir
             csv_w.writerow(null_row)
     
     # get available cpu_count
-    cpu_count = mp.cpu_count()
+    # TODO: remove process count limiting
+    cpu_count = mp.cpu_count() if mp.cpu_count() <= 4 else 4
 
     # split pano set into chunks for multithreading
     pano_set = panos.keys()
