@@ -52,7 +52,7 @@ def bulk_scrape_panos(n, start_row, path_to_labeldata_csv, local_dir, remote_dir
     
     # get available cpu_count
     # TODO: remove process count limiting
-    cpu_count = mp.cpu_count() if mp.cpu_count() <= 4 else 4
+    cpu_count = mp.cpu_count() if mp.cpu_count() <= 8 else 8
 
     # split pano set into chunks for multithreading
     pano_set = panos.keys()

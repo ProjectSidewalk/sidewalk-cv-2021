@@ -125,9 +125,7 @@ def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, 
     csv_file = open(path_to_db_export)
     csv_f = csv.reader(csv_file)
     label_list = list(csv_f)
-    print("header: ", label_list[0])
     row_count = len(label_list)
-    print("row_count: {}".format(row_count))
 
     with mp.Manager() as manager:
         # get cpu core count
@@ -145,7 +143,6 @@ def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, 
             chunk_size = (row_count - i) // cpu_count
             print("chunk size: {}".format(chunk_size))
             labels = list(islice(label_list, i, i + chunk_size))
-            print(labels)
             process = mp.Process(target=crop_label_subset, args=(labels, output_rows, path_to_gsv_scrapes, destination_dir))
             processes.append(process)
             cpu_count -= 1
@@ -172,7 +169,6 @@ def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, 
         no_pano_fail = row_count - successful_crop_count - 1
 
         for row in output_rows:
-            print(row)
             csv_w.writerow(row)
 
         # for row in csv_f:
