@@ -51,8 +51,7 @@ def bulk_scrape_panos(n, start_row, path_to_labeldata_csv, local_dir, remote_dir
             csv_w.writerow(null_row)
     
     # get available cpu_count
-    # TODO: remove process count limiting
-    cpu_count = mp.cpu_count() if mp.cpu_count() <= 8 else 8
+    cpu_count = mp.cpu_count()
 
     # split pano set into chunks for multithreading
     pano_set = panos.keys()
@@ -74,29 +73,6 @@ def bulk_scrape_panos(n, start_row, path_to_labeldata_csv, local_dir, remote_dir
     # join processes once finished
     for p in processes:
         p.join()
-
-
-    # create collection of commands
-    # set remote and local working directories
-    # sftp_command_list = ['cd {}'.format(remote_dir), 'lcd {}'.format(local_dir)]
-    # for pano_id in panos.keys():
-    #     # get first two characters of pano id
-    #     two_chars = pano_id[:2]
-
-    #     # get jpg for pano id
-    #     sftp_command_list.append('-get ./{prefix}/{full_id}.jpg'.format(prefix=two_chars, full_id=pano_id))
-
-    # bash_command = "sftp -b batch.txt -P 9000 -i alphie-sftp/alphie_pano ml-sftp@sftp.cs.washington.edu"
-    # with open('batch.txt', 'w') as sftp_file:
-    #     for sftp_command in sftp_command_list:
-    #         sftp_file.write("%s\n" % sftp_command)
-    #     sftp_file.write('quit\n')
-
-    # sftp = subprocess.Popen(bash_command.split(), shell=False)
-    # result = sftp.communicate()
-    # print(result)
-    # if sftp.returncode != 0:
-    #     print("sftp failed on one or more commands: {0}".format(sftp_command_list))
 
     t_stop = perf_counter()
     print("Elapsed time during the whole program in seconds:",
@@ -122,6 +98,8 @@ def get_null_rows(pano, min_dist = 70, bottom_space = 1600, side_space = 300):
 
 def acquire_n_panos(remote_dir, local_dir, pano_ids, thread_id):
     sftp_command_list = ['cd {}'.format(remote_dir), 'lcd {}'.format(local_dir)]
+
+    # create collection of commands
     for pano_id in pano_ids:
         # get first two characters of pano id
         two_chars = pano_id[:2]
