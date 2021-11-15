@@ -16,6 +16,8 @@ path to the folder containing these files.
 
 import csv
 import logging
+import multiprocessing as mp
+from itertools import islice
 from time import perf_counter
 from PIL import Image, ImageDraw
 import os
@@ -122,25 +124,66 @@ def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, 
     # create reader to read input csv with pano info
     csv_file = open(path_to_db_export)
     csv_f = csv.reader(csv_file)
+    label_list = list(csv_f)
+    row_count = len(label_list)
 
-    # create writer to write output csv with crop info
-    # TODO: for now, we will just have image_name point to a cropped jpg as model input 
-    # and label_type as the output
-    fields = ['image_name', 'label_type']
-    csv_out = open(csv_crop_info, 'w')
-    csv_w = csv.writer(csv_out)
-    csv_w.writerow(fields)
+    with mp.Manager() as manager:
+        # get cpu core count
+        cpu_count = mp.cpu_count()
+        print("cpu_count: {}".format(cpu_count))
+
+        # Create interprocess list to store output csv rows.
+        output_rows = manager.list()
+
+        # split label csv into chunks for multiprocessing
+        # 1-index to ignore header row
+        i = 1
+        processes = []
+        while i < row_count:
+            chunk_size = (row_count - i) // cpu_count
+            print("chunk size: {}".format(chunk_size))
+            labels = list(islice(label_list, i, i + chunk_size))
+            process = mp.Process(target=crop_label_subset, args=(labels, output_rows, path_to_gsv_scrapes, destination_dir))
+            processes.append(process)
+            cpu_count -= 1
+            i += chunk_size
+
+        # start processes
+        for p in processes:
+            p.start()
+
+        # join processes once finished
+        for p in processes:
+            p.join()
+
+        # create writer to write output csv with crop info
+        # TODO: for now, we will just have image_name point to a cropped jpg as model input 
+        # and label_type as the output
+        fields = ['image_name', 'label_type']
+        csv_out = open(csv_crop_info, 'w')
+        csv_w = csv.writer(csv_out)
+        csv_w.writerow(fields)
+        successful_crop_count = len(output_rows)
+        # no_metadata_fail = 0
+        # don't count header row as a failed crop
+        no_pano_fail = row_count - successful_crop_count - 1
+
+        for row in output_rows:
+            csv_w.writerow(row)
+
+        print("Finished.")
+        print(str(successful_crop_count) + " successful crop extractions")
+        print(str(no_pano_fail) + " extractions failed because panorama image was not found.")
+        t_stop = perf_counter()
+        print("Elapsed time during bulk cropping in seconds for {} labels:".format(row_count - 1),
+                                            t_stop-t_start)
+
+def crop_label_subset(input_rows, output_rows, path_to_gsv_scrapes, destination_dir):
     counter = 0
-    no_metadata_fail = 0
-    no_pano_fail = 0
-
-    for row in csv_f:
-        if counter == 0:
-            counter += 1
-            continue
-
+    process_pid = os.getpid()
+    for row in input_rows:
+        counter += 1
         pano_id = row[0]
-        # print(pano_id)
         sv_image_x = float(row[1])
         sv_image_y = float(row[2])
         label_type = int(row[3])
@@ -148,13 +191,10 @@ def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, 
 
         pano_img_path = os.path.join(path_to_gsv_scrapes, pano_id + ".jpg")
 
-        # print("Photographer heading is " + str(photographer_heading))
         pano_yaw_deg = 180 - photographer_heading
-        # print("Yaw:" + str(pano_yaw_deg))
 
         # Extract the crop
         if os.path.exists(pano_img_path):
-            counter += 1
             destination_folder = os.path.join(destination_dir)
             if not os.path.isdir(destination_folder):
                 os.makedirs(destination_folder)
@@ -163,29 +203,23 @@ def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, 
                 label_id = int(row[7])
                 crop_name = str(label_id) + ".jpg"  
             else:
-                crop_name = "null_" + str(counter) + ".jpg"
+                # In order to uniquely identify null crops, we concatenate the pid of process they
+                # were generated on and the counter within the process to the name of the null crop.
+                crop_name = "null_" + str(process_pid) + "_" +  str(counter) + ".jpg"
 
             crop_destination = os.path.join(destination_dir, crop_name)
 
             if not os.path.exists(crop_destination):
-                make_single_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, crop_destination, draw_mark=mark_label)
+                make_single_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, crop_destination, False)
                 print("Successfully extracted crop to " + crop_name)
                 logging.info(crop_name + " " + pano_id + " " + str(sv_image_x)
                              + " " + str(sv_image_y) + " " + str(pano_yaw_deg))
                 logging.info("---------------------------------------------------")
 
-            csv_w.writerow([crop_name, label_type])
+            output_rows.append([crop_name, label_type])
         else:
-            no_pano_fail += 1
             print("Panorama image not found.")
             try:
                 logging.warning("Skipped label id " + str(label_id) + " due to missing image.")
             except NameError:
-                logging.warning("Skipped null crop " + str(counter) + " due to missing image.")
-
-    print("Finished.")
-    print(str(no_pano_fail) + " extractions failed because panorama image was not found.")
-    print(str(no_metadata_fail) + " extractions failed because metadata was not found.")
-    t_stop = perf_counter()
-    print("Elapsed time during bulk cropping in seconds for {} labels:".format(counter - 1),
-                                        t_stop-t_start)
+                logging.warning("Skipped null crop " + str(process_pid) + " " + str(counter) + " due to missing image.")
