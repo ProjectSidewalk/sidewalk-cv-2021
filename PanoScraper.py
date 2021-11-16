@@ -51,7 +51,7 @@ def bulk_scrape_panos(n, start_row, path_to_labeldata_csv, local_dir, remote_dir
             csv_w.writerow(null_row)
     
     # get available cpu_count
-    cpu_count = mp.cpu_count()
+    cpu_count = mp.cpu_count() if mp.cpu_count() <= 8 else 8
 
     # split pano set into chunks for multithreading
     pano_set = panos.keys()
@@ -75,8 +75,12 @@ def bulk_scrape_panos(n, start_row, path_to_labeldata_csv, local_dir, remote_dir
         p.join()
 
     t_stop = perf_counter()
-    print("Elapsed time during the whole program in seconds:",
-                                            t_stop-t_start)
+    execution_time = t_stop - t_start
+
+    print("Finished Scraping.")
+    print()
+
+    return pano_set_size, execution_time
 
 # Get a collection of "null" rows from a pano.
 def get_null_rows(pano, min_dist = 70, bottom_space = 1600, side_space = 300):
