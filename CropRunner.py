@@ -130,7 +130,6 @@ def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, 
     with mp.Manager() as manager:
         # get cpu core count
         cpu_count = mp.cpu_count()
-        print("cpu_count: {}".format(cpu_count))
 
         # Create interprocess list to store output csv rows.
         output_rows = manager.list()
@@ -141,7 +140,6 @@ def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, 
         processes = []
         while i < row_count:
             chunk_size = (row_count - i) // cpu_count
-            print("chunk size: {}".format(chunk_size))
             labels = list(islice(label_list, i, i + chunk_size))
             process = mp.Process(target=crop_label_subset, args=(labels, output_rows, path_to_gsv_scrapes, destination_dir))
             processes.append(process)
@@ -171,12 +169,13 @@ def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, 
         for row in output_rows:
             csv_w.writerow(row)
 
-        print("Finished.")
-        print(str(successful_crop_count) + " successful crop extractions")
-        print(str(no_pano_fail) + " extractions failed because panorama image was not found.")
         t_stop = perf_counter()
-        print("Elapsed time during bulk cropping in seconds for {} labels:".format(row_count - 1),
-                                            t_stop-t_start)
+        execution_time = t_stop - t_start
+
+        print("Finished Cropping.")
+        print()
+        
+        return [row_count - 1, successful_crop_count, no_pano_fail, execution_time]
 
 def crop_label_subset(input_rows, output_rows, path_to_gsv_scrapes, destination_dir):
     counter = 0
