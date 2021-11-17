@@ -9,7 +9,7 @@ from torchvision import transforms
 from .utils.training_utils import load_training_checkpoint, train
 
 # set base path to training/test data folder
-BASE_PATH = "./crop_data"
+BASE_PATH = "./crop_data/"
 
 # check for GPU
 if torch.cuda.is_available():  
@@ -29,41 +29,27 @@ image_transform = transforms.Compose([
 
 batch_size = 96
 
-labels_csv_path = "/content/drive/MyDrive/sidewalk_cv/crop_info.csv"
-img_dir = "/content/drive/MyDrive/sidewalk_cv/crops"
-# train_labels_csv_path = "/content/drive/MyDrive/sidewalk_cv/train_crop_info_1.csv"
-# train_img_dir = "/content/drive/MyDrive/sidewalk_cv/train_crops_1000"
+train_labels_csv_path = BASE_PATH + "train_crop_info.csv"
+train_img_dir = BASE_PATH + "train_crops/"
 
-# test_labels_csv_path = "/content/drive/MyDrive/sidewalk_cv/test_crop_info.csv"
-# test_img_dir = "/content/drive/MyDrive/sidewalk_cv/test_crops"
 
-# load our custom sidewalk crop dataset
-# train_set = SidewalkCropsDataset(train_labels_csv_path, train_img_dir, image_transform)
-dataset = SidewalkCropsDataset(labels_csv_path, img_dir, image_transform)
+# load our custom train/val sidewalk crops dataset
+train_val_dataset = SidewalkCropsDataset(train_labels_csv_path, train_img_dir, image_transform)
 
-# partition dataset into 80/10/10 split for train/validation/test
+# partition train dataset into 80/20 split for train/validation
 k = .8
-dataset_size = len(dataset)
-train_size = int(k * dataset_size)
-val_size = int((dataset_size - train_size) / 2)
-test_size = dataset_size - train_size - val_size
-print(dataset_size)
+train_val_dataset_size = len(train_val_dataset)
+train_size = int(k * train_val_dataset_size)
+val_size = train_val_dataset_size - train_size
 print(train_size)
 print(val_size)
-print(test_size)
 
-train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, val_size, test_size])
+train_dataset, val_dataset = torch.utils.data.random_split(train_val_dataset, [train_size, val_size])
 train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
 val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
 
 print(len(train_dataset))
 print(len(val_dataset))
-print(len(test_dataset))
-
-# Do we want a dedicated test set?
-# test_dataset = SidewalkCropsDataset(test_labels_csv_path, test_img_dir, image_transform)
-
-test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=2)
 
 # get resnet50 for fine tuning
 resnet50 = torchvision.models.resnet50(pretrained = True).to(device)
