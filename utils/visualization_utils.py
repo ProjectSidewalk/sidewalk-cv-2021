@@ -1,10 +1,6 @@
-#  for inputs, labels in test_dataloader:
-#    print(inputs.shape)
-#    plt.figure()
-#    plt.imshow(torch.squeeze(inputs).permute(1, 2, 0))
-#    plt.show()
-#    print(labels)
-
+import itertools
+import matplotlib.pyplot as plt
+import numpy as np
 
 def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
     if normalize:
@@ -29,3 +25,12 @@ def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix'
     plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
+
+
+    #  TODO: move into function
+    #  for inputs, labels in test_dataloader:
+    #    print(inputs.shape)
+    #    plt.figure()
+    #    plt.imshow(torch.squeeze(inputs).permute(1, 2, 0))
+    #    plt.show()
+    #    print(labels)

@@ -10,3 +10,4 @@ aiohttp>=3.7.4
 backoff>=1.10.0
 torch
 scikit-learn
+torchvision
