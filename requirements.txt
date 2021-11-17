@@ -9,3 +9,4 @@ scipy>=1.6.2
 aiohttp>=3.7.4
 backoff>=1.10.0
 torch
+scikit-learn

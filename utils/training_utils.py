@@ -1,3 +1,9 @@
+import torch
+import os
+import copy
+from time import perf_counter
+from sklearn.metrics import confusion_matrix
+
 def save_training_checkpoint(model, best_model_state, optimizer, scheduler, loss_train, loss_validation, epoch, path):
   # add things like TPR, FPR later when we start evaluating them
   torch.save({'model_state': model.state_dict(),
@@ -26,7 +32,7 @@ def load_best_weights(model, path):
   model.load_state_dict(checkpoint['best_model_state'])
 
 
-def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_path, loss_train, loss_validation, start_epoch):
+def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_path, loss_train, loss_validation, start_epoch, device):
   t_start = perf_counter()
 
   best_model_state = copy.deepcopy(model.state_dict())
@@ -107,12 +113,8 @@ def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_p
   t_stop = perf_counter()
   print("Elapsed time during training in seconds",
                                         t_stop-t_start)
-  # set our model with best weights
-  model.load_state_dict(best_model_state)
-  return model, best_validation_accuracy, loss_train, loss_validation
 
-
-def evaluate(model, loss_func, dataset_loader, test=False):
+def evaluate(model, loss_func, dataset_loader, test, device):
   # length of data set we are evaluating on.
   n = len(dataset_loader.dataset)
 
