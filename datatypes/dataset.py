@@ -1,3 +1,8 @@
+import os
+import pandas as pd
+from PIL import Image
+from torch.utils.data import Dataset
+
 class SidewalkCropsDataset(Dataset):
   def __init__(self, annotations_file, img_dir, transform=None, target_transform=None):
     self.img_labels = pd.read_csv(annotations_file)
