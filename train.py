@@ -1,3 +1,16 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
+import torch.nn as nn
+import torchvision
+from .datatypes.dataset import SidewalkCropsDataset
+from torch.optim import lr_scheduler
+from torchvision import transforms
+from .utils.training_utils import load_training_checkpoint, train
+
+# set base path to training/test data folder
+BASE_PATH = "./crop_data"
+
 # check for GPU
 if torch.cuda.is_available():  
   dev = "cuda" 
@@ -77,8 +90,8 @@ print("validation losses: " + str(loss_validation))
 print("next epoch: " + str(last_epoch + 1))
 print("resuming training...\n")
 
-resnet50, best_validation_accuracy, loss_train, loss_validation = train(resnet50, optimizer, scheduler, loss_func, epochs, dataLoaders, checkpoint_save_path, loss_train, loss_validation, last_epoch + 1)
-print("Best validation accuracy: ", best_validation_accuracy)
+train(resnet50, optimizer, scheduler, loss_func, epochs, dataLoaders, checkpoint_save_path, loss_train, loss_validation, last_epoch + 1, device)
+# print("Best validation accuracy: ", best_validation_accuracy)
 
 # visualization of training and validation loss over epochs
 plt.plot(np.arange(epochs), loss_train, label="training loss")
