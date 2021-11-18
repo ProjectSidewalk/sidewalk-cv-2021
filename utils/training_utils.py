@@ -118,7 +118,7 @@ def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_p
       print("mode: " + mode + ", accuracy: " + str(accuracy) + ", loss: " + str(loss_avg))
 
       if mode == 'validation':
-        if accuracy > np.max(metrics['accuracy_validation']):
+        if not metrics['accuracy_validation'] or accuracy > np.max(metrics['accuracy_validation']):
           # we found a better accuracy with these new weights, so save them
           best_model_state = copy.deepcopy(model.state_dict())
         metrics['precision_validation'].append(precisions)
