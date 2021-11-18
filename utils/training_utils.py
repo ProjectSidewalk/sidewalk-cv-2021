@@ -70,9 +70,9 @@ def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_p
 
       epoch_count = 0
 
-      pred_positive_counts = torch.zeros(5)
-      actual_positive_counts = torch.zeros(5)
-      true_positive_counts = torch.zeros(5)
+      pred_positive_counts = torch.zeros(5).to(device)
+      actual_positive_counts = torch.zeros(5).to(device)
+      true_positive_counts = torch.zeros(5).to(device)
 
       for inputs, labels in datasetLoaders[mode]:
         inputs, labels = inputs.to(device), labels.to(device)
@@ -97,8 +97,6 @@ def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_p
             optimizer.step()
         
         correct_preds = torch.where(preds == labels.data, preds, torch.tensor([-1 for i in preds]).to(device))
-        print(correct_preds.is_cuda)
-        correct_preds.cpu()
         for i in range(5):
           true_positive_counts[i] += torch.count_nonzero(correct_preds == i)
           pred_positive_counts[i] += torch.count_nonzero(preds == i)
