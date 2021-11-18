@@ -46,8 +46,8 @@ print(train_size)
 print(val_size)
 
 train_dataset, val_dataset = torch.utils.data.random_split(train_val_dataset, [train_size, val_size])
-train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
-val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
+train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
+val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
 
 print(len(train_dataset))
 print(len(val_dataset))

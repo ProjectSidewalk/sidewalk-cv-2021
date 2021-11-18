@@ -50,6 +50,7 @@ def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_p
   best_model_state = copy.deepcopy(model.state_dict())
 
   for epoch in range(start_epoch, epochs):
+    epoch_t_start = perf_counter()
     print("Epoch " + str(epoch) + " out of " + str(epochs))
     for mode in ['training', 'validation']:
       if mode == "training":
@@ -135,6 +136,9 @@ def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_p
 
     training_states = {'model': model, 'optimizer': optimizer, 'scheduler': scheduler}
     save_training_checkpoint(training_states, best_model_state, metrics, epoch, save_path)
+    epoch_t_stop = perf_counter()
+    print("Elapsed time during epoch {}".format(epoch),
+                                        epoch_t_stop-epoch_t_start)
     print("\n")
 
   t_stop = perf_counter()
