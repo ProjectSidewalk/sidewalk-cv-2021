@@ -27,7 +27,8 @@ image_transform = transforms.Compose([
   transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
-batch_size = 96
+# having issues with CUDA running out of memory, so lowering batch size
+batch_size = 32
 
 train_labels_csv_path = BASE_PATH + "train_crop_info.csv"
 train_img_dir = BASE_PATH + "train_crops/"
