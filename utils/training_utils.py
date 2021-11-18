@@ -7,7 +7,7 @@ from time import perf_counter
 
 def save_training_checkpoint(training_states, best_model_state, metrics, epoch, path):
   # add things like TPR, FPR later when we start evaluating them
-  torch.save({'model': training_states['model'].state_dict(),
+  torch.save({'model_state': training_states['model'].state_dict(),
               'best_model_state': best_model_state,
               'optimizer_state': training_states['optimizer'].state_dict(),
               'scheduler_state': training_states['scheduler'].state_dict(),
@@ -24,7 +24,9 @@ def load_training_checkpoint(model, optimizer, scheduler, path):
     'accuracy_train': [], 
     'accuracy_validation': [],
     'precision_train': [],
-    'recall_train': []}, -1  # training starts at last epoch + 1
+    'recall_train': [],
+    'precision_validation': [],
+    'recall_validation': []}, -1  # training starts at last epoch + 1
   checkpoint = torch.load(path)
   model.load_state_dict(checkpoint['model_state'])
   optimizer.load_state_dict(checkpoint['optimizer_state'])
@@ -63,7 +65,11 @@ def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_p
       total_correct = 0
 
       epoch_count = 0
-      
+
+      pred_positive_counts = torch.zeros(5)
+      actual_positive_counts = torch.zeros(5)
+      true_positive_counts = torch.zeros(5)
+
       for inputs, labels in datasetLoaders[mode]:
         inputs, labels = inputs.to(device), labels.to(device)
         epoch_count += inputs.size(0)
@@ -84,7 +90,11 @@ def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_p
             # train by using loss/stepping.
             loss.backward()
             optimizer.step()
-
+        correct_preds = torch.where(preds == labels, preds, torch.tensor([-1 for i in preds]))
+        for i in range(5):
+          true_positive_counts[i] += torch.count_nonzero(correct_preds == i)
+          pred_positive_counts[i] += torch.count_nonzero(preds == i)
+          actual_positive_counts[i] += torch.count_nonzero(labels == i)
         total_loss += loss.item() * inputs.size(0) # Averages over batch              
         total_correct += (preds == labels.data).sum().item() # what is .data for?
 
@@ -94,19 +104,24 @@ def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_p
       # calculate accuracy
       accuracy = total_correct / n
       
+      # calculate precisions and recalls
+      precisions = torch.div(true_positive_counts, pred_positive_counts)
+      recalls = torch.div(true_positive_counts, actual_positive_counts)
+
       print("mode: " + mode + ", accuracy: " + str(accuracy) + ", loss: " + str(loss_avg))
-      # record validation loss
-      metrics['loss_validation'].append(loss_avg)
 
       if mode == 'validation':
         if accuracy > np.max(metrics['accuracy_validation']):
           # we found a better accuracy with these new weights, so save them
           best_model_state = copy.deepcopy(model.state_dict())
-        
+        metrics['precision_validation'].append(precisions)
+        metrics['recall_validation'].append(recalls)
         metrics['loss_validation'].append(loss_avg)
         metrics['accuracy_validation'].append(accuracy)
       else:
         # record training accuracy
+        metrics['precision_train'].append(precisions)
+        metrics['recall_train'].append(recalls)
         metrics['loss_train'].append(loss_avg)
         metrics['accuracy_train'].append(accuracy)
         # make sure to step through lr update schedule
