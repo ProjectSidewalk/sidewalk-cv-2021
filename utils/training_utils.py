@@ -95,9 +95,7 @@ def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_p
             loss.backward()
             optimizer.step()
         
-        print(preds.is_cuda())
-        print(labels.is_cuda())
-        correct_preds = torch.where(preds == labels, preds, torch.tensor([-1 for i in preds]))
+        correct_preds = torch.where(preds == labels.data, preds, torch.tensor([-1 for i in preds]))
         for i in range(5):
           true_positive_counts[i] += torch.count_nonzero(correct_preds == i)
           pred_positive_counts[i] += torch.count_nonzero(preds == i)
