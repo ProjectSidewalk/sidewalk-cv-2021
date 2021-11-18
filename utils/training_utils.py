@@ -96,7 +96,7 @@ def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_p
             loss.backward()
             optimizer.step()
         
-        correct_preds = torch.where(preds == labels.data, preds, torch.tensor([-1 for i in preds]))
+        correct_preds = torch.where(preds == labels.data, preds, torch.tensor([-1 for i in preds]).to(device))
         for i in range(5):
           true_positive_counts[i] += torch.count_nonzero(correct_preds == i)
           pred_positive_counts[i] += torch.count_nonzero(preds == i)
