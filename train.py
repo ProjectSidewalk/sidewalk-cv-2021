@@ -4,12 +4,12 @@ import torch
 import torch.nn as nn
 import torchvision
 from .datatypes.dataset import SidewalkCropsDataset
+from .utils.training_utils import load_training_checkpoint, train
 from torch.optim import lr_scheduler
 from torchvision import transforms
-from .utils.training_utils import load_training_checkpoint, train
 
 # set base path to training/test data folder
-BASE_PATH = "./crop_data/"
+BASE_PATH = "./datasets/"
 
 # check for GPU
 if torch.cuda.is_available():  
@@ -19,7 +19,7 @@ else:
 device = torch.device(dev) 
 print(device)
 
-# load train/test datasets
+# load train datasets
 image_transform = transforms.Compose([
   transforms.Resize(256),
   transforms.CenterCrop(224),
