@@ -63,7 +63,7 @@ resnet50.to(device)
 loss_func = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(resnet50.parameters(), lr=lr)
 scheduler = lr_scheduler.StepLR(optimizer, 10, gamma=0.1)
-checkpoint_save_path = BASE_PATH + "training_test_saves"
+checkpoint_save_path = BASE_PATH + "resnet_50_save.pt"
 
 # train for 20 epochs
 epochs = 20
