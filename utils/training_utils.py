@@ -98,16 +98,20 @@ def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_p
       # record validation loss
       metrics['loss_validation'].append(loss_avg)
 
-      if accuracy > np.max(metrics['loss_validation']):
-        # we found a better accuracy with these new weights, so save them
-        best_model_state = copy.deepcopy(model.state_dict())
-
+      if mode == 'validation':
+        if accuracy > np.max(metrics['accuracy_validation']):
+          # we found a better accuracy with these new weights, so save them
+          best_model_state = copy.deepcopy(model.state_dict())
+        
+        metrics['loss_validation'].append(loss_avg)
+        metrics['accuracy_validation'].append(accuracy)
       else:
         # record training accuracy
         metrics['loss_train'].append(loss_avg)
-
+        metrics['accuracy_train'].append(accuracy)
         # make sure to step through lr update schedule
         #scheduler.step()
+
     training_states = {'model': model, 'optimizer': optimizer, 'scheduler': scheduler}
     save_training_checkpoint(training_states, best_model_state, metrics, epoch, save_path)
     print("\n")
