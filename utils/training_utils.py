@@ -89,6 +89,7 @@ def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_p
           outputs = model(inputs)
           loss = loss_func(outputs, labels)
           _, preds = torch.max(outputs, 1)
+          preds.to(device)
           if use_grad:
             # We are training, so make sure to actually
             # train by using loss/stepping.
