@@ -17,7 +17,7 @@ def save_training_checkpoint(training_states, best_model_state, metrics, epoch, 
   print("saved")
   
 
-def load_training_checkpoint(model, optimizer, scheduler, path):
+def load_training_checkpoint(model, path, optimizer=None, scheduler=None):
   if not os.path.isfile(path):
     return {'loss_train': [],
     'loss_validation': [], 
@@ -29,8 +29,12 @@ def load_training_checkpoint(model, optimizer, scheduler, path):
     'recall_validation': []}, -1  # training starts at last epoch + 1
   checkpoint = torch.load(path)
   model.load_state_dict(checkpoint['model_state'])
-  optimizer.load_state_dict(checkpoint['optimizer_state'])
-  scheduler.load_state_dict(checkpoint['scheduler_state'])
+
+  if optimizer is not None:
+    optimizer.load_state_dict(checkpoint['optimizer_state'])
+  
+  if scheduler is not None:
+    scheduler.load_state_dict(checkpoint['scheduler_state'])
   
   return checkpoint['metrics'], checkpoint['epoch']
   
@@ -136,6 +140,9 @@ def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_p
                                         t_stop-t_start)
 
 def evaluate(model, loss_func, dataset_loader, test, device):
+  # put model into eval mode
+  model.eval()
+  
   # length of data set we are evaluating on.
   n = len(dataset_loader.dataset)
 

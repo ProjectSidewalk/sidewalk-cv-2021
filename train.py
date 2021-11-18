@@ -70,7 +70,7 @@ dataLoaders = {
   "training": train_dataloader,
   "validation": val_dataloader
 }
-metrics, last_epoch = load_training_checkpoint(resnet50, optimizer, scheduler, checkpoint_save_path)
+metrics, last_epoch = load_training_checkpoint(resnet50, checkpoint_save_path, optimizer, scheduler)
 print("next epoch: " + str(last_epoch + 1))
 print("resuming training...\n")
 
