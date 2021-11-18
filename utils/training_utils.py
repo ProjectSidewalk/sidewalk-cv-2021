@@ -98,6 +98,7 @@ def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_p
         
         correct_preds = torch.where(preds == labels.data, preds, torch.tensor([-1 for i in preds]).to(device))
         print(correct_preds.is_cuda)
+        correct_preds.cpu()
         for i in range(5):
           true_positive_counts[i] += torch.count_nonzero(correct_preds == i)
           pred_positive_counts[i] += torch.count_nonzero(preds == i)
