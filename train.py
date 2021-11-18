@@ -70,18 +70,16 @@ dataLoaders = {
   "training": train_dataloader,
   "validation": val_dataloader
 }
-loss_train, loss_validation, last_epoch = load_training_checkpoint(resnet50, optimizer, scheduler, checkpoint_save_path)
-print("training losses: " + str(loss_train))
-print("validation losses: " + str(loss_validation))
+metrics, last_epoch = load_training_checkpoint(resnet50, optimizer, scheduler, checkpoint_save_path)
 print("next epoch: " + str(last_epoch + 1))
 print("resuming training...\n")
 
-train(resnet50, optimizer, scheduler, loss_func, epochs, dataLoaders, checkpoint_save_path, loss_train, loss_validation, last_epoch + 1, device)
+train(resnet50, optimizer, scheduler, loss_func, epochs, dataLoaders, checkpoint_save_path, metrics, last_epoch + 1, device)
 # print("Best validation accuracy: ", best_validation_accuracy)
 
 # visualization of training and validation loss over epochs
-plt.plot(np.arange(epochs), loss_train, label="training loss")
-plt.plot(np.arange(epochs), loss_validation, label="validation loss")
+plt.plot(np.arange(epochs), metrics['loss_train'], label="training loss")
+plt.plot(np.arange(epochs), metrics['loss_validation'], label="validation loss")
 plt.title("Training/Validation loss for FT model")
 plt.xlabel("epoch")
 plt.ylabel("loss")

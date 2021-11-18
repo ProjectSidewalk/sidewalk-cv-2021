@@ -5,14 +5,13 @@ import torch
 from sklearn.metrics import confusion_matrix
 from time import perf_counter
 
-def save_training_checkpoint(model, best_model_state, optimizer, scheduler, loss_train, loss_validation, epoch, path):
+def save_training_checkpoint(training_states, best_model_state, metrics, epoch, path):
   # add things like TPR, FPR later when we start evaluating them
-  torch.save({'model_state': model.state_dict(),
+  torch.save({'model': training_states['model'].state_dict(),
               'best_model_state': best_model_state,
-              'optimizer_state': optimizer.state_dict(),
-              'scheduler_state': scheduler.state_dict(),
-              'loss_train': loss_train,
-              'loss_validation': loss_validation,
+              'optimizer_state': training_states['optimizer'].state_dict(),
+              'scheduler_state': training_states['scheduler'].state_dict(),
+              'metrics': metrics,
               'epoch': epoch
               }, path)
   print("saved")
@@ -20,12 +19,18 @@ def save_training_checkpoint(model, best_model_state, optimizer, scheduler, loss
 
 def load_training_checkpoint(model, optimizer, scheduler, path):
   if not os.path.isfile(path):
-    return [], [], -1  # training starts at last epoch + 1
+    return {'loss_train': [],
+    'loss_validation': [], 
+    'accuracy_train': [], 
+    'accuracy_validation': [],
+    'precision_train': [],
+    'recall_train': []}, -1  # training starts at last epoch + 1
   checkpoint = torch.load(path)
   model.load_state_dict(checkpoint['model_state'])
   optimizer.load_state_dict(checkpoint['optimizer_state'])
   scheduler.load_state_dict(checkpoint['scheduler_state'])
-  return checkpoint['loss_train'], checkpoint['loss_validation'], checkpoint['epoch']
+  
+  return checkpoint['metrics'], checkpoint['epoch']
   
 
 def load_best_weights(model, path):
@@ -33,7 +38,7 @@ def load_best_weights(model, path):
   model.load_state_dict(checkpoint['best_model_state'])
 
 
-def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_path, loss_train, loss_validation, start_epoch, device):
+def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_path, metrics, start_epoch, device):
   t_start = perf_counter()
 
   best_model_state = copy.deepcopy(model.state_dict())
@@ -90,25 +95,21 @@ def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_p
       accuracy = total_correct / n
       
       print("mode: " + mode + ", accuracy: " + str(accuracy) + ", loss: " + str(loss_avg))
+      # record validation loss
+      metrics['loss_validation'].append(loss_avg)
 
-      if mode == 'validation':
-        # record validation loss
-        loss_validation.append(loss_avg)
-
-        if accuracy > np.max(loss_validation):
-          # we found a better accuracy with these new weights, so save them
-          best_model_state = copy.deepcopy(model.state_dict())
+      if accuracy > np.max(metrics['loss_validation']):
+        # we found a better accuracy with these new weights, so save them
+        best_model_state = copy.deepcopy(model.state_dict())
 
       else:
         # record training accuracy
-        loss_train.append(loss_avg)
+        metrics['loss_train'].append(loss_avg)
 
         # make sure to step through lr update schedule
         #scheduler.step()
-    
-    save_training_checkpoint(model, best_model_state, optimizer, scheduler, loss_train, loss_validation, epoch, save_path)
-      
-    
+    training_states = {'model': model, 'optimizer': optimizer, 'scheduler': scheduler}
+    save_training_checkpoint(training_states, best_model_state, metrics, epoch, save_path)
     print("\n")
 
   t_stop = perf_counter()
