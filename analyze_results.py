@@ -1,11 +1,17 @@
-import torch
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import os
+import torch
 from matplotlib.pyplot import figure
+ 
+VISUALIZATIONS_PATH = "./visualizations/"
+if not os.path.isdir(VISUALIZATIONS_PATH):
+    os.makedirs(VISUALIZATIONS_PATH)
 
-session_name = 'regnet_save.pt'
-train_save_path = "./datasets/" + session_name
-results = torch.load(train_save_path)
+SESSION_NAME = 'regnet_save.pt'
+TRAIN_SAVE_PATH = "./datasets/" + SESSION_NAME
+
+results = torch.load(TRAIN_SAVE_PATH)
 metrics = results['metrics']
 
 def plot_label_metric(metric_name):
@@ -19,7 +25,7 @@ def plot_label_metric(metric_name):
     plt.xlabel("epoch", fontsize=16)
     plt.ylabel(metric_name, fontsize=16)
     plt.legend(prop={'size': 16})
-    plt.savefig(metric_name)
+    plt.savefig(VISUALIZATIONS_PATH + metric_name)
 
 plot_label_metric('precision_validation')
 plot_label_metric('precision_train')
@@ -33,4 +39,13 @@ plt.title(f'accuracy vs epoch', fontsize=20)
 plt.xlabel("epoch", fontsize=16)
 plt.ylabel("accuracy", fontsize=16)
 plt.legend(prop={'size': 16})
-plt.savefig("accuracies")
+plt.savefig(VISUALIZATIONS_PATH + "accuracies")
+
+figure(figsize=(16, 12))
+plt.plot(np.arange(20), metrics['loss_train'], label = 'train loss')
+plt.plot(np.arange(20), metrics['loss_validation'], label = 'validation loss')
+plt.title(f'loss vs epoch', fontsize=20)
+plt.xlabel("epoch", fontsize=16)
+plt.ylabel("loss", fontsize=16)
+plt.legend(prop={'size': 16})
+plt.savefig(VISUALIZATIONS_PATH + "losses")

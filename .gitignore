@@ -30,3 +30,6 @@ __pycache__
 
 # Ignore zips
 *.zip
+
+# Ignore generated visualizations
+visualizations
