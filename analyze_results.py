@@ -10,6 +10,13 @@ if not os.path.isdir(VISUALIZATIONS_PATH):
 
 SESSION_NAME = 'regnet_save.pt'
 TRAIN_SAVE_PATH = "./datasets/" + SESSION_NAME
+label_types = {
+    0: "null",
+    1: "curb ramp",
+    2: "missing curb ramp",
+    3: "obstacle", 
+    4: "surface problem"
+}
 
 results = torch.load(TRAIN_SAVE_PATH)
 metrics = results['metrics']
@@ -20,7 +27,7 @@ def plot_label_metric(metric_name):
     flipped_metric = [stacked[:, i] for i in range(1, 5)]
     for i, metric in enumerate(flipped_metric):
         metric = metric.cpu()
-        plt.plot(np.arange(20), metric, label = str(i+ 1))
+        plt.plot(np.arange(20), metric, label = label_types[i+ 1])
     plt.title(f'{metric_name} vs epoch', fontsize=20)
     plt.xlabel("epoch", fontsize=16)
     plt.ylabel(metric_name, fontsize=16)
