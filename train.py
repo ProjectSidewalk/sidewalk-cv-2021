@@ -3,8 +3,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torchvision
-from .datatypes.dataset import SidewalkCropsDataset
-from .utils.training_utils import load_training_checkpoint, train
+from datatypes.dataset import SidewalkCropsDataset
+from utils.training_utils import get_pretrained_model, load_training_checkpoint, train
 from torch.optim import lr_scheduler
 from torchvision import transforms
 
@@ -28,9 +28,9 @@ image_transform = transforms.Compose([
 ])
 
 # having issues with CUDA running out of memory, so lowering batch size
-batch_size = 32
+batch_size = 16
 
-train_labels_csv_path = BASE_PATH + "train_crop_info.csv"
+train_labels_csv_path = BASE_PATH + "train_non_null_crop_info.csv"
 train_img_dir = BASE_PATH + "train_crops/"
 
 
@@ -53,17 +53,17 @@ print(len(train_dataset))
 print(len(val_dataset))
 
 # get resnet50 for fine tuning
-resnet50 = torchvision.models.resnet50(pretrained = True).to(device)
-num_ftrs = resnet50.fc.in_features
-resnet50.fc = nn.Linear(num_ftrs, 5) # (1,2,3,4) for label types, 0 for null crops 
+model = get_pretrained_model()
+num_ftrs = model.fc.in_features
+model.fc = nn.Linear(num_ftrs, 5) # (1,2,3,4) for label types, 0 for null crops 
+model.to(device)
 
 lr = 0.01
 
-resnet50.to(device)
 loss_func = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(resnet50.parameters(), lr=lr)
+optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 scheduler = lr_scheduler.StepLR(optimizer, 10, gamma=0.1)
-checkpoint_save_path = BASE_PATH + "resnet_50_save.pt"
+checkpoint_save_path = BASE_PATH + "regnet_save.pt"
 
 # train for 20 epochs
 epochs = 20
@@ -71,11 +71,11 @@ dataLoaders = {
   "training": train_dataloader,
   "validation": val_dataloader
 }
-metrics, last_epoch = load_training_checkpoint(resnet50, checkpoint_save_path, optimizer, scheduler)
+metrics, last_epoch = load_training_checkpoint(model, checkpoint_save_path, optimizer, scheduler)
 print("next epoch: " + str(last_epoch + 1))
 print("resuming training...\n")
 
-train(resnet50, optimizer, scheduler, loss_func, epochs, dataLoaders, checkpoint_save_path, metrics, last_epoch + 1, device)
+train(model, optimizer, scheduler, loss_func, epochs, dataLoaders, checkpoint_save_path, metrics, last_epoch + 1, device)
 # print("Best validation accuracy: ", best_validation_accuracy)
 
 # visualization of training and validation loss over epochs

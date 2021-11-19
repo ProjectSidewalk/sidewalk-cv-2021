@@ -2,8 +2,12 @@ import copy
 import numpy as np
 import os
 import torch
+import torchvision
 from sklearn.metrics import confusion_matrix
 from time import perf_counter
+
+def get_pretrained_model():
+  return torchvision.models.regnet_y_8gf(pretrained = True)
 
 def save_training_checkpoint(training_states, best_model_state, metrics, epoch, path):
   # add things like TPR, FPR later when we start evaluating them
