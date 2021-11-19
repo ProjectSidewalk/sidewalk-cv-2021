@@ -19,8 +19,17 @@ crops
 # Ignore crop log
 crop.log
 
+# Ignore datasets folder
+datasets
+
 # Ignore pycache
 __pycache__
 
 # Ignore .DS_Store
 .DS_Store
+
+# Ignore zips
+*.zip
+
+# Ignore generated visualizations
+visualizations
