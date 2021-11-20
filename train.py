@@ -63,7 +63,7 @@ lr = 0.01
 loss_func = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 scheduler = lr_scheduler.StepLR(optimizer, 10, gamma=0.1)
-checkpoint_save_path = BASE_PATH + "regnet_save.pt"
+checkpoint_save_folder = "./training_checkpoints/regnet_y_8gf/"
 
 # train for 20 epochs
 epochs = 20
@@ -71,11 +71,11 @@ dataLoaders = {
   "training": train_dataloader,
   "validation": val_dataloader
 }
-metrics, last_epoch = load_training_checkpoint(model, checkpoint_save_path, optimizer, scheduler)
+metrics, last_epoch = load_training_checkpoint(model, checkpoint_save_folder, optimizer, scheduler)
 print("next epoch: " + str(last_epoch + 1))
 print("resuming training...\n")
 
-train(model, optimizer, scheduler, loss_func, epochs, dataLoaders, checkpoint_save_path, metrics, last_epoch + 1, device)
+train(model, optimizer, scheduler, loss_func, epochs, dataLoaders, checkpoint_save_folder, metrics, last_epoch + 1, device)
 # print("Best validation accuracy: ", best_validation_accuracy)
 
 # visualization of training and validation loss over epochs

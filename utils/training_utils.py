@@ -1,4 +1,5 @@
 import copy
+import glob
 import numpy as np
 import os
 import torch
@@ -9,20 +10,23 @@ from time import perf_counter
 def get_pretrained_model():
   return torchvision.models.regnet_y_8gf(pretrained = True)
 
-def save_training_checkpoint(training_states, best_model_state, metrics, epoch, path):
+def save_training_checkpoint(training_states, best_model_state, metrics, epoch, folder):
   # add things like TPR, FPR later when we start evaluating them
+  if not os.path.exists(folder):
+    os.makedirs(folder)
   torch.save({'model_state': training_states['model'].state_dict(),
               'best_model_state': best_model_state,
               'optimizer_state': training_states['optimizer'].state_dict(),
               'scheduler_state': training_states['scheduler'].state_dict(),
               'metrics': metrics,
               'epoch': epoch
-              }, path)
+              }, f'{folder}epoch_{str(epoch)}.pt')
   print("saved")
   
 
-def load_training_checkpoint(model, path, optimizer=None, scheduler=None):
-  if not os.path.isfile(path):
+def load_training_checkpoint(model, folder, optimizer=None, scheduler=None):
+  checkpoint_files = glob.glob(f'{folder}*.pt')
+  if not checkpoint_files:
     return {'loss_train': [],
     'loss_validation': [], 
     'accuracy_train': [], 
@@ -31,9 +35,10 @@ def load_training_checkpoint(model, path, optimizer=None, scheduler=None):
     'recall_train': [],
     'precision_validation': [],
     'recall_validation': []}, -1  # training starts at last epoch + 1
-  checkpoint = torch.load(path)
-  model.load_state_dict(checkpoint['model_state'])
+  most_recent_save = max(checkpoint_files, key=os.path.getmtime)
+  checkpoint = torch.load(most_recent_save)
 
+  model.load_state_dict(checkpoint['model_state'])
   if optimizer is not None:
     optimizer.load_state_dict(checkpoint['optimizer_state'])
   
@@ -48,7 +53,7 @@ def load_best_weights(model, path):
   model.load_state_dict(checkpoint['best_model_state'])
 
 
-def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_path, metrics, start_epoch, device):
+def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_folder, metrics, start_epoch, device):
   t_start = perf_counter()
 
   best_model_state = copy.deepcopy(model.state_dict())
@@ -139,7 +144,7 @@ def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_p
         #scheduler.step()
 
     training_states = {'model': model, 'optimizer': optimizer, 'scheduler': scheduler}
-    save_training_checkpoint(training_states, best_model_state, metrics, epoch, save_path)
+    save_training_checkpoint(training_states, best_model_state, metrics, epoch, save_folder)
     epoch_t_stop = perf_counter()
     print("Elapsed time during epoch {}".format(epoch),
                                         epoch_t_stop-epoch_t_start)
