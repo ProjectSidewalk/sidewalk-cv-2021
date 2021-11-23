@@ -45,6 +45,7 @@ val_size = train_val_dataset_size - train_size
 print(train_size)
 print(val_size)
 
+torch.manual_seed(0)
 train_dataset, val_dataset = torch.utils.data.random_split(train_val_dataset, [train_size, val_size])
 train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
 val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
@@ -66,7 +67,7 @@ scheduler = lr_scheduler.StepLR(optimizer, 10, gamma=0.1)
 checkpoint_save_path = BASE_PATH + "regnet_save.pt"
 
 # train for 20 epochs
-epochs = 20
+epochs = 50
 dataLoaders = {
   "training": train_dataloader,
   "validation": val_dataloader
