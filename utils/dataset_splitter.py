@@ -1,12 +1,13 @@
 import pandas as pd
 
-COMPLETE_DATASET_CSV_PATH = "../datasets/crop_info.csv"
-NON_NULL_CROP_DATASET_CSV_PATH = "../datasets/non_null_crop_info.csv"
-SUBSET_CSV_PATH = "../datasets/subset_crop_info.csv"
+COMPLETE_DATASET_CSV_PATH = "../datasets/train_crop_info.csv"
+NON_NULL_CROP_DATASET_CSV_PATH = "../datasets/train_non_null_crop_info.csv"
+SUBSET_CSV_PATH = "../datasets/train_subset_crop_info.csv"
 
 # read CSV into a Pandas Dataframe
 complete_dataset_df = pd.read_csv(COMPLETE_DATASET_CSV_PATH)
 print(complete_dataset_df.head(30))
+print(complete_dataset_df.groupby('label_type').count())
 
 # create CSV with just null crops
 # creates a subset df of all rows with 'label_type' not 0
@@ -26,7 +27,7 @@ n = len(null_crops.index)
 print(n)
 
 # create Subset CSV of all non-null crops and the first m of the null crops
-m = 0
+m = 10000
 m_null_crops = null_crops.head(m)
 
 subset_df = pd.concat([non_null_crops, m_null_crops])
