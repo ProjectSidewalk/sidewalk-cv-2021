@@ -2,7 +2,8 @@ import itertools
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
+def plot_confusion_matrix(visualizations_path, model_name, cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
+    plt.figure()
     if normalize:
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
         print("Normalized confusion matrix")
@@ -25,12 +26,15 @@ def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix'
     plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
+    plt.savefig(visualizations_path + model_name + ".png", format="png")
+    plt.show()
+    plt.close()
 
 
-    #  TODO: move into function
-    #  for inputs, labels in test_dataloader:
-    #    print(inputs.shape)
-    #    plt.figure()
-    #    plt.imshow(torch.squeeze(inputs).permute(1, 2, 0))
-    #    plt.show()
-    #    print(labels)
+#  TODO: move into function
+#  for inputs, labels in test_dataloader:
+#    print(inputs.shape)
+#    plt.figure()
+#    plt.imshow(torch.squeeze(inputs).permute(1, 2, 0))
+#    plt.show()
+#    print(labels)
