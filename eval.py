@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torchvision
 from datatypes.dataset import SidewalkCropsDataset
-from utils.training_utils import load_best_weights, evaluate
+from utils.training_utils import get_pretrained_model, load_best_weights, evaluate
 from utils.visualization_utils import plot_confusion_matrix
 from torchvision import transforms
 
@@ -11,6 +11,21 @@ VISUALIZATIONS_PATH = "./visualizations/"
 if not os.path.isdir(VISUALIZATIONS_PATH):
     print("made visualization folder")
     os.makedirs(VISUALIZATIONS_PATH)
+
+# set base path to test data folder
+BASE_PATH = "./datasets/"
+
+# name of model architecture
+MODEL_NAME = "efficientnet"
+
+# number of output classes
+NUM_CLASSES = 5  # (1,2,3,4) for label types, 0 for null crops
+
+# the actual classes
+CLASSES = ["null", "curb ramp", "missing ramp", "obstruction", "sfc problem"]
+
+# name of training session for loading purposes
+SESSION_NAME = "efficientnet-no-pretrained-weights"
 
 # check for GPU
 if torch.cuda.is_available():  
@@ -20,15 +35,25 @@ else:
 device = torch.device(dev) 
 print(device)
 
+# =================================================================================================
+# load model for evaluation
+model, input_size = get_pretrained_model(MODEL_NAME, NUM_CLASSES, False)
+model.to(device)
+
+pretrained_save_path = BASE_PATH + SESSION_NAME + ".pt"
+load_best_weights(model, pretrained_save_path)
+
+loss_func = nn.CrossEntropyLoss()
+
+# =================================================================================================
 # load our custom test sidewalk crops dataset
 image_transform = transforms.Compose([
   transforms.Resize(256),
-  transforms.CenterCrop(224),
+  transforms.CenterCrop(input_size),
   transforms.ToTensor(),
   transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
-BASE_PATH = "./datasets/"
 test_labels_csv_path = BASE_PATH + "test_crop_info.csv"
 test_img_dir = BASE_PATH + "test_crops/"
 test_dataset = SidewalkCropsDataset(test_labels_csv_path, test_img_dir, image_transform)
@@ -37,19 +62,10 @@ batch_size = 32
 
 test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=8)
 
-# load model for evaluation
-efficientnetb3 = torchvision.models.resnet50(pretrained = True)
-num_ftrs = efficientnetb3.fc.in_features
-efficientnetb3.fc = nn.Linear(num_ftrs, 5) # (1,2,3,4) for label types, 0 for null crops 
-efficientnetb3.to(device)
-loss_func = nn.CrossEntropyLoss()
-
-pretrained_save_path = BASE_PATH + "resnet50_weighted_loss.pt"
-load_best_weights(efficientnetb3, pretrained_save_path)
-
+# =================================================================================================
 # evaluate loaded model on test set
-test_accuracy, test_loss, cm = evaluate(efficientnetb3, loss_func, test_dataloader, True, device)
-print("Test accuracy for ResNet50 as FT: ", test_accuracy)
-print("Test loss for ResNet50 as FT: ", test_loss)
+test_accuracy, test_loss, cm = evaluate(model, (MODEL_NAME == "inception"), loss_func, test_dataloader, True, device)
+print("Test accuracy for {} as FT: ".format(MODEL_NAME), test_accuracy)
+print("Test loss for {} as FT: ".format(MODEL_NAME), test_loss)
 if cm is not None:
-  plot_confusion_matrix(VISUALIZATIONS_PATH, "resnet50-weighted-loss", cm, ["null", "curb ramp", "missing ramp", "obstruction", "sfc problem"], normalize=True)
+  plot_confusion_matrix(VISUALIZATIONS_PATH, SESSION_NAME, cm, CLASSES, normalize=True)
