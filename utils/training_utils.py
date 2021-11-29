@@ -2,12 +2,60 @@ import copy
 import numpy as np
 import os
 import torch
+import torch.nn as nn
 import torchvision
 from sklearn.metrics import confusion_matrix
 from time import perf_counter
 
-def get_pretrained_model():
-  return torchvision.models.regnet_y_8gf(pretrained = True)
+def get_pretrained_model(model_name, num_classes, use_pretrained=True):
+  model_ft = None
+  input_size = 0
+
+  if model_name == "resnet":
+      """ Resnet50
+      """
+      model_ft = torchvision.models.resnet50(pretrained=use_pretrained)
+      num_ftrs = model_ft.fc.in_features
+      model_ft.fc = nn.Linear(num_ftrs, num_classes)
+      input_size = 224
+
+  elif model_name == "inception":
+      """ Inception v3
+      Be careful, expects (299,299) sized images and has auxiliary output
+      """
+      model_ft = torchvision.models.inception_v3(pretrained=use_pretrained)
+      # Handle the auxilary net
+      num_ftrs = model_ft.AuxLogits.fc.in_features
+      model_ft.AuxLogits.fc = nn.Linear(num_ftrs, num_classes)
+      # Handle the primary net
+      num_ftrs = model_ft.fc.in_features
+      model_ft.fc = nn.Linear(num_ftrs,num_classes)
+      input_size = 299
+
+  elif model_name == "efficientnet":
+    """ EfficientNetB3
+    """
+    model_ft = torchvision.models.efficientnet_b3(pretrained=use_pretrained)
+    num_ftrs = model_ft.classifier[1].in_features
+    model_ft.classifier[1] = nn.Linear(num_ftrs, num_classes)
+    input_size = 224
+  
+  elif model_name == "regnet":
+    """ RegNet-y, 8gF
+    """
+    model_ft = torchvision.models.regnet_y_8gf(pretrained=use_pretrained)
+    num_ftrs = model_ft.fc.in_features
+    model_ft.fc = nn.Linear(num_ftrs, num_classes)
+    input_size = 224
+
+  else:
+    print("Invalid model name, exiting...")
+    exit()
+
+  return model_ft, input_size
+
+# # Initialize the model for this run
+# model_ft, input_size = initialize_model(model_name, num_classes, feature_extract, use_pretrained=True)
 
 def save_training_checkpoint(training_states, best_model_state, metrics, epoch, path):
   # add things like TPR, FPR later when we start evaluating them
@@ -48,7 +96,7 @@ def load_best_weights(model, path):
   model.load_state_dict(checkpoint['best_model_state'])
 
 
-def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_path, metrics, start_epoch, device):
+def train(model, is_inception, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_path, metrics, start_epoch, device):
   t_start = perf_counter()
 
   best_model_state = copy.deepcopy(model.state_dict())
@@ -91,10 +139,19 @@ def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_p
         optimizer.zero_grad()
         use_grad = (mode == 'training')
         with torch.set_grad_enabled(use_grad):
-          outputs = model(inputs)
-          loss = loss_func(outputs, labels)
+          if is_inception and use_grad:
+            # From https://discuss.pytorch.org/t/how-to-optimize-inception-model-with-auxiliary-classifiers/7958
+            outputs, aux_outputs = model(inputs)
+            loss1 = loss_func(outputs, labels)
+            loss2 = loss_func(aux_outputs, labels)
+            loss = loss1 + 0.4*loss2
+          else:
+            outputs = model(inputs)
+            loss = loss_func(outputs, labels)
+
           _, preds = torch.max(outputs, 1)
           preds.to(device)
+
           if use_grad:
             # We are training, so make sure to actually
             # train by using loss/stepping.
@@ -136,7 +193,7 @@ def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_p
         metrics['loss_train'].append(loss_avg)
         metrics['accuracy_train'].append(accuracy)
         # make sure to step through lr update schedule
-        #scheduler.step()
+        scheduler.step()
 
     training_states = {'model': model, 'optimizer': optimizer, 'scheduler': scheduler}
     save_training_checkpoint(training_states, best_model_state, metrics, epoch, save_path)
@@ -149,7 +206,7 @@ def train(model, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_p
   print("Elapsed time during training in seconds",
                                         t_stop-t_start)
 
-def evaluate(model, loss_func, dataset_loader, test, device):
+def evaluate(model, is_inception, loss_func, dataset_loader, test, device):
   # put model into eval mode
   model.eval()
   
@@ -161,13 +218,23 @@ def evaluate(model, loss_func, dataset_loader, test, device):
   lbllist=torch.zeros(0, dtype=torch.long, device='cpu')
   conf_mat = None
 
+  epoch_count = 0
+
   # correct predictions.
   correct = 0
   total_loss = 0
   with torch.no_grad():
     for inputs, labels in dataset_loader:
       inputs, labels = inputs.to(device), labels.to(device)
-      outputs = model(inputs)
+      epoch_count += inputs.size(0)
+      print("percent {}".format(epoch_count / n))
+      if is_inception:
+        outputs, _ = model(inputs)
+      else:
+        outputs = model(inputs)
+
+      # we ignore aux output in test loss calculation
+      # since we aren't updating weights
       loss = loss_func(outputs, labels)
       _, predictions = torch.max(outputs, 1)
 
