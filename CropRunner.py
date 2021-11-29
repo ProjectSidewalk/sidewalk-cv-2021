@@ -41,6 +41,12 @@ csv_crop_info = "crop_info.csv"
 # Mark the center of the crop?
 mark_center = True
 
+# The number of crops per multicrop
+MULTICROP_COUNT = 3
+
+# The scale factor for each multicrop
+MULTICROP_SCALE_FACTOR = 1.25
+
 logging.basicConfig(filename='crop.log', level=logging.DEBUG)
 
 def predict_crop_size(sv_image_y):
@@ -70,18 +76,20 @@ def predict_crop_size(sv_image_y):
 
     return crop_size
 
-def make_single_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, crop_destination, draw_mark=False):
+def make_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, destination_dir, label_name, multicrop=True, draw_mark=False):
     """
     Makes a crop around the object of interest
     :param path_to_image: where the GSV pano is stored
     :param sv_image_x: position
     :param sv_image_y: position
     :param PanoYawDeg: heading
-    :param output_filename: name of file for saving
+    :param destination_dir: path of the crop directory
+    :param label_name: label name
+    :param multicrop: whether or not to make multiple crops for the label
     :param draw_mark: if a dot should be drawn in the centre of the object/image
     :return: none
     """
-    try: 
+    try:
         im = Image.open(pano_img_path)
         # draw = ImageDraw.Draw(im)
 
@@ -101,17 +109,31 @@ def make_single_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, crop_d
         x = ((float(pano_yaw_deg) / 360) * im_width + sv_image_x) % im_width
         y = im_height / 2 - sv_image_y
 
-        r = 10
+        # r = 10
         # if draw_mark:
         #     draw.ellipse((x - r, y - r, x + r, y + r), fill=128)
 
         # print("Plotting at " + str(x) + "," + str(y) + " using yaw " + str(pano_yaw_deg))
 
         # print(x, y)
-        top_left_x = x - crop_width / 2
-        top_left_y = y - crop_height / 2
-        cropped_square = im.crop((top_left_x, top_left_y, top_left_x + crop_width, top_left_y + crop_height))
-        cropped_square.save(crop_destination)
+        for i in range(MULTICROP_COUNT):
+            top_left_x = x - crop_width / 2
+            top_left_y = y - crop_height / 2
+            if multicrop:
+                crop_name = label_name + "_" + str(i) + ".jpg"
+            else:
+                crop_name = label_name + ".jpg"
+            crop_destination = os.path.join(destination_dir, crop_name)
+            if not os.path.exists(crop_destination) and 0 <= top_left_x and top_left_x + crop_width <= im_width and 0 <= top_left_y and top_left_y + crop_height <= im_height:
+                cropped_square = im.crop((top_left_x, top_left_y, top_left_x + crop_width, top_left_y + crop_height))
+                cropped_square.save(crop_destination)
+                print("Successfully extracted crop to " + crop_name)
+                logging.info(label_name + " " + pano_img_path + " " + str(sv_image_x) + " " + str(sv_image_y) + " " + str(pano_yaw_deg))
+                logging.info("---------------------------------------------------")
+            if not multicrop:
+                break
+            crop_width *= MULTICROP_SCALE_FACTOR
+            crop_height *= MULTICROP_SCALE_FACTOR
         im.close()
     except Exception as e:
         print(e)
@@ -199,26 +221,18 @@ def crop_label_subset(input_rows, output_rows, path_to_gsv_scrapes, destination_
                 os.makedirs(destination_folder)
 
             if not label_type == 0:
-                label_id = int(row[7])
-                crop_name = str(label_id) + ".jpg"  
+                label_name = str(row[7])
+                make_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, destination_dir, label_name, True)
             else:
                 # In order to uniquely identify null crops, we concatenate the pid of process they
                 # were generated on and the counter within the process to the name of the null crop.
-                crop_name = "null_" + str(process_pid) + "_" +  str(counter) + ".jpg"
+                label_name = "null_" + str(process_pid) + "_" +  str(counter)
+                make_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, destination_dir, label_name, False)
 
-            crop_destination = os.path.join(destination_dir, crop_name)
-
-            if not os.path.exists(crop_destination):
-                make_single_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, crop_destination, False)
-                print("Successfully extracted crop to " + crop_name)
-                logging.info(crop_name + " " + pano_id + " " + str(sv_image_x)
-                             + " " + str(sv_image_y) + " " + str(pano_yaw_deg))
-                logging.info("---------------------------------------------------")
-
-            output_rows.append([crop_name, label_type])
+            output_rows.append([label_name, label_type])
         else:
             print("Panorama image not found.")
             try:
-                logging.warning("Skipped label id " + str(label_id) + " due to missing image.")
+                logging.warning("Skipped label id " + label_name + " due to missing image.")
             except NameError:
                 logging.warning("Skipped null crop " + str(process_pid) + " " + str(counter) + " due to missing image.")
