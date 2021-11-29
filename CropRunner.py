@@ -109,7 +109,7 @@ def make_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, destination_d
         x = ((float(pano_yaw_deg) / 360) * im_width + sv_image_x) % im_width
         y = im_height / 2 - sv_image_y
 
-        r = 10
+        # r = 10
         # if draw_mark:
         #     draw.ellipse((x - r, y - r, x + r, y + r), fill=128)
 
@@ -119,14 +119,16 @@ def make_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, destination_d
         for i in range(MULTICROP_COUNT):
             top_left_x = x - crop_width / 2
             top_left_y = y - crop_height / 2
-            cropped_square = im.crop((top_left_x, top_left_y, top_left_x + crop_width, top_left_y + crop_height))
-            crop_name = label_name +  "_" + chr(ord('a') + i) + ".jpg"
+            if multicrop:
+                crop_name = label_name + "_" + str(i) + ".jpg"
+            else:
+                crop_name = label_name + ".jpg"
             crop_destination = os.path.join(destination_dir, crop_name)
-            if not os.path.exists(crop_destination):
+            if not os.path.exists(crop_destination) and 0 <= top_left_x and top_left_x + crop_width <= im_width and 0 <= top_left_y and top_left_y + crop_height <= im_height:
+                cropped_square = im.crop((top_left_x, top_left_y, top_left_x + crop_width, top_left_y + crop_height))
                 cropped_square.save(crop_destination)
                 print("Successfully extracted crop to " + crop_name)
-                logging.info(label_name + " " + pano_img_path + " " + str(sv_image_x)
-                             + " " + str(sv_image_y) + " " + str(pano_yaw_deg))
+                logging.info(label_name + " " + pano_img_path + " " + str(sv_image_x) + " " + str(sv_image_y) + " " + str(pano_yaw_deg))
                 logging.info("---------------------------------------------------")
             if not multicrop:
                 break
