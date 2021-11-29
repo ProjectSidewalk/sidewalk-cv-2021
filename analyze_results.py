@@ -9,8 +9,8 @@ VISUALIZATIONS_PATH = "./visualizations/"
 if not os.path.isdir(VISUALIZATIONS_PATH):
     os.makedirs(VISUALIZATIONS_PATH)
 
-SESSION_NAME = 'regnet_save.pt'
-TRAIN_SAVE_PATH = "./datasets/" + SESSION_NAME
+SESSION_NAME = 'efficientnetb3_weighted_loss_save'
+TRAIN_SAVE_PATH = "./datasets/" + SESSION_NAME + ".pt"
 label_types = {
     0: "null",
     1: "curb ramp",
@@ -34,7 +34,7 @@ def plot_label_metric(metric_name):
     plt.xlabel("epoch", fontsize=16)
     plt.ylabel(metric_name, fontsize=16)
     plt.legend(prop={'size': 16})
-    plt.savefig(VISUALIZATIONS_PATH + metric_name)
+    plt.savefig(VISUALIZATIONS_PATH + metric_name + "_" + SESSION_NAME)
 
 plot_label_metric('precision_validation')
 plot_label_metric('precision_train')
@@ -48,7 +48,7 @@ plt.title(f'accuracy vs epoch', fontsize=20)
 plt.xlabel("epoch", fontsize=16)
 plt.ylabel("accuracy", fontsize=16)
 plt.legend(prop={'size': 16})
-plt.savefig(VISUALIZATIONS_PATH + "accuracies")
+plt.savefig(VISUALIZATIONS_PATH + "accuracies_" + SESSION_NAME)
 
 figure(figsize=(16, 12))
 plt.plot(np.arange(epochs), metrics['loss_train'], label = 'train loss')
@@ -57,4 +57,4 @@ plt.title(f'loss vs epoch', fontsize=20)
 plt.xlabel("epoch", fontsize=16)
 plt.ylabel("loss", fontsize=16)
 plt.legend(prop={'size': 16})
-plt.savefig(VISUALIZATIONS_PATH + "losses")
+plt.savefig(VISUALIZATIONS_PATH + "losses_" + SESSION_NAME)

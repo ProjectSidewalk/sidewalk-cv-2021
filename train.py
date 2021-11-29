@@ -11,6 +11,15 @@ from torchvision import transforms
 # set base path to training/test data folder
 BASE_PATH = "./datasets/"
 
+# name of model architecture
+MODEL_NAME = "efficientnet"
+
+# number of output classes
+NUM_CLASSES = 5  # (1,2,3,4) for label types, 0 for null crops
+
+# name of training session for saving purposes
+TRAIN_SESSION_NAME = "efficientnet-no-pretrained-weights"
+
 # check for GPU
 if torch.cuda.is_available():  
   dev = "cuda" 
@@ -19,10 +28,32 @@ else:
 device = torch.device(dev) 
 print(device)
 
+# =================================================================================================
+# setup model for fine tuning
+model, input_size = get_pretrained_model(MODEL_NAME, NUM_CLASSES, False)
+model.to(device)
+
+lr = 0.01
+
+# weight using inverse of each sample size
+# acquire label sample sizes from train csv
+# samples_per_class = np.array([10000, 11187, 8788, 2678, 7204])
+# weights = 1.0 / samples_per_class
+# norm = np.linalg.norm(weights)
+# normalized_weights = weights / norm
+# normalized_weights_tensor = torch.from_numpy(normalized_weights).float().to(device)
+
+# add normalized_weights_tensor as input to loss_func if weighted loss is desired
+loss_func = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-6)
+scheduler = lr_scheduler.StepLR(optimizer, 10, gamma=0.3)
+checkpoint_save_path = BASE_PATH + TRAIN_SESSION_NAME + ".pt"
+
+# =================================================================================================
 # load train datasets
 image_transform = transforms.Compose([
   transforms.Resize(256),
-  transforms.CenterCrop(224),
+  transforms.CenterCrop(input_size),
   transforms.ToTensor(),
   transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
@@ -30,9 +61,8 @@ image_transform = transforms.Compose([
 # having issues with CUDA running out of memory, so lowering batch size
 batch_size = 16
 
-train_labels_csv_path = BASE_PATH + "train_non_null_crop_info.csv"
+train_labels_csv_path = BASE_PATH + "train_subset_crop_info.csv"
 train_img_dir = BASE_PATH + "train_crops/"
-
 
 # load our custom train/val sidewalk crops dataset
 train_val_dataset = SidewalkCropsDataset(train_labels_csv_path, train_img_dir, image_transform)
@@ -53,20 +83,8 @@ val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size,
 print(len(train_dataset))
 print(len(val_dataset))
 
-# get resnet50 for fine tuning
-model = get_pretrained_model()
-num_ftrs = model.fc.in_features
-model.fc = nn.Linear(num_ftrs, 5) # (1,2,3,4) for label types, 0 for null crops 
-model.to(device)
-
-lr = 0.01
-
-loss_func = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-scheduler = lr_scheduler.StepLR(optimizer, 10, gamma=0.1)
-checkpoint_save_path = BASE_PATH + "regnet_save.pt"
-
-# train for 20 epochs
+# =================================================================================================
+# train for n epochs
 epochs = 50
 dataLoaders = {
   "training": train_dataloader,
@@ -76,13 +94,5 @@ metrics, last_epoch = load_training_checkpoint(model, checkpoint_save_path, opti
 print("next epoch: " + str(last_epoch + 1))
 print("resuming training...\n")
 
-train(model, optimizer, scheduler, loss_func, epochs, dataLoaders, checkpoint_save_path, metrics, last_epoch + 1, device)
-# print("Best validation accuracy: ", best_validation_accuracy)
-
-# visualization of training and validation loss over epochs
-plt.plot(np.arange(epochs), metrics['loss_train'], label="training loss")
-plt.plot(np.arange(epochs), metrics['loss_validation'], label="validation loss")
-plt.title("Training/Validation loss for FT model")
-plt.xlabel("epoch")
-plt.ylabel("loss")
-plt.legend()
+train(model, (MODEL_NAME == "inception"), optimizer, scheduler, loss_func, epochs, dataLoaders,
+      checkpoint_save_path, metrics, last_epoch + 1, device)
