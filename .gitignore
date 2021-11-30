@@ -5,7 +5,7 @@ alphie-sftp
 rawdata
 
 # Ignore generated batch sftp commands file
-batch.txt
+batch*.text
 
 # Ignore pano-downloads folder
 pano-downloads

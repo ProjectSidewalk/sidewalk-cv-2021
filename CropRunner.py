@@ -42,10 +42,10 @@ csv_crop_info = "crop_info.csv"
 mark_center = True
 
 # The number of crops per multicrop
-MULTICROP_COUNT = 3
+MULTICROP_COUNT = 2
 
 # The scale factor for each multicrop
-MULTICROP_SCALE_FACTOR = 1.25
+MULTICROP_SCALE_FACTOR = 1.5
 
 logging.basicConfig(filename='crop.log', level=logging.DEBUG)
 
@@ -87,8 +87,9 @@ def make_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, destination_d
     :param label_name: label name
     :param multicrop: whether or not to make multiple crops for the label
     :param draw_mark: if a dot should be drawn in the centre of the object/image
-    :return: none
+    :return: crop_names: a list of crop_names
     """
+    crop_names = []
     try:
         im = Image.open(pano_img_path)
         # draw = ImageDraw.Draw(im)
@@ -130,6 +131,7 @@ def make_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, destination_d
                 print("Successfully extracted crop to " + crop_name)
                 logging.info(label_name + " " + pano_img_path + " " + str(sv_image_x) + " " + str(sv_image_y) + " " + str(pano_yaw_deg))
                 logging.info("---------------------------------------------------")
+                crop_names.append(crop_name)
             if not multicrop:
                 break
             crop_width *= MULTICROP_SCALE_FACTOR
@@ -139,7 +141,7 @@ def make_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, destination_d
         print(e)
         print("Error for {}".format(pano_img_path))
 
-    return
+    return crop_names
 
 def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, mark_label=False):
     t_start = perf_counter()
@@ -148,6 +150,10 @@ def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, 
     csv_f = csv.reader(csv_file)
     label_list = list(csv_f)
     row_count = len(label_list)
+
+    # make the output directory if needed
+    if not os.path.isdir(destination_dir):
+        os.makedirs(destination_dir)
 
     with mp.Manager() as manager:
         # get cpu core count
@@ -186,7 +192,7 @@ def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, 
         successful_crop_count = len(output_rows)
         # no_metadata_fail = 0
         # don't count header row as a failed crop
-        no_pano_fail = row_count - successful_crop_count - 1
+        no_pano_fail = ((row_count - 1) * MULTICROP_COUNT) - successful_crop_count
 
         for row in output_rows:
             csv_w.writerow(row)
@@ -216,20 +222,18 @@ def crop_label_subset(input_rows, output_rows, path_to_gsv_scrapes, destination_
 
         # Extract the crop
         if os.path.exists(pano_img_path):
-            destination_folder = os.path.join(destination_dir)
-            if not os.path.isdir(destination_folder):
-                os.makedirs(destination_folder)
-
+            crop_names = []
             if not label_type == 0:
                 label_name = str(row[7])
-                make_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, destination_dir, label_name, True)
+                crop_names = make_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, destination_dir, label_name, True)
             else:
                 # In order to uniquely identify null crops, we concatenate the pid of process they
                 # were generated on and the counter within the process to the name of the null crop.
                 label_name = "null_" + str(process_pid) + "_" +  str(counter)
-                make_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, destination_dir, label_name, False)
+                crop_names = make_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, destination_dir, label_name, False)
 
-            output_rows.append([label_name, label_type])
+            for crop_name in crop_names:
+                output_rows.append([crop_name, label_type])
         else:
             print("Panorama image not found.")
             try:
