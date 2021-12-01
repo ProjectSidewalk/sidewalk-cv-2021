@@ -125,13 +125,24 @@ def make_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, destination_d
             else:
                 crop_name = label_name + ".jpg"
             crop_destination = os.path.join(destination_dir, crop_name)
-            if not os.path.exists(crop_destination) and 0 <= top_left_x and top_left_x + crop_width <= im_width and 0 <= top_left_y and top_left_y + crop_height <= im_height:
-                cropped_square = im.crop((top_left_x, top_left_y, top_left_x + crop_width, top_left_y + crop_height))
-                cropped_square.save(crop_destination)
+            if not os.path.exists(crop_destination) and 0 <= top_left_y and top_left_y + crop_height <= im_height:
+                if top_left_x < 0:
+                    crop = im.crop((top_left_x + im_width, top_left_y, im_width, top_left_y + crop_height))
+                    crop_2 = im.crop((0, top_left_y, top_left_x + crop_width, top_left_y + crop_height))
+                    crop.paste(crop_2, (int(- top_left_x), 0))
+                elif top_left_x + crop_width > im_width:
+                    crop = im.crop((top_left_x, top_left_y, im_width, top_left_y + crop_height))
+                    crop_2 = im.crop((0, top_left_y, top_left_x + crop_width - im_width, top_left_y + crop_height))
+                    crop.paste(crop_2, (int(im_width - top_left_x), 0))
+                else:
+                    crop = im.crop((top_left_x, top_left_y, top_left_x + crop_width, top_left_y + crop_height))
+                crop.save(crop_destination)
                 print("Successfully extracted crop to " + crop_name)
                 logging.info(label_name + " " + pano_img_path + " " + str(sv_image_x) + " " + str(sv_image_y) + " " + str(pano_yaw_deg))
                 logging.info("---------------------------------------------------")
                 crop_names.append(crop_name)
+            else:
+                print("Failed to extract crop to " + crop_name)
             if not multicrop:
                 break
             crop_width *= MULTICROP_SCALE_FACTOR
