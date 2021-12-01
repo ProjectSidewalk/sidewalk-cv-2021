@@ -99,8 +99,8 @@ def make_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, destination_d
         # print(im_width, im_height)
 
         predicted_crop_size = predict_crop_size(sv_image_y)
-        crop_width = predicted_crop_size
-        crop_height = predicted_crop_size
+        crop_width = int(predicted_crop_size)
+        crop_height = int(predicted_crop_size)
 
         # Work out scaling factor based on image dimensions
         scaling_factor = im_width / 13312
@@ -118,22 +118,25 @@ def make_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, destination_d
 
         # print(x, y)
         for i in range(MULTICROP_COUNT):
-            top_left_x = x - crop_width / 2
-            top_left_y = y - crop_height / 2
+            top_left_x = int(x - crop_width / 2)
+            top_left_y = int(y - crop_height / 2)
             if multicrop:
                 crop_name = label_name + "_" + str(i) + ".jpg"
             else:
                 crop_name = label_name + ".jpg"
             crop_destination = os.path.join(destination_dir, crop_name)
             if not os.path.exists(crop_destination) and 0 <= top_left_y and top_left_y + crop_height <= im_height:
+                crop = Image.new('RGB', (crop_width, crop_height))
                 if top_left_x < 0:
-                    crop = im.crop((top_left_x + im_width, top_left_y, im_width, top_left_y + crop_height))
+                    crop_1 = im.crop((top_left_x + im_width, top_left_y, im_width, top_left_y + crop_height))
                     crop_2 = im.crop((0, top_left_y, top_left_x + crop_width, top_left_y + crop_height))
-                    crop.paste(crop_2, (int(- top_left_x), 0))
+                    crop.paste(crop_1, (0,0))
+                    crop.paste(crop_2, (- top_left_x, 0))
                 elif top_left_x + crop_width > im_width:
-                    crop = im.crop((top_left_x, top_left_y, im_width, top_left_y + crop_height))
+                    crop_1 = im.crop((top_left_x, top_left_y, im_width, top_left_y + crop_height))
                     crop_2 = im.crop((0, top_left_y, top_left_x + crop_width - im_width, top_left_y + crop_height))
-                    crop.paste(crop_2, (int(im_width - top_left_x), 0))
+                    crop.paste(crop_1, (0,0))
+                    crop.paste(crop_2, (im_width - top_left_x, 0))
                 else:
                     crop = im.crop((top_left_x, top_left_y, top_left_x + crop_width, top_left_y + crop_height))
                 crop.save(crop_destination)
@@ -145,8 +148,8 @@ def make_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, destination_d
                 print("Failed to extract crop to " + crop_name)
             if not multicrop:
                 break
-            crop_width *= MULTICROP_SCALE_FACTOR
-            crop_height *= MULTICROP_SCALE_FACTOR
+            crop_width = int(crop_width * MULTICROP_SCALE_FACTOR)
+            crop_height = int(crop_height * MULTICROP_SCALE_FACTOR)
         im.close()
     except Exception as e:
         print(e)
