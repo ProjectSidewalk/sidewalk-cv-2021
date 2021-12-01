@@ -1,19 +1,22 @@
 import csv
-import os
-import subprocess
+import glob
 import multiprocessing as mp
+import os
+import random
+import subprocess
 from time import perf_counter
 from itertools import islice
 from datatypes.label import Label
 from datatypes.panorama import Panorama
 from datatypes.point import Point
-import random
+from PIL import Image, ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 GSV_IMAGE_WIDTH  = 13312
 GSV_IMAGE_HEIGHT = 6656
 
 # null crops per pano
-NULLS_PER_PANO = 2
+NULLS_PER_PANO = 0
 
 def bulk_scrape_panos(n, start_row, path_to_labeldata_csv, local_dir, remote_dir, output_csv_name):
     # TODO: find way to clear to pano_downloads folder and batch.txt file
@@ -123,3 +126,53 @@ def acquire_n_panos(remote_dir, local_dir, pano_ids, thread_id):
     print(result)
     if sftp.returncode != 0:
         print("sftp failed on one or more commands: {0}".format(sftp_command_list))
+
+def clean_panos(path_to_panos):
+    t_start = perf_counter()
+
+    # get list of pano paths
+    panos = glob.glob(path_to_panos + "/*.jpg")
+
+     # get available cpu_count
+    cpu_count = mp.cpu_count() if mp.cpu_count() <= 8 else 8
+
+    # split pano set into chunks for multithreading
+    pano_set_size = len(panos)
+    i = 0
+    processes = []
+    while i < pano_set_size:
+        chunk_size = (pano_set_size - i) // cpu_count
+        print(chunk_size)
+        pano_ids = set(islice(panos, i, i + chunk_size))
+        print(pano_ids)
+        process = mp.Process(target=clean_n_panos, args=(pano_ids,))
+        processes.append(process)
+        cpu_count -= 1
+        i += chunk_size
+
+    # start processes
+    for p in processes:
+        p.start()
+
+    # join processes once finished
+    for p in processes:
+        p.join()
+
+    t_stop = perf_counter()
+    execution_time = t_stop - t_start
+    return execution_time
+
+def clean_n_panos(panos):
+    for pano_path in panos:
+        with Image.open(pano_path) as p:
+            # check if pano needs cleaning by looking for black space
+            pix = p.load()
+            if pix[GSV_IMAGE_WIDTH, GSV_IMAGE_HEIGHT] == (0,0,0):
+                print("resizing ", pano_path)
+                original_size = p.size
+                print(original_size)
+                im = p.crop((0, 0, GSV_IMAGE_WIDTH, GSV_IMAGE_HEIGHT))
+                print(im.size)
+                im = im.resize(original_size)
+                im.save(pano_path)
+                print(im.size)
