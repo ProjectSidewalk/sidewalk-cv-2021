@@ -19,17 +19,23 @@ label_types = {
     4: "surface problem"
 }
 
+binary_labels_ = {
+    0: "negative",
+    1: "positive"
+}
+
 results = torch.load(TRAIN_SAVE_PATH)
 metrics = results['metrics']
 epochs = 50
 
-def plot_label_metric(metric_name):
+def plot_label_metric(metric_name, num_classes):
     figure(figsize=(16, 12))
     stacked = torch.stack(metrics[metric_name])
-    flipped_metric = [stacked[:, i] for i in range(1, 5)]
+    flipped_metric = [stacked[:, i] for i in range(num_classes)]
+    is_binary = (num_classes == 2)
     for i, metric in enumerate(flipped_metric):
         metric = metric.cpu()
-        plt.plot(np.arange(epochs), metric, label = label_types[i+ 1])
+        plt.plot(np.arange(epochs), metric, label = (binary_labels if is_binary else label_types)[i])
     plt.title(f'{metric_name} vs epoch', fontsize=20)
     plt.xlabel("epoch", fontsize=16)
     plt.ylabel(metric_name, fontsize=16)
