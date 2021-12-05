@@ -17,3 +17,4 @@ class FCEnsembleNet(nn.Module):
 
         out = self.fc(out)
         return out
+        
