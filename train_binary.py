@@ -15,7 +15,7 @@ BASE_PATH = "./datasets/"
 MODEL_NAME = "MODEL NAME HERE"
 
 # number of output classes
-NUM_CLASSES = 5  # (1,2,3,4) for label types, 0 for null crops
+NUM_CLASSES = 2  # 1 for label type, 0 for null crops
 
 # name of training session for saving purposes
 TRAIN_SESSION_NAME = "TRAIN SESSION NAME HERE"
@@ -33,9 +33,8 @@ print(device)
 model, input_size = get_pretrained_model(MODEL_NAME, NUM_CLASSES, False)
 model.to(device)
 
-lr = 0.01
+lr = 0.1
 momentum = 0.9
-weight_decay = 1e-6
 
 # weight using inverse of each sample size
 # acquire label sample sizes from train csv
@@ -47,8 +46,8 @@ weight_decay = 1e-6
 
 # add normalized_weights_tensor as input to loss_func if weighted loss is desired
 loss_func = nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay) # torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-6)
-scheduler = lr_scheduler.CyclicLR(optimizer, base_lr=1e-6, max_lr=lr, step_size_up = 2500, mode='triangular2') # lr_scheduler.StepLR(optimizer, 10, gamma=0.3)
+optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum) # torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-6)
+scheduler = lr_scheduler.CyclicLR(optimizer, base_lr=1e-5, max_lr=lr, step_size_up=2500) # lr_scheduler.StepLR(optimizer, 10, gamma=0.3)
 checkpoint_save_path = BASE_PATH + TRAIN_SESSION_NAME + ".pt"
 
 # =================================================================================================
@@ -61,9 +60,9 @@ image_transform = transforms.Compose([
 ])
 
 # having issues with CUDA running out of memory, so lowering batch size
-batch_size = 32
+batch_size = 16
 
-train_labels_csv_path = BASE_PATH + "train_crop_info.csv"
+train_labels_csv_path = BASE_PATH + "1_crop_labels.csv"
 train_img_dir = BASE_PATH + "train_crops/"
 
 # load our custom train/val sidewalk crops dataset
