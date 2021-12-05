@@ -12,13 +12,13 @@ from torchvision import transforms
 BASE_PATH = "./datasets/"
 
 # name of model architecture
-MODEL_NAME = "efficientnet"
+MODEL_NAME = "MODEL NAME HERE"
 
 # number of output classes
-NUM_CLASSES = 2  # (1,2,3,4) for label types, 0 for null crops
+NUM_CLASSES = 2  # 1 for label type, 0 for null crops
 
 # name of training session for saving purposes
-TRAIN_SESSION_NAME = "efficientnet-no-pretrained-weights"
+TRAIN_SESSION_NAME = "TRAIN SESSION NAME HERE"
 
 # check for GPU
 if torch.cuda.is_available():  
@@ -33,7 +33,8 @@ print(device)
 model, input_size = get_pretrained_model(MODEL_NAME, NUM_CLASSES, False)
 model.to(device)
 
-lr = 0.01
+lr = 0.1
+momentum = 0.9
 
 # weight using inverse of each sample size
 # acquire label sample sizes from train csv
@@ -45,8 +46,8 @@ lr = 0.01
 
 # add normalized_weights_tensor as input to loss_func if weighted loss is desired
 loss_func = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-6)
-scheduler = lr_scheduler.StepLR(optimizer, 10, gamma=0.3)
+optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum) # torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-6)
+scheduler = lr_scheduler.CyclicLR(optimizer, base_lr=1e-5, max_lr=lr, step_size_up=2500) # lr_scheduler.StepLR(optimizer, 10, gamma=0.3)
 checkpoint_save_path = BASE_PATH + TRAIN_SESSION_NAME + ".pt"
 
 # =================================================================================================
@@ -61,7 +62,7 @@ image_transform = transforms.Compose([
 # having issues with CUDA running out of memory, so lowering batch size
 batch_size = 16
 
-train_labels_csv_path = BASE_PATH + "train_subset_crop_info.csv"
+train_labels_csv_path = BASE_PATH + "1_crop_labels.csv"
 train_img_dir = BASE_PATH + "train_crops/"
 
 # load our custom train/val sidewalk crops dataset
@@ -94,5 +95,5 @@ metrics, last_epoch = load_training_checkpoint(model, checkpoint_save_path, opti
 print("next epoch: " + str(last_epoch + 1))
 print("resuming training...\n")
 
-train(model, (MODEL_NAME == "inception"), optimizer, scheduler, loss_func, epochs, dataLoaders,
+train(model, NUM_CLASSES, (MODEL_NAME == "inception"), optimizer, scheduler, loss_func, epochs, dataLoaders,
       checkpoint_save_path, metrics, last_epoch + 1, device)

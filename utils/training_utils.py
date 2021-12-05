@@ -6,6 +6,7 @@ import torch.nn as nn
 import torchvision
 from sklearn.metrics import confusion_matrix
 from time import perf_counter
+from torch.optim import lr_scheduler
 
 def get_pretrained_model(model_name, num_classes, use_pretrained=True):
   model_ft = None
@@ -96,10 +97,12 @@ def load_best_weights(model, path):
   model.load_state_dict(checkpoint['best_model_state'])
 
 
-def train(model, is_inception, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_path, metrics, start_epoch, device):
+def train(model, num_classes, is_inception, optimizer, scheduler, loss_func, epochs, datasetLoaders, save_path, metrics, start_epoch, device):
   t_start = perf_counter()
 
   best_model_state = copy.deepcopy(model.state_dict())
+
+  is_cyclic_lr = isinstance(scheduler, lr_scheduler.CyclicLR)
 
   for epoch in range(start_epoch, epochs):
     epoch_t_start = perf_counter()
@@ -123,9 +126,9 @@ def train(model, is_inception, optimizer, scheduler, loss_func, epochs, datasetL
 
       epoch_count = 0
 
-      pred_positive_counts = torch.zeros(5).to(device)
-      actual_positive_counts = torch.zeros(5).to(device)
-      true_positive_counts = torch.zeros(5).to(device)
+      pred_positive_counts = torch.zeros(num_classes).to(device)
+      actual_positive_counts = torch.zeros(num_classes).to(device)
+      true_positive_counts = torch.zeros(num_classes).to(device)
 
       for inputs, labels in datasetLoaders[mode]:
         inputs, labels = inputs.to(device), labels.to(device)
@@ -157,9 +160,12 @@ def train(model, is_inception, optimizer, scheduler, loss_func, epochs, datasetL
             # train by using loss/stepping.
             loss.backward()
             optimizer.step()
+
+            if is_cyclic_lr:
+              scheduler.step()
         
         correct_preds = torch.where(preds == labels.data, preds, torch.tensor([-1 for i in preds]).to(device))
-        for i in range(5):
+        for i in range(num_classes):
           true_positive_counts[i] += torch.count_nonzero(correct_preds == i)
           pred_positive_counts[i] += torch.count_nonzero(preds == i)
           actual_positive_counts[i] += torch.count_nonzero(labels == i)
@@ -192,8 +198,10 @@ def train(model, is_inception, optimizer, scheduler, loss_func, epochs, datasetL
         metrics['recall_train'].append(recalls)
         metrics['loss_train'].append(loss_avg)
         metrics['accuracy_train'].append(accuracy)
-        # make sure to step through lr update schedule
-        scheduler.step()
+        # make sure to step through lr update schedule (if not using cyclic)
+        if not is_cyclic_lr:
+          print("epoch LR scheduler step")
+          scheduler.step()
 
     training_states = {'model': model, 'optimizer': optimizer, 'scheduler': scheduler}
     save_training_checkpoint(training_states, best_model_state, metrics, epoch, save_path)

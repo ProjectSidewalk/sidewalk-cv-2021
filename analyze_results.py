@@ -9,7 +9,7 @@ VISUALIZATIONS_PATH = "./visualizations/"
 if not os.path.isdir(VISUALIZATIONS_PATH):
     os.makedirs(VISUALIZATIONS_PATH)
 
-SESSION_NAME = 'efficientnetb3_weighted_loss_save'
+SESSION_NAME = 'TRAIN SESSION NAME HERE'
 TRAIN_SAVE_PATH = "./datasets/" + SESSION_NAME + ".pt"
 label_types = {
     0: "null",
@@ -19,14 +19,16 @@ label_types = {
     4: "surface problem"
 }
 
-binary_labels_ = {
+binary_labels = {
     0: "negative",
     1: "positive"
 }
 
+NUM_CLASSES = "NUM CLASSES HERE"
+
 results = torch.load(TRAIN_SAVE_PATH)
 metrics = results['metrics']
-epochs = 50
+epochs = results['epoch'] + 1  # epochs are 0-indexed in checkpoint
 
 def plot_label_metric(metric_name, num_classes):
     figure(figsize=(16, 12))
@@ -42,10 +44,10 @@ def plot_label_metric(metric_name, num_classes):
     plt.legend(prop={'size': 16})
     plt.savefig(VISUALIZATIONS_PATH + metric_name + "_" + SESSION_NAME)
 
-plot_label_metric('precision_validation')
-plot_label_metric('precision_train')
-plot_label_metric('recall_validation')
-plot_label_metric('recall_train')
+plot_label_metric('precision_validation', NUM_CLASSES)
+plot_label_metric('precision_train', NUM_CLASSES)
+plot_label_metric('recall_validation', NUM_CLASSES)
+plot_label_metric('recall_train', NUM_CLASSES)
 
 figure(figsize=(16, 12))
 plt.plot(np.arange(epochs), metrics['accuracy_train'], label = 'train accuracy')

@@ -2,7 +2,7 @@ import pandas as pd
 
 LABEL = 1
 BINARY_LABELS_CSV_PATH = f"../datasets/{LABEL}_crop_labels.csv"
-DATASET_CSV_PATH = "../datasets/crop_info.csv"
+DATASET_CSV_PATH = "../datasets/train_crop_info.csv"
 
 # read CSV into a Pandas Dataframe
 dataset_df = pd.read_csv(DATASET_CSV_PATH)
