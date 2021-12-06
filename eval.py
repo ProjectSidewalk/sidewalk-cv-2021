@@ -56,7 +56,7 @@ image_transform = transforms.Compose([
 
 test_labels_csv_path = BASE_PATH + "test_crop_info.csv"
 test_img_dir = BASE_PATH + "test_crops/"
-test_dataset = SidewalkCropsDataset(test_labels_csv_path, test_img_dir, image_transform)
+test_dataset = SidewalkCropsDataset(test_labels_csv_path, test_img_dir, transform=image_transform, eval=True)
 
 batch_size = 32
 
@@ -64,7 +64,8 @@ test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_siz
 
 # =================================================================================================
 # evaluate loaded model on test set
-test_accuracy, test_loss, cm = evaluate(model, (MODEL_NAME == "inception"), loss_func, test_dataloader, True, device)
+MISTAKES_SAVE_PATH = "./visualizations/" + SESSION_NAME + "-mistakes.csv"
+test_accuracy, test_loss, cm = evaluate(model, (MODEL_NAME == "inception"), loss_func, test_dataloader, True, MISTAKES_SAVE_PATH,device)
 print("Test accuracy for {} as FT: ".format(MODEL_NAME), test_accuracy)
 print("Test loss for {} as FT: ".format(MODEL_NAME), test_loss)
 if cm is not None:

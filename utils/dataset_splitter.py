@@ -1,6 +1,6 @@
 import pandas as pd
 
-COMPLETE_DATASET_CSV_PATH = "../datasets/train_crop_info.csv"
+COMPLETE_DATASET_CSV_PATH = "../datasets/crop_info.csv"
 NON_NULL_CROP_DATASET_CSV_PATH = "../datasets/train_non_null_crop_info.csv"
 SUBSET_CSV_PATH = "../datasets/train_subset_crop_info.csv"
 
