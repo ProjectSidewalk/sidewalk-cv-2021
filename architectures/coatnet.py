@@ -276,6 +276,3 @@ def coatnet_4():
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
-
-net = coatnet_0()
-print(count_parameters(net))
