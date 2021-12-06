@@ -9,11 +9,7 @@ VISUALIZATIONS_PATH = "./visualizations/"
 if not os.path.isdir(VISUALIZATIONS_PATH):
     os.makedirs(VISUALIZATIONS_PATH)
 
-<<<<<<< Updated upstream
 SESSION_NAME = 'TRAIN SESSION NAME HERE'
-=======
-SESSION_NAME = 'efficientnet-no-pretrained-weights'
->>>>>>> Stashed changes
 TRAIN_SAVE_PATH = "./datasets/" + SESSION_NAME + ".pt"
 label_types = {
     0: "null",
@@ -48,17 +44,10 @@ def plot_label_metric(metric_name, num_classes):
     plt.legend(prop={'size': 16})
     plt.savefig(VISUALIZATIONS_PATH + metric_name + "_" + SESSION_NAME)
 
-<<<<<<< Updated upstream
 plot_label_metric('precision_validation', NUM_CLASSES)
 plot_label_metric('precision_train', NUM_CLASSES)
 plot_label_metric('recall_validation', NUM_CLASSES)
 plot_label_metric('recall_train', NUM_CLASSES)
-=======
-plot_label_metric('precision_validation', 5)
-plot_label_metric('precision_train', 5)
-plot_label_metric('recall_validation', 5)
-plot_label_metric('recall_train', 5)
->>>>>>> Stashed changes
 
 figure(figsize=(16, 12))
 plt.plot(np.arange(epochs), metrics['accuracy_train'], label = 'train accuracy')
