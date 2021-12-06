@@ -11,7 +11,7 @@ from utils.visualization_utils import visualize_mistakes
 from torchvision import transforms
 
 
-SESSION_NAME = "efficientnet-no-pretrained-weights"
+SESSION_NAME = "SESSION_NAME_HERE"
 MISTAKES_SAVE_PATH = "./visualizations/" + SESSION_NAME + "-mistakes"
 
 IMAGES_PER_ROW = 5
