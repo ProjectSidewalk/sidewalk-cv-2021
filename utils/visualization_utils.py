@@ -1,6 +1,8 @@
 import itertools
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
+import pandas as pd
 
 def plot_confusion_matrix(visualizations_path, model_name, cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
     plt.figure()
@@ -30,11 +32,36 @@ def plot_confusion_matrix(visualizations_path, model_name, cm, classes, normaliz
     plt.show()
     plt.close()
 
+def visualize_mistakes(model, is_inception, loss_func, dataset_loader, test, device):
+    # put model into eval mode
+    model.eval()
 
-#  TODO: move into function
-#  for inputs, labels in test_dataloader:
-#    print(inputs.shape)
-#    plt.figure()
-#    plt.imshow(torch.squeeze(inputs).permute(1, 2, 0))
-#    plt.show()
-#    print(labels)
+    # length of data set we are evaluating on.
+    n = len(dataset_loader.dataset)
+
+    #
+    incorrect_predictions = []
+    corresponding_ground_truths = []
+    corresponding_image_names = []
+
+    epoch_count = 0
+    # correct predictions.
+    correct = 0
+    total_loss = 0
+    with torch.no_grad():
+        for inputs, labels, paths in dataset_loader:
+            inputs, labels = inputs.to(device), labels.to(device)
+
+            if is_inception:
+                outputs, _ = model(inputs)
+            else:
+                outputs = model(inputs)
+            _, predictions = torch.max(outputs, 1)
+
+            incorrect_indices = torch.nonzero(predictions != labels, as_tuple=True)[0]
+            for index in incorrect_indices:
+                incorrect_predictions.append(predictions[index])
+                corresponding_ground_truths.append(labels[index])
+                corresponding_image_names.append(paths[index])
+
+    
