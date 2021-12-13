@@ -33,3 +33,6 @@ __pycache__
 
 # Ignore generated visualizations
 visualizations
+
+# Ignore env folder
+env

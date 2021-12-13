@@ -1,6 +1,7 @@
 import copy
 import numpy as np
 import os
+import pandas as pd
 import torch
 import torch.nn as nn
 import torchvision
@@ -54,6 +55,7 @@ def get_pretrained_model(model_name, num_classes, use_pretrained=True):
     exit()
 
   return model_ft, input_size
+  
 
 # # Initialize the model for this run
 # model_ft, input_size = initialize_model(model_name, num_classes, feature_extract, use_pretrained=True)
@@ -164,13 +166,13 @@ def train(model, num_classes, is_inception, optimizer, scheduler, loss_func, epo
             if is_cyclic_lr:
               scheduler.step()
         
-        correct_preds = torch.where(preds == labels.data, preds, torch.tensor([-1 for i in preds]).to(device))
+        correct_preds = torch.where(preds == labels, preds, torch.tensor([-1 for i in preds]).to(device))
         for i in range(num_classes):
           true_positive_counts[i] += torch.count_nonzero(correct_preds == i)
           pred_positive_counts[i] += torch.count_nonzero(preds == i)
           actual_positive_counts[i] += torch.count_nonzero(labels == i)
         total_loss += loss.item() * inputs.size(0) # Averages over batch              
-        total_correct += (preds == labels.data).sum().item() # what is .data for?
+        total_correct += (preds == labels).sum().item() # what is .data for?
 
       # calculate average loss over batches
       loss_avg = total_loss / n
@@ -214,7 +216,7 @@ def train(model, num_classes, is_inception, optimizer, scheduler, loss_func, epo
   print("Elapsed time during training in seconds",
                                         t_stop-t_start)
 
-def evaluate(model, is_inception, loss_func, dataset_loader, test, device):
+def evaluate(model, is_inception, loss_func, dataset_loader, test, mistakes_save_path, device):
   # put model into eval mode
   model.eval()
   
@@ -225,6 +227,10 @@ def evaluate(model, is_inception, loss_func, dataset_loader, test, device):
   predlist=torch.zeros(0, dtype=torch.long, device='cpu')
   lbllist=torch.zeros(0, dtype=torch.long, device='cpu')
   conf_mat = None
+  
+  incorrect_predictions = []
+  corresponding_ground_truths = []
+  corresponding_image_names = []
 
   epoch_count = 0
 
@@ -232,7 +238,7 @@ def evaluate(model, is_inception, loss_func, dataset_loader, test, device):
   correct = 0
   total_loss = 0
   with torch.no_grad():
-    for inputs, labels in dataset_loader:
+    for inputs, labels, paths in dataset_loader:
       inputs, labels = inputs.to(device), labels.to(device)
       epoch_count += inputs.size(0)
       print("percent {}".format(epoch_count / n))
@@ -252,6 +258,27 @@ def evaluate(model, is_inception, loss_func, dataset_loader, test, device):
 
       total_loss += loss.item() * inputs.size(0)  # weighted average with size?
       correct += (predictions == labels).sum().item()  # what is labels.data
+
+      incorrect_indices = torch.nonzero(predictions != labels, as_tuple=True)[0]
+      for index in incorrect_indices:
+        incorrect_predictions.append(predictions[index].item())
+        corresponding_ground_truths.append(labels[index].item())
+        corresponding_image_names.append(paths[index])
+
+  print(n - correct)
+  print(len(incorrect_predictions))
+  mistakes = pd.DataFrame(
+    {
+      'prediction': incorrect_predictions,
+      'ground truth': corresponding_ground_truths,
+      'image path': corresponding_image_names
+    }
+  )
+
+  mistakes.to_csv(mistakes_save_path, index=False)
+
+  
+
 
   if test:
     # display a Confusion matrix
