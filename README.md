@@ -1,4 +1,6 @@
-# sidewalk-cv-2021
+# Classification of Sidewalk Accessibility Features
+
+## Abstract
 
 ## Setup
 1. Acquire sftp server credentials from Mikey and place them at the root of the project folder as `alphie-sftp`.
