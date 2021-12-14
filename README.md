@@ -26,7 +26,36 @@ In addition, we aimed to have a relatively balanced dataset. Given that our expl
 
 This are the counts without filtering the labels that don't satisfy the validation conditions above, so in trying to build a balanced dataset of 10k labels per label type, our final counts were 9998 curb ramps, 10000 missing curb ramps, 8930 obstacles, 10000 surface problems. One thing to note is that labels might have been discarded due to the panorama imagery they were cropped from not existing or the crop size going out of the vertical bounds of the GSV imagery, which will be discussed later. This explains why there are less than 10000 curb ramps despite the overwhelming majority of curb ramps in the Seattle database. The smaller quantity of obstacles is due to the smaller quantity of obstacles in the Seattle database overall.
 
-### Model Training
+### Initial Training Attempts
+Our initial objective was to pick out some promising network architectures from the [torchvision.models](https://pytorch.org/vision/stable/models.html) package. Our first dataset had a huge imbalance of null crops and was causing models to just predict null for almost every image, so we did these initial training runs with no null crops while waiting on a more balanced dataset in order to get a rough idea of performance on the non-null classes. We trained several models for 50 epochs using SGD with default hyperparameters (learning rate, momentum, etc.) and no weight decay. We plotted per-class precision and recall, as well as overall accuracy and loss, as a function of epoch. We tried several mid-size architectures including [efficientnet](https://pytorch.org/hub/nvidia_deeplearningexamples_efficientnet/), [densenet](https://pytorch.org/hub/pytorch_vision_densenet/), and [regnet](https://pytorch.org/vision/master/_modules/torchvision/models/regnet.html). Note that each of these models comes in varying sizes, so we selected the largest ones that would fit in the RAM available to us and take a reasonable amount of time to train. We found that all of these models achieved similar performace on the metrics we tracked, but efficientnet and regnet trained significantly faster than densenet, so we focused on these architectures moving forward. This initial round of training revealed some issues such as overfitting and noisy updates. These plots, aquired from efficientnet training runs, are representative of some issues we faced:
+
+<img src="./writeup_images/overfit_loss.png" width=400></img><img src="./writeup_images/overfit_accuracy.png" width=400></img>
+
+<center><figcaption>Increasing loss and decreasing accuracy on validation set, indicative of overfitting</figcaption></center> </br>
+
+<img src="./writeup_images/spiky_recall.png" width=400></img> <img src="./writeup_images/spiky_precision.png" width=400></img>
+
+<center><figcaption>Spiky recall and precision curves, indicating noisy updates</figcaption></center>
+
+### Improving Training Hyperparameters
+To help resolve these issues, we implemented learning rate scheduling and added weight decay to our loss calculations. The best scheduling strategy we found was to decrease learning rate by a factor of .3 every 10 epochs, starting from .01, and the best weight decay we found was around 1e-6. This improvements gave us plots such as the following, training on the same dataset: <br>
+<img src="./writeup_images/better_loss.png" width=400></img>
+<img src="./writeup_images/better_accuracy.png" width=400></img>
+
+<center><figcaption>Less overfitting, though still some</figcaption></center>
+
+<img src="./writeup_images/less_spiky_recall.png" width=400></img>
+<img src="./writeup_images/less_spiky_precision.png" width=400></img>
+
+<center><figcaption>Precision and recall curves begin to converge</figcaption></center>
+
+### Ensembling Architectures
+In addition to aquiring a better dataset, our next step was coming up with more novel architectures to try and improve performance. A friend of ours pointed us to some interesting documentation on [ensembling](https://ensemble-pytorch.readthedocs.io/en/latest/introduction.html), which is essentially training multiple models and somehow combining their results to give a better overall performance.
+
+Ensembling of Binary Classifiers: One approach we tried that we found interesting involved independently training a binary classifier for each of the 4 non-null classes, and then combining them into a model that passes the combined output of each through an additional fully connected layer to get a multi-class prediction. Our idea here was that it may be easier for a model to learn which images are positive examples of a given class if we just label every other image as a negative example rather than with a variety of other labels. To do this training, we made a new set of labels for each class where all images that aren't a positive example of the class in question are labeled as negative, and then trained with the same dataset. We'll discuss the results of this approach more in the next section, but overall it didn't really work out.
+
+Ensembling of Models Trained on Different Size Crops: The more promising ensembling strategy we used involved taking two image crops for each labeled sidewalk feature. We were able to do this because the original data is street view panoramas with coordinates of sidewalk features, so it's up to us how large to make the crops around each feature. We trained one model on the crops we had in our current dataset (we called these "small"), and trained another model on zoomed out versions of the same crops (we called these "large"). We then combined the models into a model that takes as input both the small and large crop for a given sidewalk feature. For a forward pass, the model passed each image to the corresponding model and combined the output of each to obtain a final prediction vector. We tried simply concatenating the output of each model and passing the result through a single fully-connected layer, as well as more complex strategies such as removing the last layer of each model and passing the larger concatenated feature map through several fully-connected layers with activation functions between each. We'll discuss the results of this approach more in the next section.
+
 
 ## Results/Analysis
 
