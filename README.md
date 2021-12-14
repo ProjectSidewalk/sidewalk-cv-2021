@@ -29,11 +29,11 @@ This are the counts without filtering the labels that don't satisfy the validati
 ### Initial Training Attempts
 Our initial objective was to pick out some promising network architectures from the [torchvision.models](https://pytorch.org/vision/stable/models.html) package. Our first dataset had a huge imbalance of null crops and was causing models to just predict null for almost every image, so we did these initial training runs with no null crops while waiting on a more balanced dataset in order to get a rough idea of performance on the non-null classes. We trained several models for 50 epochs using SGD with default hyperparameters (learning rate, momentum, etc.) and no weight decay. We plotted per-class precision and recall, as well as overall accuracy and loss, as a function of epoch. We tried several mid-size architectures including [efficientnet](https://pytorch.org/hub/nvidia_deeplearningexamples_efficientnet/), [densenet](https://pytorch.org/hub/pytorch_vision_densenet/), and [regnet](https://pytorch.org/vision/master/_modules/torchvision/models/regnet.html). Note that each of these models comes in varying sizes, so we selected the largest ones that would fit in the RAM available to us and take a reasonable amount of time to train. We found that all of these models achieved similar performace on the metrics we tracked, but efficientnet and regnet trained significantly faster than densenet, so we focused on these architectures moving forward. This initial round of training revealed some issues such as overfitting and noisy updates. These plots, aquired from efficientnet training runs, are representative of some issues we faced:
 
-<img src="./writeup_images/overfit_loss.png" width=400></img><img src="./writeup_images/overfit_accuracy.png" width=400></img>
+<img src="./writeup_images/overfit_loss.png" width=400 /><img src="./writeup_images/overfit_accuracy.png" width=400 />
 
-<center><figcaption>Increasing loss and decreasing accuracy on validation set, indicative of overfitting</figcaption></center> </br>
+<center> <figcaption>Increasing loss and decreasing accuracy on validation set, indicative of overfitting</figcaption> </center>
 
-<img src="./writeup_images/spiky_recall.png" width=400></img> <img src="./writeup_images/spiky_precision.png" width=400></img>
+<img src="./writeup_images/spiky_recall.png" width=400 /> <img src="./writeup_images/spiky_precision.png" width=400 />
 
 <center><figcaption>Spiky recall and precision curves, indicating noisy updates</figcaption></center>
 
