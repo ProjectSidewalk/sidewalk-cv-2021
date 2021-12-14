@@ -17,12 +17,12 @@ As mentioned before, our datasets consisted of crowdsourced labels from the Proj
 
 In addition, we aimed to have a relatively balanced dataset. Given that our explorations for this project were limited to the Seattle Project Sidewalk label dataset, below are the individual label counts for the four accessibility features/problems we aimed to classify:
 
-| Label Type | Count |
-| ---------- | ----- |
-| Curb Ramp |    69k    |
-| Missing Curb Ramp |   34k    |
-| Obstacle |   10k     |
-| Surface Problem |   25k    |
+| Label Type | Label Type ID | Count |
+| ---------- | ------------- | ----- |
+| Curb Ramp | 1 |   69k    |
+| Missing Curb Ramp | 2 |  34k    |
+| Obstacle | 3 |    10k     |
+| Surface Problem | 4 |  25k    |
 
 This are the counts without filtering the labels that don't satisfy the validation conditions above, so in trying to build a balanced dataset of 10k labels per label type, our final counts were 9998 curb ramps, 10000 missing curb ramps, 8930 obstacles, 10000 surface problems. One thing to note is that labels might have been discarded due to the panorama imagery they were cropped from not existing or the crop size going out of the vertical bounds of the GSV imagery, which will be discussed later. This explains why there are less than 10000 curb ramps despite the overwhelming majority of curb ramps in the Seattle database. The smaller quantity of obstacles is due to the smaller quantity of obstacles in the Seattle database overall.
 
@@ -36,6 +36,18 @@ The `gsv_panorama_id` allowed us to download the associated GSV panorama static 
 One strategy we wanted to try was to get different sized crops per label (still centered on the label in the GSV panorama image) in order to provide more background context to the crops (for example, a smaller crop of a fire hydrant in the middle of the sidewalk - an obstacle - might not show enough sidewalk for even a human to deem the fire hydrant an obstacle). As a result, for each label we made a crop for, we additionally made another crop whose dimensions where 1.5 times greater. Since these images would all end up being resized to `224x224` crops to feed into our models, we were interested in seeing how the greater pixel density of the smaller crops in proximity to the label would compare to the increased background context provided by the larger crops in terms of model accuracy. In addition, as we'll discuss later, we wanted to investigate how a model might improve given access to both these crop types, being able to learn from the higher pixel density as well as the provided background context.
 
 #### Null Crops
+In identifying sidewalk accessibility features/problems, we also wanted to make sure our model learned how to predict the absence of the aforementioned accessibility  features/problem. To do so, we implemented a cropping strategy that cropped `n` null crops (where `n` is set by us; for our case, `n = 1`) per GSV panorama image downloaded in attempting to crop the labels. We also designed helper classes that ultimately allowed us to keep track of all the labels that were to be cropped from a given panorama. We then randomly selected a point `(x, y)` on the GSV panorama image as such:
+
+`x = random.uniform(side_space, GSV_IMAGE_WIDTH - side_space), y = random.uniform(- (GSV_IMAGE_HEIGHT/2 - bottom_space), 0)`
+
+Which essentially chose a random point which was horizontally between the edges of the panorama (given some padding) as well as under the vertical middle of the image (and slightly above the bottom of the image). This was in order to best simulate a feasible location on the ground/sidewalk that didn't have an accessibility feature/problem, as the vertical coordinate of the random point is under the horizon (or close to under the horizon, given the pitch of the camera when the GSV panorama was taken). The horizontal and vertical paddings are to make sure the crop doesn't leak over the borders of the image (though, in making crops in general, if a crop would've leaked along the HORIZONTAL edges of the image, we essentially made the crop wrap around to the other side of the panorama as the panoramas encompassed a 360 degree view; this was not the case if it leaked over the VERTICAL edges, as the panoramas did not encompass a 360 degree view vertically).
+
+We then made sure that this random point was at least some `min_dist` away from any other actual labels on the panorama so that we could minimize accidently creating a null crop that could be mistaken for an accessibility feature/problem. We then gave these null crops a label of 0 and provided them as part of our dataset.
+
+*Currently, we have not implemented the multi-size cropping strategy for the null crops, but do note that the two data acquisition strategies are not disjoint*
+
+#### Current Dataset
+With the above data acquisition strategies, our final dataset (currently) consists of 20469 null crops, 19996 curb ramps, 20000 missing curb ramps, 17860 obstalces, and 20000 surface problems. Note that this is quite small given that we also have numerous labels from other municipalities; however, in consideration of time and machinery limitations, we decided to keep our dataset a reasonable size for experimentation before fully committing to a long training run.
 
 ### Initial Training Attempts
 Our initial objective was to pick out some promising network architectures from the [torchvision.models](https://pytorch.org/vision/stable/models.html) package, utilizing transfer learning to fit the architectures to our problem space. Our first dataset had a huge imbalance of null crops and was causing models to just predict null for almost every image, so we did these initial training runs with no null crops while waiting on a more balanced dataset in order to get a rough idea of performance on the non-null classes. We trained several models for 50 epochs using SGD with default hyperparameters (learning rate, momentum, etc.) and no weight decay. We plotted per-class precision and recall, as well as overall accuracy and loss, as a function of epoch. We tried several mid-size architectures including [efficientnet](https://pytorch.org/hub/nvidia_deeplearningexamples_efficientnet/), [densenet](https://pytorch.org/hub/pytorch_vision_densenet/), and [regnet](https://pytorch.org/vision/master/_modules/torchvision/models/regnet.html). Note that each of these models comes in varying sizes, so we selected the largest ones that would fit in the RAM available to us and take a reasonable amount of time to train. We found that all of these models achieved similar performace on the metrics we tracked, but efficientnet and regnet trained significantly faster than densenet, so we focused on these architectures moving forward. This initial round of training revealed some issues such as overfitting and noisy updates. These plots, aquired from efficientnet training runs, are representative of some issues we faced:
