@@ -110,6 +110,11 @@ Another solution to the problem if the math doesn't work out is to simply build 
 ### Experimenting with More Training Strategies
 
 ### A More Complete Validation Pipeline
+Currently, our implementation for the validation pipeline is to simply pass a crop into the model and output what the model predicts the class of the crop is (the top-1 result). The human validator could then choose to agree or disagree. However, this is a flawed approach, as there are many instances of label crops that can be labeled as multiple accessibility features. For example, consider this "hard" example:
+
+![0](https://user-images.githubusercontent.com/37346427/146073558-f4bfb9fb-db38-4c6c-a6e4-0d87c38b2da6.png)
+
+This was reported as an incorrect labeling by the model, yet this is not necessarily the case. This is a curb ramp, but there is evidently surface problems as seen through the grassy cracks and uneven surface. Therefore, we propose a different architecture. We will train individual binary classifiers on the four respective label types, each outputting a confidence of how likely an inputted image is to be of the respective label type. Therefore, for any image to be validated, for each label type model which outputs a confidence for the image above a certain threshold (say 90%), the AI validation pipeline will output that label type as an option. Given the set of options, one could check whether the human validation for the image is in the set as a measure of validity. 
 
 # Technical Details
 ## Setup
