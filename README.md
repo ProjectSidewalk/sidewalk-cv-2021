@@ -39,8 +39,8 @@ Our initial objective was to pick out some promising network architectures from 
 
 ### Improving Training Hyperparameters
 To help resolve these issues, we implemented learning rate scheduling and added weight decay to our loss calculations. The best scheduling strategy we found was to decrease learning rate by a factor of .3 every 10 epochs, starting from .01, and the best weight decay we found was around 1e-6. This improvements gave us plots such as the following, training on the same dataset: <br>
-<img src="./writeup_images/better_loss.png" width=500></img>
-<img src="./writeup_images/better_accuracy.png" width=513></img>
+<img src="./writeup_images/better_loss.png" width=300></img>
+<img src="./writeup_images/better_accuracy.png" width=300></img>
 
 <center><figcaption>Less overfitting, though still some</figcaption></center>
 
