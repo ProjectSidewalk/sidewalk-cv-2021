@@ -49,7 +49,7 @@ We then made sure that this random point was at least some `min_dist` away from 
 *Currently, we have not implemented the multi-size cropping strategy for the null crops, but do note that the two data acquisition strategies are not disjoint*
 
 #### Current Dataset
-With the above data acquisition strategies, our final dataset (currently) consists of 20469 null crops, 19996 curb ramps, 20000 missing curb ramps, 17860 obstalces, and 20000 surface problems. Note that this is quite small given that we also have numerous labels from other municipalities; however, in consideration of time and machinery limitations, we decided to keep our dataset a reasonable size for experimentation before fully committing to a long training run.
+With the above data acquisition strategies, our final dataset (currently) consists of 20469 null crops, 19996 curb ramps, 20000 missing curb ramps, 17860 obstacles, and 20000 surface problems. Note that this is quite small given that we also have numerous labels from other municipalities; however, in consideration of time and machinery limitations, we decided to keep our dataset a reasonable size for experimentation before fully committing to a long training run.
 
 ### Initial Training Attempts
 Our initial objective was to pick out some promising network architectures from the [torchvision.models](https://pytorch.org/vision/stable/models.html) package, utilizing transfer learning to fit the architectures to our problem space. Our first dataset had a huge imbalance of null crops and was causing models to just predict null for almost every image, so we did these initial training runs with no null crops while waiting on a more balanced dataset in order to get a rough idea of performance on the non-null classes. We trained several models for 50 epochs using SGD with default hyperparameters (learning rate, momentum, etc.) and no weight decay. We plotted per-class precision and recall, as well as overall accuracy and loss, as a function of epoch. We tried several mid-size architectures including [efficientnet](https://pytorch.org/hub/nvidia_deeplearningexamples_efficientnet/), [densenet](https://pytorch.org/hub/pytorch_vision_densenet/), and [regnet](https://pytorch.org/vision/master/_modules/torchvision/models/regnet.html). Note that each of these models comes in varying sizes, so we selected the largest ones that would fit in the RAM available to us and take a reasonable amount of time to train. We found that all of these models achieved similar performace on the metrics we tracked, but efficientnet and regnet trained significantly faster than densenet, so we focused on these architectures moving forward. This initial round of training revealed some issues such as overfitting and noisy updates. These plots, aquired from efficientnet training runs, are representative of some issues we faced:
@@ -86,7 +86,16 @@ Ensembling of Models Trained on Different Size Crops: The more promising ensembl
 
 ## Next Steps
 ### Cleaner Data
+We still notice a lot of "dirty" labels such as the ones below:
 
+While we have resolved some issues due to labels being too close to the horizontal edges of the image leading to cut-off crops as well as GSV imagery of different resolution (some GSV panorama images we downloaded were `13312x6656`, while others were `16384x8192`) leading to incorrectly placed labels (as the image coordinates of the label were incorrectly scaled), we still see incorrect labels of the above variety. Evidently, this is not ideal for training an effective model.
+
+One hypothesis we are considering is that the translation from the label placement on the Project Sidewalk audit interface to the GSV panorama image is faulty. For context, below is a screenshot of the Project Sidewalk audit interface followed by an example of a GSV panorama image (the panorama being rendered in the audit interface isn't the same panorama as the example GSV panorama image):
+
+![image](https://user-images.githubusercontent.com/37346427/146039155-cc54862a-de01-4a7e-b49c-4a6eb8eda082.png)
+![iqN6itQWY2qFwXx3lfcAhw](https://user-images.githubusercontent.com/37346427/146039323-e355892f-2472-46df-afe5-f35c670f9d41.jpg)
+
+Essentially, we map the label's viewport or "canvas" coordinates (where the viewport is essentially just a windowed region over a portion of the panorama that may be zoomed in/out) to a coordinate over the entire panorama. The current implementation of the mapping process is derived from this [stackoverflow post](https://stackoverflow.com/questions/21591462/get-heading-and-pitch-from-pixels-on-street-view). 
 ### Experimenting with More Training Strategies
 
 ### A More Complete Validation Pipeline
