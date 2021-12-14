@@ -5,6 +5,7 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torchvision
+from architectures.two_model_ensemble import TwoModelEnsembleNet
 from sklearn.metrics import confusion_matrix
 from time import perf_counter
 from torch.optim import lr_scheduler
@@ -106,6 +107,9 @@ def train(model, num_classes, is_inception, optimizer, scheduler, loss_func, epo
 
   is_cyclic_lr = isinstance(scheduler, lr_scheduler.CyclicLR)
 
+  is_two_model_ensemble = isinstance(model, TwoModelEnsembleNet)
+  print("two model ensemble ", is_two_model_ensemble)
+
   for epoch in range(start_epoch, epochs):
     epoch_t_start = perf_counter()
     print("Epoch " + str(epoch) + " out of " + str(epochs))
@@ -133,8 +137,11 @@ def train(model, num_classes, is_inception, optimizer, scheduler, loss_func, epo
       true_positive_counts = torch.zeros(num_classes).to(device)
 
       for inputs, labels in datasetLoaders[mode]:
-        inputs, labels = inputs.to(device), labels.to(device)
-        epoch_count += inputs.size(0)
+        if is_two_model_ensemble:
+          inputs_small, inputs_large, labels = inputs[0].to(device), inputs[1].to(device), labels.to(device)
+        else:
+          inputs, labels = inputs.to(device), labels.to(device)
+        epoch_count += inputs_large.size(0) if is_two_model_ensemble else inputs.size(0)
         print("percent {}".format(epoch_count / n))
         # For code brevity, we'll set the reset gradients for model params
         # with the intention of using it for training.
@@ -150,6 +157,10 @@ def train(model, num_classes, is_inception, optimizer, scheduler, loss_func, epo
             loss1 = loss_func(outputs, labels)
             loss2 = loss_func(aux_outputs, labels)
             loss = loss1 + 0.4*loss2
+          elif is_two_model_ensemble:
+            print(inputs_small.shape, inputs_large.shape)
+            outputs = model(inputs_small, inputs_large)
+            loss = loss_func(outputs, labels)
           else:
             outputs = model(inputs)
             loss = loss_func(outputs, labels)
@@ -171,7 +182,7 @@ def train(model, num_classes, is_inception, optimizer, scheduler, loss_func, epo
           true_positive_counts[i] += torch.count_nonzero(correct_preds == i)
           pred_positive_counts[i] += torch.count_nonzero(preds == i)
           actual_positive_counts[i] += torch.count_nonzero(labels == i)
-        total_loss += loss.item() * inputs.size(0) # Averages over batch              
+        total_loss += loss.item() * inputs_large.size(0) if is_two_model_ensemble else loss.item() * inputs.size(0) # Averages over batch              
         total_correct += (preds == labels).sum().item() # what is .data for?
 
       # calculate average loss over batches
@@ -219,6 +230,9 @@ def train(model, num_classes, is_inception, optimizer, scheduler, loss_func, epo
 def evaluate(model, is_inception, loss_func, dataset_loader, test, mistakes_save_path, device):
   # put model into eval mode
   model.eval()
+
+  is_two_model_ensemble = isinstance(model, TwoModelEnsembleNet)
+  print("two model ensemble ", is_two_model_ensemble)
   
   # length of data set we are evaluating on.
   n = len(dataset_loader.dataset)
@@ -239,11 +253,16 @@ def evaluate(model, is_inception, loss_func, dataset_loader, test, mistakes_save
   total_loss = 0
   with torch.no_grad():
     for inputs, labels, paths in dataset_loader:
-      inputs, labels = inputs.to(device), labels.to(device)
+      if is_two_model_ensemble:
+        inputs_small, inputs_large, labels = inputs[0].to(device), inputs[1].to(device), labels.to(device)
+      else:
+        inputs, labels = inputs.to(device), labels.to(device)
       epoch_count += inputs.size(0)
       print("percent {}".format(epoch_count / n))
       if is_inception:
         outputs, _ = model(inputs)
+      elif is_two_model_ensemble:
+        outputs = model(inputs_small, inputs_large)
       else:
         outputs = model(inputs)
 
@@ -256,7 +275,7 @@ def evaluate(model, is_inception, loss_func, dataset_loader, test, mistakes_save
       predlist=torch.cat([predlist, predictions.view(-1).cpu()])
       lbllist=torch.cat([lbllist, labels.view(-1).cpu()])
 
-      total_loss += loss.item() * inputs.size(0)  # weighted average with size?
+      total_loss += loss.item() * inputs_large.size(0) if is_two_model_ensemble else loss.item() * inputs.size(0) # Averages over batch              
       correct += (predictions == labels).sum().item()  # what is labels.data
 
       incorrect_indices = torch.nonzero(predictions != labels, as_tuple=True)[0]

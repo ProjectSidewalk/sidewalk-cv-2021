@@ -3,9 +3,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torchvision
-from datatypes.dataset import SidewalkCropsDataset
-from utils.training_utils import load_training_checkpoint, train
-from architectures.coatnet import coatnet_0
+from datatypes.paired_dataset import PairedCropsDataset
+from utils.training_utils import get_pretrained_model, load_training_checkpoint, train
+from architectures.two_model_ensemble import TwoModelEnsembleNet
 from torch.optim import lr_scheduler
 from torchvision import transforms
 
@@ -16,7 +16,7 @@ BASE_PATH = "./datasets/"
 NUM_CLASSES = 5  # (1,2,3,4) for label types, 0 for null crops
 
 # name of training session for saving purposes
-TRAIN_SESSION_NAME = "CoAtNet"
+TRAIN_SESSION_NAME = "PairedTwoModelEnsembleNet"
 
 if __name__ ==  '__main__':
   # check for GPU
@@ -29,8 +29,10 @@ if __name__ ==  '__main__':
 
   # =================================================================================================
   # setup model for fine tuning
-  model = coatnet_0()
-  model.to(device)
+  model_small, input_size = get_pretrained_model("efficientnet", NUM_CLASSES, False)
+  model_large, _ = get_pretrained_model("efficientnet", NUM_CLASSES, False)
+  ensemble_model = TwoModelEnsembleNet(model_small, model_large, freeze_models=True, num_classes=NUM_CLASSES)
+  ensemble_model.to(device)
 
   lr = 0.01
   momentum = 0.9
@@ -46,7 +48,7 @@ if __name__ ==  '__main__':
 
   # add normalized_weights_tensor as input to loss_func if weighted loss is desired
   loss_func = nn.CrossEntropyLoss()
-  optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay) # torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-6)
+  optimizer = torch.optim.SGD(ensemble_model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay) # torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-6)
   scheduler = lr_scheduler.CyclicLR(optimizer, base_lr=1e-6, max_lr=lr, step_size_up = 2500, mode='triangular2') # lr_scheduler.StepLR(optimizer, 10, gamma=0.3)
   checkpoint_save_path = BASE_PATH + TRAIN_SESSION_NAME + ".pt"
 
@@ -60,13 +62,13 @@ if __name__ ==  '__main__':
   ])
 
   # having issues with CUDA running out of memory, so lowering batch size
-  batch_size = 16
+  batch_size = 8
 
-  train_labels_csv_path = BASE_PATH + "train_crop_info.csv"
+  train_labels_csv_path = BASE_PATH + "paired_train_crop_info.csv"
   train_img_dir = BASE_PATH + "train_crops/"
 
   # load our custom train/val sidewalk crops dataset
-  train_val_dataset = SidewalkCropsDataset(train_labels_csv_path, train_img_dir, image_transform)
+  train_val_dataset = PairedCropsDataset(train_labels_csv_path, train_img_dir, image_transform)
 
   # partition train dataset into 80/20 split for train/validation
   k = .8
@@ -91,9 +93,9 @@ if __name__ ==  '__main__':
     "training": train_dataloader,
     "validation": val_dataloader
   }
-  metrics, last_epoch = load_training_checkpoint(model, checkpoint_save_path, optimizer, scheduler)
+  metrics, last_epoch = load_training_checkpoint(ensemble_model, checkpoint_save_path, optimizer, scheduler)
   print("next epoch: " + str(last_epoch + 1))
   print("resuming training...\n")
 
-  train(model, NUM_CLASSES, False, optimizer, scheduler, loss_func, epochs, dataLoaders,
+  train(ensemble_model, NUM_CLASSES, False, optimizer, scheduler, loss_func, epochs, dataLoaders,
         checkpoint_save_path, metrics, last_epoch + 1, device)
