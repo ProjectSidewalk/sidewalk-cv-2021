@@ -86,9 +86,6 @@ Ensembling of Binary Classifiers: One approach we tried that we found interestin
 
 Ensembling of Models Trained on Different Size Crops: The more promising ensembling strategy we used involved taking two image crops for each labeled sidewalk feature. We were able to do this because the original data is street view panoramas with coordinates of sidewalk features, so it's up to us how large to make the crops around each feature. We trained one model on the crops we had in our current dataset (we called these "small"), and trained another model on zoomed out versions of the same crops (we called these "large"). We then combined the models into a model that takes as input both the small and large crop for a given sidewalk feature. For a forward pass, the model passed each image to the corresponding model and combined the output of each to obtain a final prediction vector. We tried simply concatenating the output of each model and passing the result through a single fully-connected layer, as well as more complex strategies such as removing the last layer of each model and passing the larger concatenated feature map through several fully-connected layers with activation functions between each. We'll discuss the results of this approach more in the next section.
 
-### Attention Mechanisms
-
-
 ## Results/Analysis
 
 ## Next Steps
@@ -108,6 +105,7 @@ Essentially, we map the label's viewport or "canvas" coordinates (where the view
 
 Another solution to the problem if the math doesn't work out is to simply build a data cleaning interface where we can manually prune faulty labels (as they are a minority of the total crops). However, while the implementation of the interface isn't necessarily difficult, the manual cleaning process doesn't scale well with increased dataset size (a reason for why we decided against this strategy for the current dataset given the timeline).
 ### Experimenting with More Training Strategies
+#### Attention Mechanisms
 
 ### A More Complete Validation Pipeline
 Currently, our implementation for the validation pipeline is to simply pass a crop into the model and output what the model predicts the class of the crop is (the top-1 result). The human validator could then choose to agree or disagree. However, this is a flawed approach, as there are many instances of label crops that can be labeled as multiple accessibility features. For example, consider this "hard" example:
