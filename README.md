@@ -69,15 +69,29 @@ Our initial objective was to pick out some promising network architectures from 
 
 ### Improving Training Hyperparameters
 To help resolve these issues, we implemented learning rate scheduling and added weight decay to our loss calculations. The best scheduling strategy we found was to decrease learning rate by a factor of .3 every 10 epochs, starting from .01, and the best weight decay we found was around 1e-6. This improvements gave us plots such as the following, training on the same dataset: <br>
-<img src="./writeup_images/better_loss.png" width=400></img>
-<img src="./writeup_images/better_accuracy.png" width=400></img>
+<img src="./writeup_images/better_loss.png" width=400 />
+<img src="./writeup_images/better_accuracy.png" width=400 />
 
 <center><figcaption>Less overfitting, though still some</figcaption></center>
 
-<img src="./writeup_images/less_spiky_recall.png" width=400></img>
-<img src="./writeup_images/less_spiky_precision.png" width=400></img>
+<img src="./writeup_images/less_spiky_recall.png" width=400 />
+<img src="./writeup_images/less_spiky_precision.png" width=400 />
 
 <center><figcaption>Precision and recall curves begin to converge</figcaption></center>
+
+### Training on Better Data
+ Another glaring issue revealed by our initial training efforts is that obstacles had much lower precision and recall than all the other classes. We believed this was due to imbalances in our dataset, namely that there were much fewer positive examples for obstacles. We first attempted to resolve this by implementing a weighted loss function that penalizes predictions for the more common labels and rewards predictions for the less common labels, and we had some success with this. Precision and recall was a little higher for obstacles, but at the expense of lower precision and recall for the other classes. We felt that aquiring actual balanced data would be better than artificially modifying the loss function, so we took some time to alter our scraper in order to aquire a dataset with roughly 10,000 examples for each class, including null. The following plots show the results of training with this new data and the hyperparameters we determined above:
+
+ <center><img src="./writeup_images/accuracies_small-efficientnet.png" width=600 /></center>
+<center><figcaption>Validation accuracy reaches around 70%</figcaption></center>
+<br>
+
+<center><img src="./writeup_images/precision_validation_small-efficientnet.png" width=600 /></center>
+<center><figcaption>Precision reaches around 70% for obstacles, missing curb ramps, and surface problems, 60% for null, and 75% for curb ramps</figcaption></center>
+<br>
+<center><img src="./writeup_images/recall_validation_small-efficientnet.png" width=600 /></center>
+<center><figcaption>Recall hovers just below 70% for null and just above 70% for other classes</figcaption></center>
+<br>
 
 ### Ensembling Architectures
 In addition to aquiring a better dataset, our next step was coming up with more novel architectures to try and improve performance. A friend of ours pointed us to some interesting documentation on [ensembling](https://ensemble-pytorch.readthedocs.io/en/latest/introduction.html), which is essentially training multiple models and somehow combining their results to give a better overall performance.
@@ -87,6 +101,32 @@ Ensembling of Binary Classifiers: One approach we tried that we found interestin
 Ensembling of Models Trained on Different Size Crops: The more promising ensembling strategy we used involved taking two image crops for each labeled sidewalk feature. We were able to do this because the original data is street view panoramas with coordinates of sidewalk features, so it's up to us how large to make the crops around each feature. We trained one model on the crops we had in our current dataset (we called these "small"), and trained another model on zoomed out versions of the same crops (we called these "large"). We then combined the models into a model that takes as input both the small and large crop for a given sidewalk feature. For a forward pass, the model passed each image to the corresponding model and combined the output of each to obtain a final prediction vector. We tried simply concatenating the output of each model and passing the result through a single fully-connected layer, as well as more complex strategies such as removing the last layer of each model and passing the larger concatenated feature map through several fully-connected layers with activation functions between each. We'll discuss the results of this approach more in the next section.
 
 ## Results/Analysis
+Ensembling of Binary Classifiers: When training independent binary classifiers, we found that our models were unable to reach a higher precision or recall on the individual classes than the ordinary multi-class classifiers. For this reason, we did not go to the effort of assembling the binary classifiers in order to make a multi-class prediction. However, this architecture could be tweaked to allow us to make multiple predictions for a given image, which may be useful to us. We'll discuss this more in the next section.
+
+Ensembling of Models Trained on Different Size Crops: The results of this approach are more interesting. After training a model on the "large" crops (more zoomed out), we combined the outputs with the model trained on the normal size ("small") crops and passed them through a fully connected layer. We then trained this final FC layer for some additional epochs, but noticed none of the metrics seemed to be improving so stopped early. As mentioned above, we also tried removing the last layer of each model and passing the larger feature map through multiple fully-connected layers, but our results were better with the former approach. These plots indicate the performance of this ensemble network:
+
+ <center><img src="./writeup_images/accuracies_PairedTwoModelEnsembleNet.png" width=600 /></center>
+<center><figcaption>Validation accuracy hovers around 79%</figcaption></center>
+<br>
+<center><img src="./writeup_images/precision_validation_PairedTwoModelEnsembleNet.png" width=600 /></center>
+<center><figcaption>Spiky updates because learning rate is high for early epochs, but precision hovers around 80% for most classes and 75% for null</figcaption></center>
+<br>
+<center><img src="./writeup_images/recall_validation_PairedTwoModelEnsembleNet.png" width=600 /></center>
+<center><figcaption>Again, spiky updates because of short training run, but recall hovers between 75% and 80% for most classes and above 85% for null</figcaption></center>
+<br>
+
+One huge improvement we saw with this network compared to the one trained on the original "small" crops is that the recall for null crops improved a ton, from less than 70% to over 85%. The precision and recall for the other classes, as well as overall accuracy, were significantly higher as well. At this point, we began to wonder how much of this improvement came from combining the results of two models and how much came from just training one of the models on larger crops. So we made training plots for the individual model trained on the large crops:
+
+<center><img src="./writeup_images/accuracies_large-efficientnet.png" width=600 /></center>
+<center><figcaption>Validation accuracy reaches around 78%</figcaption></center>
+<br>
+<center><img src="./writeup_images/precision_validation_large-efficientnet.png" width=600 /></center>
+<center><figcaption>Precision hovers a little below 80% for most classes, including null, and is slightly higher for curb ramps</figcaption></center>
+<br>
+<center><img src="./writeup_images/recall_validation_large-efficientnet.png" width=600 /></center>
+<center><figcaption>Recall hovers between 75% and 80% for most classes and around  85% for null</figcaption></center>
+<br>
+It seems that validation accuracy and precision are marginally lower than for the ensemble model, but null precision seems a little higher. If anything, the ensemble approach is only slightly better than just training on larger crops, and training on larger crops alone appears far better than training on crops of the original size. This result surprised us because the previous attempt at this project used crops of the size we were using initially, and never mentioned attempting to zoom out further. The best model these people achieved got slightly better performance than we reached here, but it was also much larger than any model we could train with the RAM resources available to us and was trained on way more images than we could fit on the disk space available to us. We believe that if we repeated this group's training efforts with more zoomed out crops, we could achieve better results based on how much our results improved just by zooming out. We'll discuss this more in the next section.
 
 ## Next Steps
 ### Cleaner Data
