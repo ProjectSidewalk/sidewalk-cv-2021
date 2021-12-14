@@ -98,7 +98,7 @@ Ensembling of Models Trained on Different Size Crops: The more promising ensembl
 ### Cleaner Data
 We still notice a lot of "dirty" labels such as the ones below: 
 
-TODO: ADD IMAGE EXAMPLES HERE
+![0](https://user-images.githubusercontent.com/37346427/146063093-4224ea5d-71ff-4ccb-8799-e279d46b7980.png)![black_image](https://user-images.githubusercontent.com/37346427/146063111-62dd2076-7409-413f-9d46-f8b2b3b9dfd8.png)![0](https://user-images.githubusercontent.com/37346427/146063120-9bba9778-d38a-401e-9f87-b6f71ebac7d1.png)
 
 While we have resolved some issues due to labels being too close to the horizontal edges of the image leading to cut-off crops as well as GSV imagery of different resolution (some GSV panorama images we downloaded were `13312x6656`, while others were `16384x8192`) leading to incorrectly placed labels (as the image coordinates of the label were incorrectly scaled), we still see incorrect labels of the above variety. Evidently, this is not ideal for training an effective model.
 
