@@ -33,8 +33,7 @@ Our initial objective was to pick out some promising network architectures from 
 
 <center><figcaption>Increasing loss and decreasing accuracy on validation set, indicative of overfitting</figcaption></center> </br>
 
-<img src="./writeup_images/spiky_recall.png"></img>
-<img src="./writeup_images/spiky_precision.png" width=500></img>
+<img src="./writeup_images/spiky_recall.png"></img> <img src="./writeup_images/spiky_precision.png" width=500></img>
 
 <center><figcaption>Spiky recall and precision curves, indicating noisy updates</figcaption></center>
 
