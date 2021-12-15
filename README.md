@@ -8,6 +8,14 @@ In this project, supplemented by the ever-growing Project Sidewalk dataset of 30
 
 ## Video Here
 
+[![Watch the video](https://img.youtube.com/vi/T-D1KVIuvjA/maxresdefault.jpg)](https://user-images.githubusercontent.com/52512290/146112413-ffecf35e-fd79-4a35-bab0-a87af14996f3.mp4)
+
+
+
+
+
+
+
 ## Related Work
 Our project expands upon the research performed by Weld et al. in 2019 in applying multimodal deep learning to automatically validate crowdsourced labels
 and automatically label sidewalk accessibility issues given streetview panoramic imagery. Now, equipped with more validated data, we seek to improve on the results observed in 2019, particularly in regards to automatic crowdsourced label validation. Our goal is to eventually integrate an improved classification pipeline into the current Project Sidewalk validation interface as an "AI assistant" of sorts. To do so, we look to first clean/modify the data acquisition pipeline. Investigation into the 2019 data acquisition pipeline demonstrated inconsistency in the usability of the crops, whether it be inaccurate crop placement or data that is simply trivial due to black space. This issue is one that possibly stems deep into the Project Sidewalk auditing interface itself in terms of data collection, so we are working closely with the lab to gain more accurate data. Clearly, we don't want our models to learn on dirty data. We also look to take different approaches to model training. Some of the novel training strategies attempted in the 2019 paper consisted of utilizing multimodal data (image data and non-image data in the form of positional/geographic features). However, we choose to take a simpler approach and stick to unimodal data (simply image data) as we reason that spatial context is more important (humans can classify accessibility problems well with just image data) and it removes dependencies on additional metadata from Google, which is subject to change in availability. Should we choose to utilize multimodality, we want to explore avenues such as including data in terms of a label's relativity to other labels, for example. Ultimately, as stated before, we want to make automatic label data validation more feasible/reliable as accurate data exposing sidewalk infrastructure issues can incite action from political bodies that make sidewalmks more accessible to all.
