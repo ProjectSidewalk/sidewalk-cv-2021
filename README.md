@@ -8,8 +8,10 @@ In this project, supplemented by the ever-growing Project Sidewalk dataset of 30
 
 ## Video Here
 
+  <video autoplay loop>
+  <source src="https://user-images.githubusercontent.com/52512290/146111588-2d260702-7a3b-4d85-94e5-cdbfa9990279.mp4" type="video/mp4">
+ </video>
 
-https://user-images.githubusercontent.com/52512290/146111588-2d260702-7a3b-4d85-94e5-cdbfa9990279.mp4
 
 
 
