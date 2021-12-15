@@ -17,7 +17,7 @@ Our project expands upon the research performed by [Weld et al.](https://makeabi
 ### Data Acquisition
 As mentioned before, our datasets consisted of crowdsourced labels from the Project Sidewalk database. In order to ensure the quality of the human labels, we only chose validated labels satisfying the following conditions:
 
-`disagree validations <= 2` and `disagree validations < 2 * agree validations`
+`disagree validations <= 2` and `agree validations > 2 * disagree validations`
 
 In addition, we aimed to have a relatively balanced dataset. Given that our explorations for this project were limited to the Seattle Project Sidewalk label dataset, below are the individual label counts for the four accessibility features/problems we aimed to classify:
 
