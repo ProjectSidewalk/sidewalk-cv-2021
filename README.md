@@ -8,8 +8,6 @@ In this project, supplemented by the ever-growing Project Sidewalk dataset of 30
 
 ## Video Here
 
-[![Watch the video](https://user-images.githubusercontent.com/52512290/146120569-677482ac-5236-48d4-aeea-87b8c106242b.png)](https://www.youtube.com/watch?v=jNElblf4s4E)
-
 
 
 
@@ -135,6 +133,9 @@ One huge improvement we saw with this network compared to the one trained on the
 <center><figcaption>Recall hovers between 75% and 80% for most classes and around  85% for null</figcaption></center>
 <br>
 It seems that validation accuracy and precision are marginally lower than for the ensemble model, but null precision seems a little higher. If anything, the ensemble approach is only slightly better than just training on larger crops, and training on larger crops alone appears far better than training on crops of the original size. This result surprised us because the previous attempt at this project used crops of the size we were using initially, and never mentioned attempting to zoom out further. The best model these people achieved got slightly better performance than we reached here, but it was also much larger than any model we could train with the RAM resources available to us and was trained on way more images than we could fit on the disk space available to us. We believe that if we repeated this group's training efforts with more zoomed out crops, we could achieve better results based on how much our results improved just by zooming out. We'll discuss this more in the next section.
+
+## Performance Demo
+[![Watch the video](https://user-images.githubusercontent.com/52512290/146120569-677482ac-5236-48d4-aeea-87b8c106242b.png)](https://www.youtube.com/watch?v=jNElblf4s4E)
 
 ## Next Steps
 ### Cleaner Data
