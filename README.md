@@ -8,8 +8,8 @@ In this project, supplemented by the ever-growing Project Sidewalk dataset of 30
 
 ## Video Here
 
+[![Watch the video](https://img.youtube.com/vi/T-D1KVIuvjA/maxresdefault.jpg)](https://user-images.githubusercontent.com/52512290/146112413-ffecf35e-fd79-4a35-bab0-a87af14996f3.mp4)
 
-https://user-images.githubusercontent.com/52512290/146112413-ffecf35e-fd79-4a35-bab0-a87af14996f3.mp4
 
 
 
