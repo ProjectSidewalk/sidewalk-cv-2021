@@ -16,6 +16,7 @@ path to the folder containing these files.
 
 import csv
 import logging
+import math
 import multiprocessing as mp
 from itertools import islice
 from time import perf_counter
@@ -76,7 +77,7 @@ def predict_crop_size(sv_image_y):
 
     return crop_size
 
-def make_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, destination_dir, label_name, multicrop=True, draw_mark=False):
+def make_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, photographer_pitch, destination_dir, label_name, lock, multicrop=True, draw_mark=True):
     """
     Makes a crop around the object of interest
     :param path_to_image: where the GSV pano is stored
@@ -92,27 +93,38 @@ def make_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, destination_d
     crop_names = []
     try:
         im = Image.open(pano_img_path)
-        # draw = ImageDraw.Draw(im)
+        draw = ImageDraw.Draw(im)
 
         im_width = im.size[0]
         im_height = im.size[1]
         # print(im_width, im_height)
 
         predicted_crop_size = predict_crop_size(sv_image_y)
-        crop_width = int(predicted_crop_size)
-        crop_height = int(predicted_crop_size)
+        # crop_width = int(predicted_crop_size)
+        # crop_height = int(predicted_crop_size)
+        crop_width = 1500
+        crop_height = 1500
 
         # Work out scaling factor based on image dimensions
         scaling_factor = im_width / 13312
         sv_image_x *= scaling_factor
         sv_image_y *= scaling_factor
 
+        y_adjustment = im_height * photographer_pitch / 180
+
         x = ((float(pano_yaw_deg) / 360) * im_width + sv_image_x) % im_width
         y = im_height / 2 - sv_image_y
 
-        # r = 10
-        # if draw_mark:
-        #     draw.ellipse((x - r, y - r, x + r, y + r), fill=128)
+        new_y = im_height / 2 - sv_image_y + y_adjustment
+
+        # print("old y, new y: ", old_y, y)
+
+        r = 50
+        if draw_mark:
+            lock.acquire()
+            draw.ellipse((x - r, y - r, x + r, y + r), fill=128)
+            im.save(pano_img_path)
+            lock.release()
 
         # print("Plotting at " + str(x) + "," + str(y) + " using yaw " + str(pano_yaw_deg))
 
@@ -176,6 +188,8 @@ def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, 
         # Create interprocess list to store output csv rows.
         output_rows = manager.list()
 
+        lock = mp.Lock()
+
         # split label csv into chunks for multiprocessing
         # 1-index to ignore header row
         i = 1
@@ -183,7 +197,7 @@ def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, 
         while i < row_count:
             chunk_size = (row_count - i) // cpu_count
             labels = list(islice(label_list, i, i + chunk_size))
-            process = mp.Process(target=crop_label_subset, args=(labels, output_rows, path_to_gsv_scrapes, destination_dir))
+            process = mp.Process(target=crop_label_subset, args=(labels, output_rows, path_to_gsv_scrapes, destination_dir, lock))
             processes.append(process)
             cpu_count -= 1
             i += chunk_size
@@ -219,7 +233,7 @@ def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, 
         
         return [row_count - 1, successful_crop_count, no_pano_fail, execution_time]
 
-def crop_label_subset(input_rows, output_rows, path_to_gsv_scrapes, destination_dir):
+def crop_label_subset(input_rows, output_rows, path_to_gsv_scrapes, destination_dir, lock):
     counter = 0
     process_pid = os.getpid()
     for row in input_rows:
@@ -229,6 +243,7 @@ def crop_label_subset(input_rows, output_rows, path_to_gsv_scrapes, destination_
         sv_image_y = float(row[2])
         label_type = int(row[3])
         photographer_heading = float(row[4])
+        photographer_pitch = float(row[5])
 
         pano_img_path = os.path.join(path_to_gsv_scrapes, pano_id + ".jpg")
 
@@ -238,13 +253,13 @@ def crop_label_subset(input_rows, output_rows, path_to_gsv_scrapes, destination_
         if os.path.exists(pano_img_path):
             crop_names = []
             if not label_type == 0:
-                label_name = str(row[7])
-                crop_names = make_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, destination_dir, label_name, True)
+                label_name = str(row[8])
+                crop_names = make_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, photographer_pitch, destination_dir, label_name, lock, True)
             else:
                 # In order to uniquely identify null crops, we concatenate the pid of process they
                 # were generated on and the counter within the process to the name of the null crop.
                 label_name = "null_" + str(process_pid) + "_" +  str(counter)
-                crop_names = make_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, destination_dir, label_name, False)
+                crop_names = make_crop(pano_img_path, sv_image_x, sv_image_y, pano_yaw_deg, photographer_pitch, destination_dir, label_name, lock, False)
 
             for crop_name in crop_names:
                 output_rows.append([crop_name, label_type])

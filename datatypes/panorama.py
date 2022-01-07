@@ -5,6 +5,7 @@ class Panorama(object):
         self.feats = {}
         self.pano_id        = None
         self.photog_heading = None
+        self.photog_pitch = None
 
     def add_feature(self, row):
         feat = Label(row)
@@ -14,6 +15,9 @@ class Panorama(object):
         
         if self.photog_heading is None:
             self.photog_heading = feat.photographer_heading
+
+        if self.photog_pitch is None:
+            self.photog_pitch = feat.photographer_pitch
         
         if feat.label_type not in self.feats:
             self.feats[feat.label_type] = []

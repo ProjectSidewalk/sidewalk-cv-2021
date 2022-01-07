@@ -16,7 +16,7 @@ GSV_IMAGE_WIDTH  = 13312
 GSV_IMAGE_HEIGHT = 6656
 
 # null crops per pano
-NULLS_PER_PANO = 1
+NULLS_PER_PANO = 0
 
 def bulk_scrape_panos(n, start_row, path_to_labeldata_csv, local_dir, remote_dir, output_csv_name):
     # TODO: find way to clear to pano_downloads folder and batch.txt file
@@ -99,7 +99,7 @@ def get_null_rows(pano, min_dist = 70, bottom_space = 1600, side_space = 300):
                 break
         if valid_null:
             # Using 0 for "null" label_type_id.
-            row = [pano.pano_id, x, y, 0, pano.photog_heading, None, None, None]
+            row = [pano.pano_id, x, y, 0, pano.photog_heading, pano.photog_pitch, None, None, None]
             null_rows.append(row)
     return null_rows
 
@@ -133,8 +133,9 @@ def clean_panos(path_to_panos):
     # get list of pano paths
     panos = glob.glob(path_to_panos + "/*.jpg")
 
-     # get available cpu_count
+    # get available cpu_count
     cpu_count = mp.cpu_count() if mp.cpu_count() <= 8 else 8
+    # cpu_count = 1
 
     # split pano set into chunks for multithreading
     pano_set_size = len(panos)
@@ -164,15 +165,20 @@ def clean_panos(path_to_panos):
 
 def clean_n_panos(panos):
     for pano_path in panos:
+        print(pano_path)
         with Image.open(pano_path) as p:
-            # check if pano needs cleaning by looking for black space
-            pix = p.load()
-            if pix[GSV_IMAGE_WIDTH, GSV_IMAGE_HEIGHT] == (0,0,0):
-                print("resizing ", pano_path)
-                original_size = p.size
-                print(original_size)
-                im = p.crop((0, 0, GSV_IMAGE_WIDTH, GSV_IMAGE_HEIGHT))
-                print(im.size)
-                im = im.resize(original_size)
-                im.save(pano_path)
-                print(im.size)
+            original_size = p.size
+            if original_size != (GSV_IMAGE_WIDTH, GSV_IMAGE_HEIGHT):
+                # check if pano needs cleaning by looking for black space
+                try:
+                    pix = p.load()
+                    if pix[GSV_IMAGE_WIDTH, GSV_IMAGE_HEIGHT] == (0,0,0) and pix[original_size[0] - 1, original_size[1] - 1] == (0, 0, 0):
+                        print("resizing ", pano_path)
+                        im = p.crop((0, 0, GSV_IMAGE_WIDTH, GSV_IMAGE_HEIGHT))
+                        im = im.resize(original_size)
+                        im.save(pano_path)
+                except Exception as e:
+                    print("error on ", p)
+                    print(p.size)
+                    print(e)
+

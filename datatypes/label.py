@@ -7,9 +7,10 @@ class Label(object):
         self.sv_image_y = float(row[2])
         self.label_type = int(row[3])
         self.photographer_heading = float(row[4]) if row[4] is not None else None
-        self.heading = float(row[5]) if row[5] is not None and len(row[5]) > 1 else None
-        self.pitch = float(row[6]) if row[6] is not None else None
-        self.label_id = int(row[7]) if row[7] is not None else None
+        self.photographer_pitch = float(row[5]) if row[5] is not None else None
+        self.heading = float(row[6]) if row[6] is not None and len(row[6]) > 1 else None
+        self.pitch = float(row[7]) if row[7] is not None else None
+        self.label_id = int(row[8]) if row[8] is not None else None
         
     def to_row(self):
         row = []
@@ -18,6 +19,7 @@ class Label(object):
         row.append(self.sv_image_y)
         row.append(self.label_type)
         row.append(self.photographer_heading)
+        row.append(self.photographer_pitch)
         row.append(self.heading)
         row.append(self.pitch)
         row.append(self.label_id)
@@ -32,5 +34,5 @@ class Label(object):
     
     @classmethod
     def header_row(cls):
-        row = ['gsv_panorama_id', 'sv_image_x', 'sv_image_y', 'label_type_id', 'photographer_heading', 'heading', 'pitch', 'label_id']
+        row = ['gsv_panorama_id', 'sv_image_x', 'sv_image_y', 'label_type_id', 'photographer_heading', 'photographer_pitch', 'heading', 'pitch', 'label_id']
         return row

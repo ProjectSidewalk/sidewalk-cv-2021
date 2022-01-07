@@ -7,8 +7,8 @@ import os
 if __name__ ==  '__main__':
     # scrape panos from SFTP server
     n = 20
-    start_row = 1
-    path_to_labeldata_csv = "rawdata/seattle-labels-cv-10-29-2021.csv"
+    start_row = 25948
+    path_to_labeldata_csv = "rawdata/seattle-labels-cv-12-20-2021.csv"
 
     # local directory to write to (relative to shell root)
     local_dir = 'pano-downloads/'
