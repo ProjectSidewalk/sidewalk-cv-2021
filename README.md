@@ -1,19 +1,13 @@
-# Classification of Sidewalk Accessibility Features
+# Assessing Sidewalk Quality With Deep Learning
 
-Sidewalks provide a safe, environmentally-friendly means for pedestrians to move about the city landscape. As a result, sidewalks should benefit everyone. However, for
-people with disabilities, poor sidewalk quality can have a detrimental impact on independence, quality of life, and overall physical activity. However, there has been much progress in recent years with regards to collecting sidewalk accessibility issue data and making it transparent/available. However, most of this data is crowdsourced, with the application of machine learning in automatically performing these data collection/analyses only being a relatively recent avenue of investigation. One region of particular interest is the application of AI assistance in the validation of crowdsourced accessibility labels, whether it be automatic or in collaboration with human validation. Manual validation is a laborious task, but has immense applications in data quality and also in increasing the amount of data that can be brought to governmental bodies who can take action in improving sidewalk infrastructure (consider this [resource](https://sidewalk-sea.cs.washington.edu/gallery)). As a result, alleviating the labor that accompanies validation is critical.
+Sidewalks are supposed to provide a safe, environmentally-friendly means for pedestrians to move about the city landscape. As such, for people with disabilities, poor sidewalk quality can have a detrimental impact on independence, quality of life, and overall physical activity. Unfortunately, sidewalk accessibility issues are extremely common, but in recent years there has been much progress in collecting data on these issues and making it transparent/available. Most of this data is crowdsourced, and only recently have people begun investigating the application of machine learning in automatically performing these data collection/analyses. One region of particular interest is the application of AI assistance in the validation of crowdsourced accessibility labels, whether it be automatic or in collaboration with human validation. Manual validation is a laborious task, but has immense applications in data quality and also in increasing the amount of data that can be brought to governmental bodies who can take action in improving sidewalk infrastructure (consider this [resource](https://sidewalk-sea.cs.washington.edu/gallery)). As a result, alleviating the labor that accompanies validation is critical.
 
 ## Abstract
 In this project, supplemented by the ever-growing Project Sidewalk dataset of 300,000+ image-based sidewalk accessibility labels, we aim to improve on the results/findings from the [2019 iteration](https://github.com/ProjectSidewalk/sidewalk-cv-assets19) of the project, which provided a novel examination of deep learning as a means to assess sidewalk quality in Google Street View (GSV) panoramas. To do so, we focus on one application area, the automatic validation of crowdsourced labels. Our goal is to introduce improvements in two regards: data quality (particularly, the types of image crops we are gathering) and utilizing modern deep learning techniques to highlight spatial/background context in supplementing the classification of the actual accessibility feature. In tackling the issue of data quality, we investigate strategies such as multi-size cropping as well as delving deeper and adjusting the pipeline used to map labels placed in the Project Sidewalk audit interface to the GSV panorama image being cropped from. In regards to model training, we compare strategies such as ensembling various models trained on different sized crops, as well as comparing model quality given a simplified problem space through the binary classification of individual label types. In evaluating the success of our strategies, we provide an analysis on dataset-wide metrics such as accuracy and loss, while also considering label-type-specific metrics such as precision and recall per label type.
 
 ## Video Here
 
-[![Watch the video](https://img.youtube.com/vi/T-D1KVIuvjA/maxresdefault.jpg)](https://user-images.githubusercontent.com/52512290/146112413-ffecf35e-fd79-4a35-bab0-a87af14996f3.mp4)
-
-
-
-
-
+[![Watch the video](https://user-images.githubusercontent.com/52512290/146133674-3902d85a-31cf-4be6-8a58-9463ae741932.png)](https://www.youtube.com/watch?v=lM0wCvW9yho)
 
 
 ## Related Work
@@ -23,7 +17,7 @@ Our project expands upon the research performed by [Weld et al.](https://makeabi
 ### Data Acquisition
 As mentioned before, our datasets consisted of crowdsourced labels from the Project Sidewalk database. In order to ensure the quality of the human labels, we only chose validated labels satisfying the following conditions:
 
-`disagree validations <= 2` and `disagree validations < 2 * agree validations`
+`disagree validations <= 2` and `agree validations > 2 * disagree validations`
 
 In addition, we aimed to have a relatively balanced dataset. Given that our explorations for this project were limited to the Seattle Project Sidewalk label dataset, below are the individual label counts for the four accessibility features/problems we aimed to classify:
 

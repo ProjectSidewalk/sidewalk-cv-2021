@@ -7,14 +7,15 @@ WITH good_labels AS (
       AND label.tutorial = FALSE
       AND label.street_edge_id != 27645
     GROUP BY label.label_id
-    HAVING COUNT(CASE WHEN validation_result = 2  THEN 1 END) <= 2
-        OR COUNT(CASE WHEN validation_result = 2 THEN 1 END) < (2 * COUNT(CASE WHEN  validation_result = 1 THEN 1 END))
+    HAVING COUNT(CASE WHEN validation_result = 2  THEN 1 END) <= 1
+       AND (2 * COUNT(CASE WHEN validation_result = 2 THEN 1 END)) < COUNT(CASE WHEN  validation_result = 1 THEN 1 END)
 )
 SELECT label.gsv_panorama_id,
        label_point.sv_image_x,
        label_point.sv_image_y,
        label.label_type_id,
        label.photographer_heading,
+       label.photographer_pitch,
        label_point.heading,
        label_point.pitch,
        label.label_id
