@@ -86,6 +86,7 @@ def bulk_scrape_panos(n, start_row, path_to_labeldata_csv, local_dir, remote_dir
     return pano_set_size, execution_time
 
 # Get a collection of "null" rows from a pano.
+# TODO: update with new label structure
 def get_null_rows(pano, min_dist = 70, bottom_space = 1600, side_space = 300):
     null_rows = []
     while len(null_rows) < NULLS_PER_PANO:
@@ -172,7 +173,7 @@ def clean_n_panos(panos):
                 # check if pano needs cleaning by looking for black space
                 try:
                     pix = p.load()
-                    if pix[GSV_IMAGE_WIDTH, GSV_IMAGE_HEIGHT] == (0,0,0) and pix[original_size[0] - 1, original_size[1] - 1] == (0, 0, 0):
+                    if pix[GSV_IMAGE_WIDTH, GSV_IMAGE_HEIGHT] < (8,8,8) and pix[original_size[0] - 1, original_size[1] - 1] < (8, 8 ,8):
                         print("resizing ", pano_path)
                         im = p.crop((0, 0, GSV_IMAGE_WIDTH, GSV_IMAGE_HEIGHT))
                         im = im.resize(original_size)
