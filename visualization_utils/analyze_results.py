@@ -5,12 +5,12 @@ import torch
 from matplotlib.pyplot import figure
  
 
-VISUALIZATIONS_PATH = "./visualizations/"
+VISUALIZATIONS_PATH = "../visualizations/"
 if not os.path.isdir(VISUALIZATIONS_PATH):
     os.makedirs(VISUALIZATIONS_PATH)
 
-SESSION_NAME = 'TRAIN SESSION NAME HERE'
-TRAIN_SAVE_PATH = "./datasets/" + SESSION_NAME + ".pt"
+SESSION_NAME = "with_nulls"
+TRAIN_SAVE_PATH = "../datasets/" + SESSION_NAME + ".pt"
 label_types = {
     0: "null",
     1: "curb ramp",
@@ -24,7 +24,7 @@ binary_labels = {
     1: "positive"
 }
 
-NUM_CLASSES = "NUM CLASSES HERE"
+NUM_CLASSES = 5
 
 results = torch.load(TRAIN_SAVE_PATH)
 metrics = results['metrics']
@@ -49,6 +49,7 @@ plot_label_metric('precision_train', NUM_CLASSES)
 plot_label_metric('recall_validation', NUM_CLASSES)
 plot_label_metric('recall_train', NUM_CLASSES)
 
+print("accuracy: " + str(metrics['accuracy_validation']))
 figure(figsize=(16, 12))
 plt.plot(np.arange(epochs), metrics['accuracy_train'], label = 'train accuracy')
 plt.plot(np.arange(epochs), metrics['accuracy_validation'], label = 'validation accuracy')
