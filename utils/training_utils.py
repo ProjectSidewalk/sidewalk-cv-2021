@@ -296,9 +296,6 @@ def evaluate(model, is_inception, loss_func, dataset_loader, test, mistakes_save
 
   mistakes.to_csv(mistakes_save_path, index=False)
 
-  
-
-
   if test:
     # display a Confusion matrix
     conf_mat = confusion_matrix(lbllist.numpy(), predlist.numpy())
