@@ -20,6 +20,9 @@ NUM_CLASSES = 2  # 1 for label type, 0 for null crops
 # name of training session for saving purposes
 TRAIN_SESSION_NAME = "TRAIN SESSION NAME HERE"
 
+# for zoom testing
+CROP_SIZE = 1500
+
 # check for GPU
 if torch.cuda.is_available():  
   dev = "cuda" 
@@ -53,8 +56,8 @@ checkpoint_save_path = BASE_PATH + TRAIN_SESSION_NAME + ".pt"
 # =================================================================================================
 # load train datasets
 image_transform = transforms.Compose([
-  transforms.Resize(256),
-  transforms.CenterCrop(input_size),
+  transforms.CenterCrop(CROP_SIZE),
+  transforms.Resize(input_size),
   transforms.ToTensor(),
   transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])

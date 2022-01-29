@@ -20,6 +20,9 @@ NUM_CLASSES = 5  # (1,2,3,4) for label types, 0 for null crops
 # name of training session for saving purposes
 TRAIN_SESSION_NAME = "TRAIN SESSION NAME HERE"
 
+# for zoom testing
+CROP_SIZE = 1500
+
 # check for GPU
 if torch.cuda.is_available():  
   dev = "cuda" 
@@ -54,14 +57,15 @@ checkpoint_save_path = BASE_PATH + TRAIN_SESSION_NAME + ".pt"
 # =================================================================================================
 # load train datasets
 image_transform = transforms.Compose([
-  transforms.Resize(256),
-  transforms.CenterCrop(input_size),
+  transforms.CenterCrop(CROP_SIZE),
+  transforms.Resize(input_size),
+  # transforms.CenterCrop(input_size),
   transforms.ToTensor(),
   transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
 # having issues with CUDA running out of memory, so lowering batch size
-batch_size = 32
+batch_size = 8
 
 train_labels_csv_path = BASE_PATH + "train_crop_info.csv"
 train_img_dir = BASE_PATH + "train_crops/"
