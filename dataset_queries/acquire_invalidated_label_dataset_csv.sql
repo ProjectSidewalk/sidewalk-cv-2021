@@ -1,4 +1,4 @@
-WITH good_labels AS (
+WITH bad_labels AS (
     SELECT label.label_id
     FROM sidewalk.label
     INNER JOIN sidewalk.label_validation ON label.label_id = label_validation.label_id
@@ -7,15 +7,15 @@ WITH good_labels AS (
       AND label.tutorial = FALSE
       AND label.street_edge_id != 27645
     GROUP BY label.label_id
-    HAVING COUNT(CASE WHEN validation_result = 2  THEN 1 END) <= 1
-       AND 2 * COUNT(CASE WHEN validation_result = 2 THEN 1 END) < COUNT(CASE WHEN  validation_result = 1 THEN 1 END)
+    HAVING COUNT(CASE WHEN validation_result = 2 THEN 1 END) >= 3
+       AND COUNT(CASE WHEN validation_result = 2 THEN 1 END) > 2 * COUNT(CASE WHEN  validation_result = 1 THEN 1 END)
 ), n_per_label_type AS (
     SELECT ranked_labels.* FROM
     (
         SELECT label.*,
                rank() OVER (PARTITION BY label.label_type_id ORDER BY label.time_created DESC)
         FROM sidewalk.label
-        WHERE label.label_id IN (SELECT label_id FROM good_labels)
+        WHERE label.label_id IN (SELECT label_id FROM bad_labels)
           AND label.label_type_id IN (1,2,3,4)
     ) ranked_labels 
     where rank <= 10000
@@ -23,6 +23,11 @@ WITH good_labels AS (
 SELECT label.gsv_panorama_id,
        label_point.sv_image_x,
        label_point.sv_image_y,
+       label_point.canvas_x,
+       label_point.canvas_y,
+       label_point.canvas_width,
+       label_point.canvas_height,
+       label_point.zoom,
        label.label_type_id,
        label.photographer_heading,
        label.photographer_pitch,
