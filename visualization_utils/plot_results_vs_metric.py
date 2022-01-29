@@ -62,6 +62,3 @@ for i in range(5):
 plt.title("recalls vs dataset size")
 plt.legend(prop={'size': 16})
 plt.savefig(f"{VISUALIZATIONS_PATH}/recall_vs_size")
-
-
-

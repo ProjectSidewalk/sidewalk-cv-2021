@@ -43,3 +43,4 @@ for plot_idx in range(10): # only plot 10% of mistakes for now
         plt.imshow(image)
     plt.savefig(f"./visualizations/demo_correct_{plot_idx}.png", bbox_inches="tight")
     plt.clf()
+    

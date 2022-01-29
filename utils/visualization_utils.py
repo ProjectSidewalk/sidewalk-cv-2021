@@ -63,5 +63,3 @@ def visualize_mistakes(model, is_inception, loss_func, dataset_loader, test, dev
                 incorrect_predictions.append(predictions[index])
                 corresponding_ground_truths.append(labels[index])
                 corresponding_image_names.append(paths[index])
-
-    
