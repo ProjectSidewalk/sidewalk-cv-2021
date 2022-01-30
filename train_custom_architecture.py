@@ -18,6 +18,12 @@ NUM_CLASSES = 5  # (1,2,3,4) for label types, 0 for null crops
 # name of training session for saving purposes
 TRAIN_SESSION_NAME = "CoAtNet"
 
+# for zoom testing
+CROP_SIZE = 1500
+
+# specify for custom architecture being tested
+MODEL_INPUT_SIZE = 224
+
 if __name__ ==  '__main__':
   # check for GPU
   if torch.cuda.is_available():  
@@ -53,8 +59,8 @@ if __name__ ==  '__main__':
   # =================================================================================================
   # load train datasets
   image_transform = transforms.Compose([
-    transforms.Resize(256),
-    transforms.CenterCrop(224),
+    transforms.CenterCrop(CROP_SIZE),
+    transforms.Resize(MODEL_INPUT_SIZE),
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
   ])

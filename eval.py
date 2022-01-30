@@ -4,7 +4,7 @@ import torch.nn as nn
 import torchvision
 from datatypes.dataset import SidewalkCropsDataset
 from utils.training_utils import get_pretrained_model, load_best_weights, evaluate
-from utils.visualization_utils import plot_confusion_matrix
+from visualization_utils.confusion_matrix import plot_confusion_matrix
 from torchvision import transforms
 
 VISUALIZATIONS_PATH = "./visualizations/"
@@ -25,7 +25,7 @@ NUM_CLASSES = 5  # (1,2,3,4) for label types, 0 for null crops
 CLASSES = ["null", "curb ramp", "missing ramp", "obstruction", "sfc problem"]
 
 # name of training session for loading purposes
-SESSION_NAME = "efficientnet-no-pretrained-weights"
+SESSION_NAME = "large-efficientnet"
 
 # check for GPU
 if torch.cuda.is_available():  
@@ -54,8 +54,8 @@ image_transform = transforms.Compose([
   transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
-test_labels_csv_path = BASE_PATH + "test_crop_info.csv"
-test_img_dir = BASE_PATH + "test_crops/"
+test_labels_csv_path = BASE_PATH + "train_large_crop_info.csv"
+test_img_dir = BASE_PATH + "train_crops/"
 test_dataset = SidewalkCropsDataset(test_labels_csv_path, test_img_dir, transform=image_transform, eval=True)
 
 batch_size = 32
