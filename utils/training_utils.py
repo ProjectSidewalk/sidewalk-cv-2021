@@ -142,7 +142,7 @@ def train(model, num_classes, is_inception, optimizer, scheduler, loss_func, epo
         else:
           inputs, labels = inputs.to(device), labels.to(device)
         epoch_count += inputs_large.size(0) if is_two_model_ensemble else inputs.size(0)
-        print("percent {}".format(epoch_count / n))
+        print("epoch {}: percent {}".format(epoch, epoch_count / n))
         # For code brevity, we'll set the reset gradients for model params
         # with the intention of using it for training.
         # We'll use the set_grad_enabled to toggle whether we actually use the
