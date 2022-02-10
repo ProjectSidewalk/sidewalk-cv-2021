@@ -18,15 +18,22 @@ import torch.nn as nn
 import torch._utils
 import torch.nn.functional as F
 
-from network.mynn import Norm2d
+# from network.mynn import Norm2d
 # from runx.logx import logx
-from config import cfg
+from citysurfaces.config import cfg
 
 
 BN_MOMENTUM = 0.1
 align_corners = cfg.MODEL.ALIGN_CORNERS
 relu_inplace = True
 
+def Norm2d(in_channels, **kwargs):
+    """
+    Custom Norm Function to allow flexible switching
+    """
+    layer = getattr(cfg.MODEL, 'BNFUNC')
+    normalization_layer = layer(in_channels, **kwargs)
+    return normalization_layer
 
 def conv3x3(in_planes, out_planes, stride=1):
     """3x3 convolution with padding"""
@@ -312,7 +319,62 @@ class HighResolutionNet(nn.Module):
         self.stage4, pre_stage_channels = self._make_stage(
             self.stage4_cfg, num_channels, multi_scale_output=True)
 
+        # classification head - comment out if planning to attach OCR
+        self.incre_modules, self.downsamp_modules, \
+            self.final_layer = self._make_head(pre_stage_channels)
+
+        self.classifier = nn.Linear(2048, 1000)
+
         self.high_level_ch = np.int(np.sum(pre_stage_channels))
+
+    def _make_head(self, pre_stage_channels):
+        head_block = Bottleneck
+        head_channels = [32, 64, 128, 256]
+
+        # Increasing the #channels on each resolution 
+        # from C, 2C, 4C, 8C to 128, 256, 512, 1024
+        incre_modules = []
+        for i, channels  in enumerate(pre_stage_channels):
+            incre_module = self._make_layer(head_block,
+                                            channels,
+                                            head_channels[i],
+                                            1,
+                                            stride=1)
+            incre_modules.append(incre_module)
+        incre_modules = nn.ModuleList(incre_modules)
+            
+        # downsampling modules
+        downsamp_modules = []
+        for i in range(len(pre_stage_channels)-1):
+            in_channels = head_channels[i] * head_block.expansion
+            out_channels = head_channels[i+1] * head_block.expansion
+
+            downsamp_module = nn.Sequential(
+                nn.Conv2d(in_channels=in_channels,
+                          out_channels=out_channels,
+                          kernel_size=3,
+                          stride=2,
+                          padding=1),
+                nn.BatchNorm2d(out_channels, momentum=BN_MOMENTUM),
+                nn.ReLU(inplace=True)
+            )
+
+            downsamp_modules.append(downsamp_module)
+        downsamp_modules = nn.ModuleList(downsamp_modules)
+
+        final_layer = nn.Sequential(
+            nn.Conv2d(
+                in_channels=head_channels[3] * head_block.expansion,
+                out_channels=2048,
+                kernel_size=1,
+                stride=1,
+                padding=0
+            ),
+            nn.BatchNorm2d(2048, momentum=BN_MOMENTUM),
+            nn.ReLU(inplace=True)
+        )
+
+        return incre_modules, downsamp_modules, final_layer
 
     def _make_transition_layer(
             self, num_channels_pre_layer, num_channels_cur_layer):
@@ -433,22 +495,39 @@ class HighResolutionNet(nn.Module):
                     x_list.append(self.transition3[i](y_list[-1]))
             else:
                 x_list.append(y_list[i])
-        x = self.stage4(x_list)
+        y_list = self.stage4(x_list)
 
         # Upsampling
-        x0_h, x0_w = x[0].size(2), x[0].size(3)
-        x1 = F.interpolate(x[1], size=(x0_h, x0_w),
-                           mode='bilinear', align_corners=align_corners)
-        x2 = F.interpolate(x[2], size=(x0_h, x0_w),
-                           mode='bilinear', align_corners=align_corners)
-        x3 = F.interpolate(x[3], size=(x0_h, x0_w),
-                           mode='bilinear', align_corners=align_corners)
+        # x0_h, x0_w = x[0].size(2), x[0].size(3)
+        # x1 = F.interpolate(x[1], size=(x0_h, x0_w),
+        #                    mode='bilinear', align_corners=align_corners)
+        # x2 = F.interpolate(x[2], size=(x0_h, x0_w),
+        #                    mode='bilinear', align_corners=align_corners)
+        # x3 = F.interpolate(x[3], size=(x0_h, x0_w),
+        #                    mode='bilinear', align_corners=align_corners)
 
-        feats = torch.cat([x[0], x1, x2, x3], 1)
+        # feats = torch.cat([x[0], x1, x2, x3], 1)
 
-        return None, None, feats
+        # Classification Head
+        y = self.incre_modules[0](y_list[0])
+        for i in range(len(self.downsamp_modules)):
+            y = self.incre_modules[i+1](y_list[i+1]) + \
+                        self.downsamp_modules[i](y)
 
-    def init_weights(self, pretrained=cfg.MODEL.HRNET_CHECKPOINT):
+        y = self.final_layer(y)
+
+        if torch._C._get_tracing_state():
+            y = y.flatten(start_dim=2).mean(dim=2)
+        else:
+            y = F.avg_pool2d(y, kernel_size=y.size()
+                                 [2:]).view(y.size(0), -1)
+
+        y = self.classifier(y)
+
+        # return None, None, feats
+        return y
+
+    def init_weights(self, pretrained="datasets/hrnetv2_w48_imagenet_pretrained.pth"):  #cfg.MODEL.HRNET_CHECKPOINT):
         # logx.msg('=> init weights from normal distribution')
         for name, m in self.named_modules():
             if any(part in name for part in {'cls', 'aux', 'ocr'}):
@@ -481,4 +560,23 @@ def get_seg_model():
     model = HighResolutionNet()
     model.init_weights()
 
+    return model
+
+# this is terribly modularized, probably want to find a way to generalize
+def load_hrnet_checkpoint(checkpoint_path, num_classes, is_backbone):
+    checkpoint = torch.load(checkpoint_path)
+    checkpoint_state_dict = checkpoint['state_dict']
+
+    model = get_seg_model()
+    net_state_dict = model.state_dict()
+    new_loaded_dict = {}
+    for k in net_state_dict:
+        new_k = 'module.backbone.' + k if is_backbone else k
+        if new_k in checkpoint_state_dict and net_state_dict[k].size() == checkpoint_state_dict[new_k].size():
+            new_loaded_dict[k] = checkpoint_state_dict[new_k]
+        else:           
+            print("Skipped loading parameter {}".format(k))
+    net_state_dict.update(new_loaded_dict)
+    model.load_state_dict(net_state_dict)
+    model.classifier = nn.Linear(model.classifier.in_features, num_classes)
     return model

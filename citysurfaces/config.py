@@ -38,8 +38,9 @@ from __future__ import unicode_literals
 import os
 import re
 import torch
+import torch.nn as nn
 
-from utils.attr_dict import AttrDict
+from .utils.attr_dict import AttrDict
 # from runx.logx import logx
 
 
@@ -128,7 +129,7 @@ __C.DATASET.CROP_SIZE = '896'
 
 __C.MODEL = AttrDict()
 __C.MODEL.BN = 'regularnorm'
-__C.MODEL.BNFUNC = None
+__C.MODEL.BNFUNC = nn.BatchNorm2d
 __C.MODEL.MSCALE = False
 __C.MODEL.THREE_SCALE = False
 __C.MODEL.ALT_TWO_SCALE = False
@@ -147,13 +148,7 @@ __C.MODEL.MSCALE_INIT = 0.5
 __C.MODEL.ATTNSCALE_BN_HEAD = False
 __C.MODEL.GRAD_CKPT = False
 
-WEIGHTS_PATH = os.path.join(__C.ASSETS_PATH, 'seg_weights')
-__C.MODEL.WRN38_CHECKPOINT = \
-    os.path.join(WEIGHTS_PATH, 'wider_resnet38.pth.tar')
-__C.MODEL.WRN41_CHECKPOINT = \
-    os.path.join(WEIGHTS_PATH, 'wider_resnet41_cornflower_sunfish.pth')
-__C.MODEL.X71_CHECKPOINT = \
-    os.path.join(WEIGHTS_PATH, 'aligned_xception71.pth')
+WEIGHTS_PATH = "../datasets"
 __C.MODEL.HRNET_CHECKPOINT = \
     os.path.join(WEIGHTS_PATH, 'hrnetv2_w48_imagenet_pretrained.pth')
 
