@@ -26,7 +26,7 @@ NUM_CLASSES = "NUM CLASSES"  # (1,2,3,4) for label types, 0 for null crops
 CLASSES = ["null", "curb ramp", "missing ramp", "obstruction", "sfc problem"]
 
 # name of training session for loading purposes
-SESSION_NAME = "MODEL NAME HERE"
+SESSION_NAME = "SESSION NAME"
 PRETRAINED_SAVE_PATH = BASE_PATH + SESSION_NAME + ".pt"
 
 # check for GPU
@@ -41,7 +41,7 @@ print(device)
 # load model for evaluation
 # setup model for fine tuning
 if MODEL_NAME == "hrnet":
-  model, input_size = hrnetv2.load_hrnet_checkpoint(PRETRAINED_SAVE_PATH, NUM_CLASSES, True), 224
+  model, input_size = hrnetv2.load_hrnet_checkpoint(PRETRAINED_SAVE_PATH, NUM_CLASSES, True, False), 224
 else:
   model, input_size = get_pretrained_model(MODEL_NAME, NUM_CLASSES, False)
 model.to(device)
@@ -59,11 +59,11 @@ image_transform = transforms.Compose([
   transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
-test_labels_csv_path = BASE_PATH + "CSV PATH HERE"
+test_labels_csv_path = BASE_PATH + "CSV PATH"
 test_img_dir = BASE_PATH + "train_crops/"
 test_dataset = SidewalkCropsDataset(test_labels_csv_path, test_img_dir, transform=image_transform, eval=True)
 
-batch_size = 32
+batch_size = 12
 
 test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=8)
 

@@ -556,18 +556,18 @@ class HighResolutionNet(nn.Module):
             raise RuntimeError('No such file {}'.format(pretrained))
 
 
-def get_seg_model():
+def get_seg_model(is_initial_load):
     model = HighResolutionNet()
-    model.init_weights()
+    model.init_weights() if is_initial_load else model.init_weights("")
 
     return model
 
 # this is terribly modularized, probably want to find a way to generalize
-def load_hrnet_checkpoint(checkpoint_path, num_classes, is_backbone):
+def load_hrnet_checkpoint(checkpoint_path, num_classes, is_backbone, is_initial_load):
     checkpoint = torch.load(checkpoint_path)
-    checkpoint_state_dict = checkpoint['state_dict']
+    checkpoint_state_dict = checkpoint['state_dict' if is_initial_load else 'model_state']
 
-    model = get_seg_model()
+    model = get_seg_model(is_initial_load)
     net_state_dict = model.state_dict()
     new_loaded_dict = {}
     for k in net_state_dict:
