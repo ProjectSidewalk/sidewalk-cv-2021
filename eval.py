@@ -2,6 +2,7 @@ import os
 import torch
 import torch.nn as nn
 import torchvision
+import citysurfaces.network.hrnetv2 as hrnetv2
 from datatypes.dataset import SidewalkCropsDataset
 from utils.training_utils import get_pretrained_model, load_best_weights, evaluate
 from visualization_utils.confusion_matrix import plot_confusion_matrix
@@ -16,16 +17,17 @@ if not os.path.isdir(VISUALIZATIONS_PATH):
 BASE_PATH = "./datasets/"
 
 # name of model architecture
-MODEL_NAME = "efficientnet"
+MODEL_NAME = "MODEL NAME HERE"
 
 # number of output classes
-NUM_CLASSES = 5  # (1,2,3,4) for label types, 0 for null crops
+NUM_CLASSES = "NUM CLASSES"  # (1,2,3,4) for label types, 0 for null crops
 
 # the actual classes
 CLASSES = ["null", "curb ramp", "missing ramp", "obstruction", "sfc problem"]
 
 # name of training session for loading purposes
-SESSION_NAME = "large-efficientnet"
+SESSION_NAME = "MODEL NAME HERE"
+PRETRAINED_SAVE_PATH = BASE_PATH + SESSION_NAME + ".pt"
 
 # check for GPU
 if torch.cuda.is_available():  
@@ -37,11 +39,14 @@ print(device)
 
 # =================================================================================================
 # load model for evaluation
-model, input_size = get_pretrained_model(MODEL_NAME, NUM_CLASSES, False)
+# setup model for fine tuning
+if MODEL_NAME == "hrnet":
+  model, input_size = hrnetv2.load_hrnet_checkpoint(PRETRAINED_SAVE_PATH, NUM_CLASSES, True), 224
+else:
+  model, input_size = get_pretrained_model(MODEL_NAME, NUM_CLASSES, False)
 model.to(device)
 
-pretrained_save_path = BASE_PATH + SESSION_NAME + ".pt"
-load_best_weights(model, pretrained_save_path)
+load_best_weights(model, PRETRAINED_SAVE_PATH)
 
 loss_func = nn.CrossEntropyLoss()
 
@@ -54,7 +59,7 @@ image_transform = transforms.Compose([
   transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
-test_labels_csv_path = BASE_PATH + "train_large_crop_info.csv"
+test_labels_csv_path = BASE_PATH + "CSV PATH HERE"
 test_img_dir = BASE_PATH + "train_crops/"
 test_dataset = SidewalkCropsDataset(test_labels_csv_path, test_img_dir, transform=image_transform, eval=True)
 
