@@ -13,7 +13,7 @@ from torchvision import transforms
 BASE_PATH = "./datasets/"
 
 # name of model architecture
-MODEL_NAME = "efficientnet"
+MODEL_NAME = "MODEL NAME HERE"
 
 # number of output classes
 NUM_CLASSES = "NUM CLASSES"  # (1,2,3,4) for label types, 0 for null crops
