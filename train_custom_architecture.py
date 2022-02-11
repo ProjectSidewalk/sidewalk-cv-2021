@@ -3,9 +3,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torchvision
+import citysurfaces.network.hrnetv2 as hrnetv2
 from datatypes.dataset import SidewalkCropsDataset
 from utils.training_utils import load_training_checkpoint, train
-from architectures.coatnet import coatnet_0
+# from architectures.coatnet import coatnet_0
 from torch.optim import lr_scheduler
 from torchvision import transforms
 
@@ -13,13 +14,13 @@ from torchvision import transforms
 BASE_PATH = "./datasets/"
 
 # number of output classes
-NUM_CLASSES = 5  # (1,2,3,4) for label types, 0 for null crops
+NUM_CLASSES = "NUM CLASSES"  # (1,2,3,4) for label types, 0 for null crops
 
 # name of training session for saving purposes
-TRAIN_SESSION_NAME = "CoAtNet"
+TRAIN_SESSION_NAME = "MODEL NAME HERE"
 
 # for zoom testing
-CROP_SIZE = 1500
+CROP_SIZE = "CROP SIZE HERE"
 
 # specify for custom architecture being tested
 MODEL_INPUT_SIZE = 224
@@ -35,7 +36,7 @@ if __name__ ==  '__main__':
 
   # =================================================================================================
   # setup model for fine tuning
-  model = coatnet_0()
+  model = "MODEL HERE"
   model.to(device)
 
   lr = 0.01
@@ -68,7 +69,7 @@ if __name__ ==  '__main__':
   # having issues with CUDA running out of memory, so lowering batch size
   batch_size = 16
 
-  train_labels_csv_path = BASE_PATH + "train_crop_info.csv"
+  train_labels_csv_path = BASE_PATH + "CSV PATH HERE"
   train_img_dir = BASE_PATH + "train_crops/"
 
   # load our custom train/val sidewalk crops dataset
