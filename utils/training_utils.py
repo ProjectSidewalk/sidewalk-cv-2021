@@ -12,7 +12,7 @@ from time import perf_counter
 from torch.optim import lr_scheduler
 
 
-CITYSURFACES_PRETRAINED_MODEL_PATH = "./models/" + "FILE NAME HERE"
+CITYSURFACES_PRETRAINED_MODEL_PATH = "./models/block_c_10classes.pth"
 
 
 def get_pretrained_model(model_name, num_classes, use_pretrained=True):
