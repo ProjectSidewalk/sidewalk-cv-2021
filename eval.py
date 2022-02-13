@@ -43,10 +43,7 @@ print(device)
 # =================================================================================================
 # load model for evaluation
 # setup model for fine tuning
-if MODEL_NAME == "hrnet":
-  model, input_size = hrnetv2.load_hrnet_checkpoint(PRETRAINED_SAVE_PATH, NUM_CLASSES, True, False), 224
-else:
-  model, input_size = get_pretrained_model(MODEL_NAME, NUM_CLASSES, False)
+model, input_size = get_pretrained_model(MODEL_NAME, NUM_CLASSES)
 model.to(device)
 
 load_best_weights(model, PRETRAINED_SAVE_PATH)
