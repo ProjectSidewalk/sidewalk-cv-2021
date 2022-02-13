@@ -14,7 +14,10 @@ if not os.path.isdir(VISUALIZATIONS_PATH):
     os.makedirs(VISUALIZATIONS_PATH)
 
 # set base path to test data folder
-BASE_PATH = "./datasets/"
+BASE_PATH = "/tmp/datasets/"
+
+# save path for model weights
+MODEL_SAVE_FOLDER = "./models/"
 
 # name of model architecture
 MODEL_NAME = "MODEL NAME HERE"
@@ -27,7 +30,7 @@ CLASSES = ["null", "curb ramp", "missing ramp", "obstruction", "sfc problem"]
 
 # name of training session for loading purposes
 SESSION_NAME = "SESSION NAME"
-PRETRAINED_SAVE_PATH = BASE_PATH + SESSION_NAME + ".pt"
+PRETRAINED_SAVE_PATH = MODEL_SAVE_FOLDER + SESSION_NAME + ".pt"
 
 # check for GPU
 if torch.cuda.is_available():  

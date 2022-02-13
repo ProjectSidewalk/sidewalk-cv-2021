@@ -10,7 +10,10 @@ from torch.optim import lr_scheduler
 from torchvision import transforms
 
 # set base path to training/test data folder
-BASE_PATH = "./datasets/"
+BASE_PATH = "/tmp/datasets/"
+
+# save path for model weights
+MODEL_SAVE_FOLDER = "./models/"
 
 # name of model architecture
 MODEL_NAME = "MODEL NAME HERE"
@@ -22,7 +25,7 @@ NUM_CLASSES = "NUM CLASSES"  # (1,2,3,4) for label types, 0 for null crops
 TRAIN_SESSION_NAME = "SESSION NAME HERE"
 
 # save path for model
-CHECKPOINT_SAVE_PATH = BASE_PATH + TRAIN_SESSION_NAME + ".pt"
+CHECKPOINT_SAVE_PATH = MODEL_SAVE_FOLDER + TRAIN_SESSION_NAME + ".pt"
 
 # for zoom testing
 CROP_SIZE = 1000
