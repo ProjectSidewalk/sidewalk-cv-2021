@@ -527,7 +527,7 @@ class HighResolutionNet(nn.Module):
         # return None, None, feats
         return y
 
-    def init_weights(self, pretrained="datasets/hrnetv2_w48_imagenet_pretrained.pth"):  #cfg.MODEL.HRNET_CHECKPOINT):
+    def init_weights(self, pretrained="models/hrnetv2_w48_imagenet_pretrained.pth"):  #cfg.MODEL.HRNET_CHECKPOINT):
         # logx.msg('=> init weights from normal distribution')
         for name, m in self.named_modules():
             if any(part in name for part in {'cls', 'aux', 'ocr'}):
@@ -556,24 +556,23 @@ class HighResolutionNet(nn.Module):
             raise RuntimeError('No such file {}'.format(pretrained))
 
 
-def get_seg_model(is_initial_load):
+def get_seg_model():
     model = HighResolutionNet()
-    model.init_weights() if is_initial_load else model.init_weights("")
+    model.init_weights()
 
     return model
 
 # this is terribly modularized, probably want to find a way to generalize
-def load_hrnet_checkpoint(checkpoint_path, num_classes, is_backbone, is_initial_load):
-    checkpoint = torch.load(checkpoint_path)
-    checkpoint_state_dict = checkpoint['state_dict' if is_initial_load else 'model_state']
+def get_hrnet_with_citysurface_weights(citysurfaces_pretrained_model_path, num_classes):
+    citysurfaces_data = torch.load(citysurfaces_pretrained_model_path)
+    weights = citysurfaces_data['state_dict']
 
-    model = get_seg_model(is_initial_load)
+    model = get_seg_model()
     net_state_dict = model.state_dict()
     new_loaded_dict = {}
     for k in net_state_dict:
-        new_k = 'module.backbone.' + k if is_backbone else k
-        if new_k in checkpoint_state_dict and net_state_dict[k].size() == checkpoint_state_dict[new_k].size():
-            new_loaded_dict[k] = checkpoint_state_dict[new_k]
+        if k in weights and net_state_dict[k].size() == weights[k].size():
+            new_loaded_dict[k] = weights[k]
         else:           
             print("Skipped loading parameter {}".format(k))
     net_state_dict.update(new_loaded_dict)
