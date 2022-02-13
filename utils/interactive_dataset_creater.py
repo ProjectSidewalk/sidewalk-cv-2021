@@ -4,8 +4,10 @@ import glob
 import pandas as pd
 
 class Operations(str, Enum):
+    LOAD = "load"
     COMBINE = "combine"
     BINARIZE = "binarize"
+    SUBSET = "subset"
     QUIT = "quit"
     OUTPUT = "output"
 
@@ -15,13 +17,15 @@ def receive_operation():
     operation_components = operation.split(' ', 1)
     return operation_components[0], operation_components[1].split() if len(operation_components) > 1 else None
 
-
 def combine(dataset_dfs):
     return pd.concat(dataset_dfs)
 
 def binarize(dataframe, positive_class):
     dataframe.loc[dataset_df['label_type'] != positive_class, 'label_type'] = 0
     dataframe.loc[dataset_df['label_type'] == positive_class, 'label_type'] = 1
+
+def subset(dataframe, subset_size):
+    return dataframe.sample(n=subset_size)
 
 def output(dataframe, output_path):
     dataframe.to_csv(output_path, index=False)
@@ -59,6 +63,9 @@ if __name__ == "__main__":
 
         if command == Operations.QUIT:
             break
+        elif command == Operations.LOAD:
+            csv_idx = int(arguments[0]) - 1
+            output_df = pd.read_csv(csv_list[csv_idx])
         elif command == Operations.COMBINE:
             dataframes = [output_df] if output_df is not None else []
             for i in arguments:
@@ -70,6 +77,11 @@ if __name__ == "__main__":
             positive_class = int(arguments[0])
             if output_df is not None:
                 binarize(output_df, positive_class)
+        elif command == Operations.SUBSET:
+            # right now just grabs a random subset of specified size
+            subset_size = int(arguments[0])
+            if output_df is not None:
+                output_df = subset(output_df, subset_size)
         elif command == Operations.OUTPUT:
             output_path = arguments[0]
             if output_df is not None:
