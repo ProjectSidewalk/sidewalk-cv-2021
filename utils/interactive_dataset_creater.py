@@ -8,6 +8,8 @@ class Operations(str, Enum):
     COMBINE = "combine"
     BINARIZE = "binarize"
     SUBSET = "subset"
+    FILTER = "filter"
+    LABEL_CITY = "label_city"
     QUIT = "quit"
     OUTPUT = "output"
 
@@ -26,6 +28,9 @@ def binarize(dataframe, positive_class):
 
 def subset(dataframe, subset_size):
     return dataframe.sample(n=subset_size)
+
+def label_city(dataframe, city):
+    dataframe['image_name'] = dataframe['image_name'].apply(lambda x: f"{city}/{x}")
 
 def output(dataframe, output_path):
     dataframe.to_csv(output_path, index=False)
@@ -82,6 +87,10 @@ if __name__ == "__main__":
             subset_size = int(arguments[0])
             if output_df is not None:
                 output_df = subset(output_df, subset_size)
+        elif command == Operations.LABEL_CITY:
+            city = arguments[0]
+            if output_df is not None:
+                label_city(output_df, city)
         elif command == Operations.OUTPUT:
             output_path = arguments[0]
             if output_df is not None:
