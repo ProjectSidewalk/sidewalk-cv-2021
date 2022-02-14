@@ -62,6 +62,7 @@ def get_pretrained_model(model_name, num_classes, use_pretrained=True):
     print("Invalid model name, exiting...")
     exit()
 
+
   return model, input_size
   
 
