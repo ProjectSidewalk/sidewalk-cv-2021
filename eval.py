@@ -2,6 +2,7 @@ import os
 import torch
 import torch.nn as nn
 import torchvision
+import citysurfaces.network.hrnetv2 as hrnetv2
 from datatypes.dataset import SidewalkCropsDataset
 from utils.training_utils import get_pretrained_model, load_best_weights, evaluate
 from visualization_utils.confusion_matrix import plot_confusion_matrix
@@ -13,19 +14,26 @@ if not os.path.isdir(VISUALIZATIONS_PATH):
     os.makedirs(VISUALIZATIONS_PATH)
 
 # set base path to test data folder
-BASE_PATH = "./datasets/"
+BASE_PATH = "/tmp/datasets/"
+
+# save path for model weights
+MODEL_SAVE_FOLDER = "./models/"
 
 # name of model architecture
-MODEL_NAME = "efficientnet"
+MODEL_NAME = "MODEL NAME HERE"
 
 # number of output classes
-NUM_CLASSES = 5  # (1,2,3,4) for label types, 0 for null crops
+NUM_CLASSES = "NUM CLASSES"  # (1,2,3,4) for label types, 0 for null crops
 
 # the actual classes
 CLASSES = ["null", "curb ramp", "missing ramp", "obstruction", "sfc problem"]
 
 # name of training session for loading purposes
-SESSION_NAME = "large-efficientnet"
+SESSION_NAME = "SESSION NAME"
+PRETRAINED_SAVE_PATH = MODEL_SAVE_FOLDER + SESSION_NAME + ".pt"
+
+# for zoom testing
+CROP_SIZE = "CROP SIZE HERE"
 
 # check for GPU
 if torch.cuda.is_available():  
@@ -37,28 +45,28 @@ print(device)
 
 # =================================================================================================
 # load model for evaluation
-model, input_size = get_pretrained_model(MODEL_NAME, NUM_CLASSES, False)
+# setup model for fine tuning
+model, input_size = get_pretrained_model(MODEL_NAME, NUM_CLASSES)
 model.to(device)
 
-pretrained_save_path = BASE_PATH + SESSION_NAME + ".pt"
-load_best_weights(model, pretrained_save_path)
+load_best_weights(model, PRETRAINED_SAVE_PATH)
 
 loss_func = nn.CrossEntropyLoss()
 
 # =================================================================================================
 # load our custom test sidewalk crops dataset
 image_transform = transforms.Compose([
-  transforms.Resize(256),
-  transforms.CenterCrop(input_size),
+  transforms.CenterCrop(CROP_SIZE),
+  transforms.Resize(input_size),
   transforms.ToTensor(),
   transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
-test_labels_csv_path = BASE_PATH + "train_large_crop_info.csv"
+test_labels_csv_path = BASE_PATH + "CSV PATH"
 test_img_dir = BASE_PATH + "train_crops/"
 test_dataset = SidewalkCropsDataset(test_labels_csv_path, test_img_dir, transform=image_transform, eval=True)
 
-batch_size = 32
+batch_size = 12
 
 test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=8)
 

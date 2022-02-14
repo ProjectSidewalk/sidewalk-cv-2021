@@ -5,57 +5,64 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torchvision
+import citysurfaces.network.hrnetv2 as hrnetv2
 from architectures.two_model_ensemble import TwoModelEnsembleNet
 from sklearn.metrics import confusion_matrix
 from time import perf_counter
 from torch.optim import lr_scheduler
 
+
+CITYSURFACES_PRETRAINED_MODEL_PATH = "./models/block_c_10classes.pth"
+
+
 def get_pretrained_model(model_name, num_classes, use_pretrained=True):
-  model_ft = None
-  input_size = 0
 
   if model_name == "resnet":
       """ Resnet50
       """
-      model_ft = torchvision.models.resnet50(pretrained=use_pretrained)
+      model = torchvision.models.resnet50(pretrained=use_pretrained)
       num_ftrs = model_ft.fc.in_features
-      model_ft.fc = nn.Linear(num_ftrs, num_classes)
+      model.fc = nn.Linear(num_ftrs, num_classes)
       input_size = 224
 
   elif model_name == "inception":
       """ Inception v3
       Be careful, expects (299,299) sized images and has auxiliary output
       """
-      model_ft = torchvision.models.inception_v3(pretrained=use_pretrained)
+      model = torchvision.models.inception_v3(pretrained=use_pretrained)
       # Handle the auxilary net
       num_ftrs = model_ft.AuxLogits.fc.in_features
-      model_ft.AuxLogits.fc = nn.Linear(num_ftrs, num_classes)
+      model.AuxLogits.fc = nn.Linear(num_ftrs, num_classes)
       # Handle the primary net
-      num_ftrs = model_ft.fc.in_features
-      model_ft.fc = nn.Linear(num_ftrs,num_classes)
+      num_ftrs = model.fc.in_features
+      model.fc = nn.Linear(num_ftrs,num_classes)
       input_size = 299
 
   elif model_name == "efficientnet":
     """ EfficientNetB3
     """
-    model_ft = torchvision.models.efficientnet_b3(pretrained=use_pretrained)
-    num_ftrs = model_ft.classifier[1].in_features
-    model_ft.classifier[1] = nn.Linear(num_ftrs, num_classes)
+    model = torchvision.models.efficientnet_b3(pretrained=use_pretrained)
+    num_ftrs = model.classifier[1].in_features
+    model.classifier[1] = nn.Linear(num_ftrs, num_classes)
     input_size = 224
   
   elif model_name == "regnet":
     """ RegNet-y, 8gF
     """
-    model_ft = torchvision.models.regnet_y_8gf(pretrained=use_pretrained)
-    num_ftrs = model_ft.fc.in_features
-    model_ft.fc = nn.Linear(num_ftrs, num_classes)
+    model = torchvision.models.regnet_y_8gf(pretrained=use_pretrained)
+    num_ftrs = model.fc.in_features
+    model.fc = nn.Linear(num_ftrs, num_classes)
     input_size = 224
-
+  elif model_name == "hrnet":
+    """ Maryam's custom architecture trained on her citysurfaces dataset
+    """
+    model = hrnetv2.load_hrnet_checkpoint(CITYSURFACES_PRETRAINED_MODEL_PATH, num_classes)
+    input_size = 224
   else:
     print("Invalid model name, exiting...")
     exit()
 
-  return model_ft, input_size
+  return model, input_size
   
 
 # # Initialize the model for this run
@@ -135,7 +142,6 @@ def train(model, num_classes, is_inception, optimizer, scheduler, loss_func, epo
       pred_positive_counts = torch.zeros(num_classes).to(device)
       actual_positive_counts = torch.zeros(num_classes).to(device)
       true_positive_counts = torch.zeros(num_classes).to(device)
-
       for inputs, labels in datasetLoaders[mode]:
         if is_two_model_ensemble:
           inputs_small, inputs_large, labels = inputs[0].to(device), inputs[1].to(device), labels.to(device)
@@ -158,7 +164,6 @@ def train(model, num_classes, is_inception, optimizer, scheduler, loss_func, epo
             loss2 = loss_func(aux_outputs, labels)
             loss = loss1 + 0.4*loss2
           elif is_two_model_ensemble:
-            print(inputs_small.shape, inputs_large.shape)
             outputs = model(inputs_small, inputs_large)
             loss = loss_func(outputs, labels)
           else:
