@@ -32,6 +32,9 @@ CLASSES = ["null", "curb ramp", "missing ramp", "obstruction", "sfc problem"]
 SESSION_NAME = "SESSION NAME"
 PRETRAINED_SAVE_PATH = MODEL_SAVE_FOLDER + SESSION_NAME + ".pt"
 
+# for zoom testing
+CROP_SIZE = "CROP SIZE HERE"
+
 # check for GPU
 if torch.cuda.is_available():  
   dev = "cuda" 
@@ -53,8 +56,8 @@ loss_func = nn.CrossEntropyLoss()
 # =================================================================================================
 # load our custom test sidewalk crops dataset
 image_transform = transforms.Compose([
-  transforms.Resize(256),
-  transforms.CenterCrop(input_size),
+  transforms.CenterCrop(CROP_SIZE),
+  transforms.Resize(input_size),
   transforms.ToTensor(),
   transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])

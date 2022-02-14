@@ -25,7 +25,7 @@ TRAIN_SESSION_NAME = "SESSION NAME HERE"
 CHECKPOINT_SAVE_PATH = "./models/" + TRAIN_SESSION_NAME + ".pt"
 
 # for zoom testing
-CROP_SIZE = 1000
+CROP_SIZE = "CROP SIZE HERE"
 
 if __name__ == "__main__":
   # check for GPU
@@ -63,7 +63,6 @@ if __name__ == "__main__":
   image_transform = transforms.Compose([
     transforms.CenterCrop(CROP_SIZE),
     transforms.Resize(input_size),
-    # transforms.CenterCrop(input_size),
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
   ])
