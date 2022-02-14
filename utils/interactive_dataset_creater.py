@@ -16,8 +16,8 @@ class Operations(str, Enum):
 def receive_operation():
     print("Provide an operation")
     operation = input()
-    operation_components = operation.split(' ', 1)
-    return operation_components[0], operation_components[1].split() if len(operation_components) > 1 else None
+    operation_components = operation.split()
+    return operation_components[0], operation_components[1:] if len(operation_components) > 1 else None
 
 def combine(dataset_dfs):
     return pd.concat(dataset_dfs)
