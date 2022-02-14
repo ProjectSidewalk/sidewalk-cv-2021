@@ -16,6 +16,9 @@ class Label(object):
         self.heading = float(row[11]) if row[11] is not None and len(row[11]) > 1 else None
         self.pitch = float(row[12]) if row[12] is not None else None
         self.label_id = int(row[13]) if row[13] is not None else None
+        self.agree_count = int(row[14]) if row[14] is not None else None
+        self.disagree_count = int(row[15]) if row[15] is not None else None
+        self.notsure_count = int(row[16]) if row[16] is not None else None
         
     def to_row(self):
         row = []
@@ -33,6 +36,9 @@ class Label(object):
         row.append(self.heading)
         row.append(self.pitch)
         row.append(self.label_id)
+        row.append(self.agree_count)
+        row.append(self.disagree_count)
+        row.append(self.notsure_count)
         return row
     
     def point(self):
@@ -44,5 +50,6 @@ class Label(object):
     
     @classmethod
     def header_row(cls):
-        row = ['gsv_panorama_id', 'sv_image_x', 'sv_image_y', 'canvas_x', 'canvas_y', 'canvas_width', 'canvas_height', 'zoom', 'label_type_id', 'photographer_heading', 'photographer_pitch', 'heading', 'pitch', 'label_id']
+        row = ['gsv_panorama_id', 'sv_image_x', 'sv_image_y', 'canvas_x', 'canvas_y', 'canvas_width', 'canvas_height', 'zoom', 'label_type_id',
+               'photographer_heading', 'photographer_pitch', 'heading', 'pitch', 'label_id', 'agree_count', 'disagree_count', 'notsure_count']
         return row
