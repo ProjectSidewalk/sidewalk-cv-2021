@@ -56,7 +56,7 @@ def get_pretrained_model(model_name, num_classes, use_pretrained=True):
   elif model_name == "hrnet":
     """ Maryam's custom architecture trained on her citysurfaces dataset
     """
-    model = hrnetv2.load_hrnet_checkpoint(CITYSURFACES_PRETRAINED_MODEL_PATH, num_classes)
+    model = hrnetv2.get_hrnet_with_citysurface_weights(CITYSURFACES_PRETRAINED_MODEL_PATH, num_classes)
     input_size = 224
   else:
     print("Invalid model name, exiting...")
