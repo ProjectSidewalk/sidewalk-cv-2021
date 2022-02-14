@@ -22,6 +22,9 @@ crop.log
 # Ignore datasets folder
 datasets
 
+# Ignore models folder
+models
+
 # Ignore pycache
 __pycache__
 
