@@ -565,14 +565,15 @@ def get_seg_model():
 # this is terribly modularized, probably want to find a way to generalize
 def get_hrnet_with_citysurface_weights(citysurfaces_pretrained_model_path, num_classes):
     citysurfaces_data = torch.load(citysurfaces_pretrained_model_path)
-    weights = citysurfaces_data['state_dict']
+    citysurfaces_weights = citysurfaces_data['state_dict']
 
     model = get_seg_model()
     net_state_dict = model.state_dict()
     new_loaded_dict = {}
     for k in net_state_dict:
-        if k in weights and net_state_dict[k].size() == weights[k].size():
-            new_loaded_dict[k] = weights[k]
+        new_k = "module.backbone." + k
+        if new_k in citysurfaces_weights and net_state_dict[k].size() == citysurfaces_weights[new_k].size():
+            new_loaded_dict[k] = citysurfaces_weights[new_k]
         else:           
             print("Skipped loading parameter {}".format(k))
     net_state_dict.update(new_loaded_dict)
