@@ -29,6 +29,10 @@ def binarize(dataframe, positive_class):
 def subset(dataframe, subset_size):
     return dataframe.sample(n=subset_size)
 
+def filter(dataframe, label_type):
+    # This function is incomplete
+    return dataframe.loc[dataframe['label_type'] == label_type]
+
 def label_city(dataframe, city):
     dataframe['image_name'] = dataframe['image_name'].apply(lambda x: f"{city}/{x}")
 
@@ -87,6 +91,10 @@ if __name__ == "__main__":
             subset_size = int(arguments[0])
             if output_df is not None:
                 output_df = subset(output_df, subset_size)
+        elif command == Operations.FILTER:
+            label_type = int(arguments[0])
+            if output_df is not None:
+                output_df = filter(output_df, label_type)
         elif command == Operations.LABEL_CITY:
             city = arguments[0]
             if output_df is not None:
