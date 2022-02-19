@@ -68,7 +68,7 @@ def make_plots(mistakes, num_plots, mistake_type):
         fig = plt.figure(num=1, figsize=(IMAGES_PER_ROW * IMAGE_SIZE, IMAGES_PER_COL * IMAGE_SIZE))
         fig.suptitle(f"{SESSION_NAME} {mistake_type} {plot_idx}", fontsize=30)
         for i, mistake in plot_rows.iterrows():
-            image = Image.open(f'.{mistake["image path"]}')
+            image = Image.open(f'{mistake["image path"]}')
 
             image = crop(image)
             add_border(image, mistake_type)
