@@ -5,7 +5,7 @@ import sys
 import torch
 import torch.nn as nn
 import torchvision
-from PIL import Image
+from PIL import Image, ImageOps
 from torchvision import transforms
 
 
@@ -13,6 +13,8 @@ SESSION_NAME = "maryam_test"
 MISTAKES_SAVE_PATH = "../visualizations/" + SESSION_NAME + "_mistakes"
 FALSE_POSITIVES_SAVE_PATH = "../visualizations/" + SESSION_NAME + "_false_positives"
 FALSE_NEGATIVES_SAVE_PATH = "../visualizations/" + SESSION_NAME + "_false_negatives"
+
+CROP_SIZE = "CROP SIZE HERE"
 
 IMAGES_PER_ROW = 5
 IMAGES_PER_COL = 3
@@ -26,6 +28,37 @@ label_types = {
     4: "surface problem"
 }
 
+def add_border(image, mistake_type):
+    width, height = image.size
+    pixels = image.load()
+    color = (255, 0, 0) if mistake_type == "false positives" else (255, 215, 0)
+
+    for y in range(0, 20):
+        for x in range(0, width):
+            pixels[x, y] = color
+    for y in range(height-20, height):
+        for x in range(0, width):
+            pixels[x, y] = color
+
+    for x in range(0, 20):
+        for y in range(0, height):
+            pixels[x, y] = color
+
+    for x in range(width-20, width):
+        for y in range(0, height):
+            pixels[x, y] = color
+
+def crop(image):
+    width, height = image.size   # Get dimensions
+
+    left = (width - CROP_SIZE)/2
+    top = (height - CROP_SIZE)/2
+    right = (width + CROP_SIZE)/2
+    bottom = (height + CROP_SIZE)/2
+
+    # Crop the center of the image
+    return image.crop((left, top, right, bottom))
+
 def make_plots(mistakes, num_plots, mistake_type):
     for plot_idx in range(num_plots):
         start_row = IMAGES_PER_PLOT * plot_idx
@@ -36,11 +69,16 @@ def make_plots(mistakes, num_plots, mistake_type):
         fig.suptitle(f"{SESSION_NAME} {mistake_type} {plot_idx}", fontsize=30)
         for i, mistake in plot_rows.iterrows():
             image = Image.open(f'.{mistake["image path"]}')
+
+            image = crop(image)
+            add_border(image, mistake_type)
+
             predicted = label_types[mistake['prediction']]
             actual = label_types[mistake['ground truth']]
             ax = plt.subplot(IMAGES_PER_COL, IMAGES_PER_ROW, i+1)
             plt.axis("off")
             ax.set_title(f"{mistake['image path'][22:]}\npred: {predicted}\n actual: {actual}", fontsize=15)
+            ax.spines['bottom'].set_color('0.5')
             plt.imshow(image)
         save_path = FALSE_POSITIVES_SAVE_PATH if mistake_type == "false positives" else FALSE_NEGATIVES_SAVE_PATH
         plt.savefig(f"{save_path}{plot_idx}.png", bbox_inches="tight")
