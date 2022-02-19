@@ -73,15 +73,15 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         return None
     if (self.path.count('/testset_maker/')):
-      index = int(self.path.replace('/testset_maker/', '').partition('?')[0])
-      img_id = csv_list[index - 1][0].replace('.jpg', '')
+      index = int(self.path.replace('/testset_maker/', '').partition('?')[0]) - 1
+      img_id = csv_list[index][0].replace('.jpg', '')
       if self.path.count('?'):
         form_data = self.path.partition('?')[2]
         if form_data != '':
           label_ids = list(map(int, form_data.replace('=on','').split('&')))
         else:
           label_ids = []
-        csv_list[index - 1][1] = label_ids
+        csv_list[index][1] = label_ids
         save_to_file()
         self.send_response(HTTPStatus.MOVED_PERMANENTLY)
         self.send_header('Location', '/testset_maker/' + str(index + 1))
@@ -121,16 +121,16 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
         <a href="/testset_maker/{}" style="margin-left: 125px;">Next</a>
       </div>
       """.format(
-        index,
+        index + 1,
         len(csv_list),
         img_id,
         img_id, 
-        index-1 if index > 1 else index, 
-        'checked' if csv_list[index - 1][1].count(1) else '', 
-        'checked' if csv_list[index - 1][1].count(2) else '', 
-        'checked' if csv_list[index - 1][1].count(3) else '', 
-        'checked' if csv_list[index - 1][1].count(4) else '', 
-        index+1 if index < len(csv_list) else index
+        index - 1 if index > 0 else index, 
+        'checked' if csv_list[index][1].count(1) else '', 
+        'checked' if csv_list[index][1].count(2) else '', 
+        'checked' if csv_list[index][1].count(3) else '', 
+        'checked' if csv_list[index][1].count(4) else '', 
+        index + 1 if index < len(csv_list) - 1 else index
       )
       encoded = text.encode('utf-8')
       f = io.BytesIO()
