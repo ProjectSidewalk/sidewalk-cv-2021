@@ -12,8 +12,8 @@ from http import HTTPStatus
 #    Make sure the port address matches `PORT`.
 # 2. If test_set.csv doesn't exist yet, run init_testset.py.
 # 3. Run server_tool.py.
-# 4. Go to 'http://localhost:40296/testset_maker' in your browser and begin editing!
-#    Navigate crops with the "Next" and "Prev" buttons. 
+# 4. Navigate to 'http://localhost:40296/testset_maker' in your browser and begin editing!
+#    Click through crops with "Next" and "Prev". 
 #    Clicking "Save" saves and goes to the next crop.
 # 5. Use Ctrl+C to exit.
 
@@ -43,10 +43,8 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
     http.server.SimpleHTTPRequestHandler.__init__(self, *args)
 
   def translate_path(self, path):
-    # abandon query parameters
     path = path.split('?',1)[0]
     path = path.split('#',1)[0]
-    # Don't forget explicit trailing slash when normalizing. Issue17324
     trailing_slash = path.rstrip().endswith('/')
     try:
         path = urllib.parse.unquote(path, errors='surrogatepass')
@@ -58,7 +56,6 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
     path = DIRECTORY
     for word in words:
         if os.path.dirname(word) or word in (os.curdir, os.pardir):
-            # Ignore components that are not a simple file/directory name
             continue
         path = os.path.join(path, word)
     if trailing_slash:
