@@ -9,12 +9,12 @@ from PIL import Image, ImageOps
 from torchvision import transforms
 
 
-SESSION_NAME = "maryam_test"
+SESSION_NAME = "curb_ramp_balanced"
 MISTAKES_SAVE_PATH = "../visualizations/" + SESSION_NAME + "_mistakes"
 FALSE_POSITIVES_SAVE_PATH = "../visualizations/" + SESSION_NAME + "_false_positives"
 FALSE_NEGATIVES_SAVE_PATH = "../visualizations/" + SESSION_NAME + "_false_negatives"
 
-CROP_SIZE = "CROP SIZE HERE"
+CROP_SIZE = 1250
 
 IMAGES_PER_ROW = 5
 IMAGES_PER_COL = 3
@@ -77,7 +77,7 @@ def make_plots(mistakes, num_plots, mistake_type):
             actual = label_types[mistake['ground truth']]
             ax = plt.subplot(IMAGES_PER_COL, IMAGES_PER_ROW, i+1)
             plt.axis("off")
-            ax.set_title(f"{mistake['image path'][22:]}\npred: {predicted}\n actual: {actual}", fontsize=15)
+            ax.set_title(f"{mistake['image path'][28:]}\npred: {predicted}\n actual: {actual}", fontsize=15)
             ax.spines['bottom'].set_color('0.5')
             plt.imshow(image)
         save_path = FALSE_POSITIVES_SAVE_PATH if mistake_type == "false positives" else FALSE_NEGATIVES_SAVE_PATH
