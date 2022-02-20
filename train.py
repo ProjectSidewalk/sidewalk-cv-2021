@@ -70,7 +70,7 @@ if __name__ == "__main__":
   # having issues with CUDA running out of memory, so lowering batch size
   batch_size = 12
 
-  train_labels_csv_path = BASE_PATH + "CHECKPOINT SAVE PATH"
+  train_labels_csv_path = BASE_PATH + "CSV PATH HERE"
   train_img_dir = BASE_PATH + "train_crops/"
 
   # load our custom train/val sidewalk crops dataset
