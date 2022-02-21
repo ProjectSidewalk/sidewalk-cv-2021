@@ -82,16 +82,32 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
     return path
 
   def send_head(self):
-    if (self.path == '/testset_maker'):
+    print(self.path)
+    if '/save' in self.path:
+      index = int(self.path[self.path.index("?") - 1])
+      form_data = self.path.partition('?')[2]
+      if form_data != '':
+        label_ids = list(map(int, form_data.replace('=on','').split('&')))
+      else:
+        label_ids = []
+      csv_list[index][1] = label_ids
+      save_to_file()
+      self.send_response(HTTPStatus.MOVED_PERMANENTLY)
+      self.send_header('Location', '/testset_maker/' + str(index + 1))
+      self.send_header('Cache-Control', 'no-store')
+      self.send_header('Content-Length', '0')
+      self.end_headers()
+      return None
+    elif (self.path == '/testset_maker' or self.path == '/testset_maker/'):
         self.send_response(HTTPStatus.MOVED_PERMANENTLY)
         self.send_header('Location', '/testset_maker/0')
         self.send_header('Content-Length', '0')
         self.end_headers()
         return None
-    if (self.path.count('/testset_maker/')):
+    elif '/testset_maker' in self.path:
       # one-indexed
-      if "id=" in self.path:
-        searched_label_id = self.path[self.path.index("=") + 1:]
+      if "search=" in self.path:
+        searched_label_id = urllib.parse.unquote(self.path[self.path.index("=") + 1:])
         if searched_label_id in label_ids_to_csv_indices.keys():
           index = label_ids_to_csv_indices[searched_label_id]
         else:
@@ -99,20 +115,7 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
       else:
         index = int(self.path.replace('/testset_maker/', '').partition('?')[0])
       img_id = csv_list[index][0].replace('.jpg', '')
-      if self.path.count('?'):
-        form_data = self.path.partition('?')[2]
-        if form_data != '':
-          label_ids = list(map(int, form_data.replace('=on','').split('&')))
-        else:
-          label_ids = []
-        csv_list[index][1] = label_ids
-        save_to_file()
-        self.send_response(HTTPStatus.MOVED_PERMANENTLY)
-        self.send_header('Location', '/testset_maker/' + str(index + 1))
-        self.send_header('Cache-Control', 'no-store')
-        self.send_header('Content-Length', '0')
-        self.end_headers()
-        return None
+
       text = """
       <h2 style="display: flex; justify-content: center; margin-top: 25px;">Crop #{}/{}</h2>
       <h3 style="display: flex; justify-content: center;">Label ID: {}</h3>
@@ -121,7 +124,7 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
       </div>
       <div style="display: flex; justify-content: center; margin-top: 15px;">
         <a href="/testset_maker/{}" style="margin-right: 125px;">Prev</a>
-        <form method="get">
+        <form method="get" action="/save{}">
           <div>
             <input type="checkbox" id="1" name="1" {}>
             <label for="1"> Curb Ramp</label><br>
@@ -144,35 +147,21 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
         </form>
         <a href="/testset_maker/{}" style="margin-left: 125px;">Next</a>
       </div>
-
-      <script type="text/javascript">
-        const submitSearch = () => {{
-          const fileId = document.getElementById('search').value;
-          window.location.assign("id=" + fileId);
-        }}
-      </script>
       <div style="display: flex; justify-content: center; margin-top: 15px;">
-          Search by label ID:
-          <input type="text" id="search">
-          <button onclick="submitSearch()" id="go">go</button>
+        <form action="/testset_maker">
+            Search by label ID:
+            <input type="text" name="search" id="search">
+            <button type="submit" id="go">go</button>
+        </form>
       </div>
-      <script type="text/javascript">
-        const searchBox = document.getElementById('search');
-        searchBox.addEventListener("keyup", event => {{
-          event.preventDefault();
-          console.log('pressed');
-          if (event.keyCode === 13) {{
-            document.getElementById("go").click();
-          }}
-        }});
-      </script>
       """.format(
         index + 1,
         len(csv_list),
         img_id,
         CROPS_DIRECTORY,
         img_id, 
-        index - 1 if index > 0 else index, 
+        index - 1 if index > 0 else index,
+        index,
         'checked' if csv_list[index][1].count(1) else '', 
         'checked' if csv_list[index][1].count(2) else '', 
         'checked' if csv_list[index][1].count(3) else '', 
