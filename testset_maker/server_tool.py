@@ -82,7 +82,6 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
     return path
 
   def send_head(self):
-    print(self.path)
     if '/save' in self.path:
       index = int(self.path[self.path.index("?") - 1])
       form_data = self.path.partition('?')[2]
