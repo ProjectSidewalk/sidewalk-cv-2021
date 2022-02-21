@@ -19,16 +19,35 @@ from http import HTTPStatus
 
 PORT = 40296
 TESTSET_PATH = '../datasets/test_set.csv'
-DIRECTORY = '/tmp/datasets/'
+ROOT_DIRECTORY = '/tmp/datasets'
+CROPS_DIRECTORY = '/crops/'
 
 csv_in = open(TESTSET_PATH, 'r')
 csv_reader = csv.reader(csv_in)
 next(csv_reader)
 csv_list = []
-for row in csv_reader:
+label_ids_to_csv_indices = dict()
+for index, row in enumerate(csv_reader):
   filename = row[0]
   label_ids = eval(row[1])
   csv_list.append([filename, label_ids])
+
+
+  # different filename formats that are accepted by search tool
+  acceptable_filenames = [filename]
+
+  # without extension
+  acceptable_filenames.append(filename[:filename.index('.jpg')]) 
+  # without _0 size indicator at end or extension
+  acceptable_filenames.append(filename[:filename.index("_0")])
+  # without city prefix or extension
+  acceptable_filenames.append(filename[filename.index("/") + 1:filename.index(".jpg")])
+  # without city prefix or _0 size indicator at end or extension
+  acceptable_filenames.append(filename[filename.index("/") + 1:filename.index("_0")])
+
+  for name in acceptable_filenames:
+    label_ids_to_csv_indices[name] = index
+
 
 def save_to_file():
   csv_out = open(TESTSET_PATH, 'w')
@@ -53,7 +72,7 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
     path = posixpath.normpath(path)
     words = path.split('/')
     words = filter(None, words)
-    path = DIRECTORY
+    path = ROOT_DIRECTORY
     for word in words:
         if os.path.dirname(word) or word in (os.curdir, os.pardir):
             continue
@@ -65,12 +84,20 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
   def send_head(self):
     if (self.path == '/testset_maker'):
         self.send_response(HTTPStatus.MOVED_PERMANENTLY)
-        self.send_header('Location', '/testset_maker/1')
+        self.send_header('Location', '/testset_maker/0')
         self.send_header('Content-Length', '0')
         self.end_headers()
         return None
     if (self.path.count('/testset_maker/')):
-      index = int(self.path.replace('/testset_maker/', '').partition('?')[0]) - 1
+      # one-indexed
+      if "id=" in self.path:
+        searched_label_id = self.path[self.path.index("=") + 1:]
+        if searched_label_id in label_ids_to_csv_indices.keys():
+          index = label_ids_to_csv_indices[searched_label_id]
+        else:
+          index = 0
+      else:
+        index = int(self.path.replace('/testset_maker/', '').partition('?')[0])
       img_id = csv_list[index][0].replace('.jpg', '')
       if self.path.count('?'):
         form_data = self.path.partition('?')[2]
@@ -90,7 +117,7 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
       <h2 style="display: flex; justify-content: center; margin-top: 25px;">Crop #{}/{}</h2>
       <h3 style="display: flex; justify-content: center;">Label ID: {}</h3>
       <div style="display: flex; justify-content: center;">
-        <img src="/crops/{}_0.jpg" width="500" height="500"></img>
+        <img src="{}{}.jpg" width="500" height="500"></img>
       </div>
       <div style="display: flex; justify-content: center; margin-top: 15px;">
         <a href="/testset_maker/{}" style="margin-right: 125px;">Prev</a>
@@ -117,10 +144,33 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
         </form>
         <a href="/testset_maker/{}" style="margin-left: 125px;">Next</a>
       </div>
+
+      <script type="text/javascript">
+        const submitSearch = () => {{
+          const fileId = document.getElementById('search').value;
+          window.location.assign("id=" + fileId);
+        }}
+      </script>
+      <div style="display: flex; justify-content: center; margin-top: 15px;">
+          Search by label ID:
+          <input type="text" id="search">
+          <button onclick="submitSearch()" id="go">go</button>
+      </div>
+      <script type="text/javascript">
+        const searchBox = document.getElementById('search');
+        searchBox.addEventListener("keyup", event => {{
+          event.preventDefault();
+          console.log('pressed');
+          if (event.keyCode === 13) {{
+            document.getElementById("go").click();
+          }}
+        }});
+      </script>
       """.format(
         index + 1,
         len(csv_list),
         img_id,
+        CROPS_DIRECTORY,
         img_id, 
         index - 1 if index > 0 else index, 
         'checked' if csv_list[index][1].count(1) else '', 
