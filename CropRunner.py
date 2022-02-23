@@ -16,35 +16,18 @@ path to the folder containing these files.
 
 import csv
 import logging
-import math
 import multiprocessing as mp
 import numpy as np
+import os
+import pandas as pd
 from itertools import islice
 from time import perf_counter
-from PIL import Image, ImageDraw
-import os
 
-from PIL import ImageFile
+from PIL import Image, ImageDraw, ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-# *****************************************
-# Update paths below                      *
-# *****************************************
-
-# Path to CSV data from database - Place in 'metadata'
-csv_export_path = "metadata/gathered_panos.csv"
-# Path to panoramas downloaded using DownloadRunner.py. Reference correct directory
-gsv_pano_path = "../pano-downloads"
-# Path to location for saving the crops
-destination_path = "crops"
-# Name of csv containing info about crops
-csv_crop_info = "crop_info.csv"
-
-# Mark the center of the crop?
-mark_center = True
-
 # The number of crops per multicrop
-MULTICROP_COUNT = 2
+MULTICROP_COUNT = 1
 
 # The scale factor for each multicrop
 MULTICROP_SCALE_FACTOR = 1.5
@@ -261,15 +244,15 @@ def make_crop(pano_img_path, label_pov, photographer_heading, photographer_pitch
         print(e)
         print("Error for {}".format(pano_img_path))
 
-    return crop_names
+    return crop_names, (x, y), img_dim
 
-def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, mark_label=False):
+def bulk_extract_crops(data_chunk, path_to_gsv_scrapes, destination_dir, output_csv, panos):
     t_start = perf_counter()
     # create reader to read input csv with pano info
-    csv_file = open(path_to_db_export)
-    csv_f = csv.reader(csv_file)
-    label_list = list(csv_f)
-    row_count = len(label_list)
+    # csv_file = open(path_to_db_export)
+    # csv_f = csv.reader(csv_file)
+    # label_list = list(csv_f)
+    row_count = len(data_chunk)
 
     # make the output directory if needed
     if not os.path.isdir(destination_dir):
@@ -284,13 +267,12 @@ def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, 
 
         lock = mp.Lock()
 
-        # split label csv into chunks for multiprocessing
-        # 1-index to ignore header row
-        i = 1
+        # split data_chunk into sub-chunks for multiprocessing
+        i = 0
         processes = []
         while i < row_count:
             chunk_size = (row_count - i) // cpu_count
-            labels = list(islice(label_list, i, i + chunk_size))
+            labels = data_chunk.iloc[i:i + chunk_size, :]# list(islice(label_list, i, i + chunk_size))
             process = mp.Process(target=crop_label_subset, args=(labels, output_rows, path_to_gsv_scrapes, destination_dir, lock))
             processes.append(process)
             cpu_count -= 1
@@ -307,17 +289,22 @@ def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, 
         # create writer to write output csv with crop info
         # TODO: for now, we will just have image_name point to a cropped jpg as model input 
         # and label_type as the output
-        fields = ['image_name', 'label_type']
-        csv_out = open(csv_crop_info, 'w')
-        csv_w = csv.writer(csv_out)
-        csv_w.writerow(fields)
         successful_crop_count = len(output_rows)
+        no_pano_fail = (row_count * MULTICROP_COUNT) - successful_crop_count
         # no_metadata_fail = 0
-        # don't count header row as a failed crop
-        no_pano_fail = ((row_count - 1) * MULTICROP_COUNT) - successful_crop_count
+        with open(output_csv, 'a+', newline='') as csv_out:
+            csv_w = csv.writer(csv_out)
+            for row in output_rows:
+                # row format: [crop_name, primary_label_type, pano_id, label_id, final_sv_position, pano_size]
+                csv_w.writerow(row[:3])
 
-        for row in output_rows:
-            csv_w.writerow(row)
+                # update final sv position per label
+                if row[2] in panos and row[3] in panos[row[2]].feats:
+                    if panos[row[2]].width is None and panos[row[2]].height is None:
+                        panos[row[2]].update_pano_size(row[5][0], row[5][1])
+
+                    label = panos[row[2]].feats[row[3]]
+                    label.finalize_sv_position(row[4][0], row[4][1])
 
         t_stop = perf_counter()
         execution_time = t_stop - t_start
@@ -325,13 +312,15 @@ def bulk_extract_crops(path_to_db_export, path_to_gsv_scrapes, destination_dir, 
         print("Finished Cropping.")
         print()
         
-        return [row_count - 1, successful_crop_count, no_pano_fail, execution_time]
+        return [row_count, successful_crop_count, no_pano_fail, execution_time]
 
 def crop_label_subset(input_rows, output_rows, path_to_gsv_scrapes, destination_dir, lock):
     counter = 0
     process_pid = os.getpid()
-    for row in input_rows:
+    input_rows_dict = input_rows.to_dict('records')
+    for row in input_rows_dict:
         counter += 1
+        row = list(row.values())
         pano_id = row[0]
         canvas_x = int(row[3])
         canvas_y = int(row[4])
@@ -363,16 +352,18 @@ def crop_label_subset(input_rows, output_rows, path_to_gsv_scrapes, destination_
         if os.path.exists(pano_img_path):
             crop_names = []
             if not label_type == 0:
+                # TODO: currently the only case being supported
                 label_name = str(row[13])
-                crop_names = make_crop(pano_img_path, label_pov, photographer_heading, photographer_pitch, destination_dir, label_name, lock, True)
+                crop_names, pos, pano_size = make_crop(pano_img_path, label_pov, photographer_heading, photographer_pitch, destination_dir, label_name, lock, True, False)
             else:
+                # TODO: this may need to be its own function since null cropping should be independent
                 # In order to uniquely identify null crops, we concatenate the pid of process they
                 # were generated on and the counter within the process to the name of the null crop.
                 label_name = "null_" + str(process_pid) + "_" +  str(counter)
-                crop_names = make_crop(pano_img_path, label_pov, photographer_heading, photographer_pitch, destination_dir, label_name, lock, False)
+                crop_names, pos, pano_size = make_crop(pano_img_path, label_pov, photographer_heading, photographer_pitch, destination_dir, label_name, lock, False, False)
 
             for crop_name in crop_names:
-                output_rows.append([crop_name, label_type])
+                output_rows.append([crop_name, label_type, pano_id, int(label_name), pos, pano_size])
         else:
             print("Panorama image not found.")
             try:
