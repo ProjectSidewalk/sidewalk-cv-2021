@@ -13,8 +13,11 @@ if not os.path.isdir(VISUALIZATIONS_PATH):
     print("made visualization folder")
     os.makedirs(VISUALIZATIONS_PATH)
 
-# set base path to test data folder
-BASE_PATH = "/tmp/datasets/"
+# set base path to training/test data folder
+IMAGE_BASE_PATH = "/tmp/datasets/"
+
+# set different base path for CSVs in case /tmp gets deleted
+CSV_BASE_PATH = "./datasets/"
 
 # save path for model weights
 MODEL_SAVE_FOLDER = "./models/"
@@ -62,8 +65,8 @@ image_transform = transforms.Compose([
   transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
-test_labels_csv_path = BASE_PATH + "CSV PATH"
-test_img_dir = BASE_PATH + "train_crops/"
+test_labels_csv_path = CSV_BASE_PATH + "CSV PATH"
+test_img_dir = IMAGE_BASE_PATH + "train_crops/"
 test_dataset = SidewalkCropsDataset(test_labels_csv_path, test_img_dir, transform=image_transform, eval=True)
 
 batch_size = 12
