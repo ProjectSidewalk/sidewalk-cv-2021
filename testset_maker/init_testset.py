@@ -3,7 +3,7 @@ import csv
 # Run init_testset.py to get `NUM_LABELS` of each label type
 # from `IN_PATH` and add it to the test set at `OUT_PATH`.
 
-IN_PATH = '/tmp/crop_info.csv'
+IN_PATH = '../datasets/seattle_crops.csv'
 OUT_PATH = '../datasets/test_set.csv'
 NUM_LABELS = 1000
 
