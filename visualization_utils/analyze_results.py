@@ -10,7 +10,7 @@ if not os.path.isdir(VISUALIZATIONS_PATH):
     os.makedirs(VISUALIZATIONS_PATH)
 
 SESSION_NAME = "with_nulls"
-TRAIN_SAVE_PATH = "../datasets/" + SESSION_NAME + ".pt"
+TRAIN_SAVE_PATH = "../models/" + SESSION_NAME + ".pt"
 label_types = {
     0: "null",
     1: "curb ramp",

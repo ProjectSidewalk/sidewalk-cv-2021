@@ -3,10 +3,13 @@ from enum import Enum
 import glob
 import pandas as pd
 
+DEFAULT_CSV_FOLDER = "/tmp/datasets/"
+
 class Operations(str, Enum):
     LOAD = "load"
     COMBINE = "combine"
     BINARIZE = "binarize"
+    BALANCE = "balance"
     SUBSET = "subset"
     FILTER = "filter"
     LABEL_CITY = "label_city"
@@ -23,8 +26,26 @@ def combine(dataset_dfs):
     return pd.concat(dataset_dfs)
 
 def binarize(dataframe, positive_class):
-    dataframe.loc[dataset_df['label_type'] != positive_class, 'label_type'] = 0
-    dataframe.loc[dataset_df['label_type'] == positive_class, 'label_type'] = 1
+    dataframe.loc[dataframe['label_type'] != positive_class, 'label_type'] = 0
+    dataframe.loc[dataframe['label_type'] == positive_class, 'label_type'] = 1
+
+def balance(dataframe, fraction_positive=.5):
+    positives = dataframe.loc[dataframe['label_type'] == 1]
+    negatives = dataframe.loc[dataframe['label_type'] == 0]
+
+    if len(negatives) > len(positives):
+        num_negatives = int(len(positives) * (1 - fraction_positive) / fraction_positive)
+        if num_negatives > len(negatives):
+            num_negatives = len(negatives)
+            num_positive = int(len(negatives) * fraction_positive / (1 - fraction_positive))
+            positives = positives = positives.sample(n=num_positive)
+
+        negatives = negatives.sample(n=num_negatives)
+    else:
+        num_positive = int(len(negatives) * fraction_positive / (1 - fraction_positive))
+        positives = positives.sample(n=num_positive)
+    
+    return combine([negatives, positives])
 
 def subset(dataframe, subset_size):
     return dataframe.sample(n=subset_size)
@@ -41,13 +62,13 @@ def output(dataframe, output_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--csv_folder", default="../datasets")
+    parser.add_argument("--csv_folder", default=DEFAULT_CSV_FOLDER)
     args = parser.parse_args()
 
     dataset_csv_folder = args.csv_folder
 
     # get a list of dataset csvs
-    csv_list = glob.glob(dataset_csv_folder + "/*.csv")
+    csv_list = glob.glob(dataset_csv_folder + "*.csv")
     print("The following CSVs are available:")
     for i in range(len(csv_list)):
         print(f'{i + 1}: {csv_list[i]}')
@@ -75,6 +96,7 @@ if __name__ == "__main__":
         elif command == Operations.LOAD:
             csv_idx = int(arguments[0]) - 1
             output_df = pd.read_csv(csv_list[csv_idx])
+            print("loaded")
         elif command == Operations.COMBINE:
             dataframes = [output_df] if output_df is not None else []
             for i in arguments:
@@ -82,27 +104,38 @@ if __name__ == "__main__":
                 dataframes.append(dataset_df)
             combined_df = combine(dataframes)
             output_df = combined_df
+            print("combined")
         elif command == Operations.BINARIZE:
             positive_class = int(arguments[0])
             if output_df is not None:
                 binarize(output_df, positive_class)
+                print("binarized")
+        elif command == Operations.BALANCE:
+            fraction_positive = float(arguments[0]) if arguments else .5
+            if output_df is not None:
+                output_df = balance(output_df, fraction_positive)
+                print("balanced")
         elif command == Operations.SUBSET:
             # right now just grabs a random subset of specified size
             subset_size = int(arguments[0])
             if output_df is not None:
                 output_df = subset(output_df, subset_size)
+                print("subsetted lol")
         elif command == Operations.FILTER:
             label_type = int(arguments[0])
             if output_df is not None:
                 output_df = filter(output_df, label_type)
+                print("filtered")
         elif command == Operations.LABEL_CITY:
             city = arguments[0]
             if output_df is not None:
                 label_city(output_df, city)
+                print("labeled")
         elif command == Operations.OUTPUT:
-            output_path = arguments[0]
+            output_path = dataset_csv_folder + arguments[0]
             if output_df is not None:
                 output(output_df, output_path)
+                print("saved")
                 output_df = None
         else:
             print("Unrecognized operation")

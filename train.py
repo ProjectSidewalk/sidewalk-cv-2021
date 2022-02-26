@@ -10,7 +10,10 @@ from torch.optim import lr_scheduler
 from torchvision import transforms
 
 # set base path to training/test data folder
-BASE_PATH = "/tmp/datasets/"
+IMAGE_BASE_PATH = "/tmp/datasets/"
+
+# set different base path for CSVs in case /tmp gets deleted
+CSV_BASE_PATH = "./datasets/"
 
 # name of model architecture
 MODEL_NAME = "MODEL NAME HERE"
@@ -70,8 +73,8 @@ if __name__ == "__main__":
   # having issues with CUDA running out of memory, so lowering batch size
   batch_size = 12
 
-  train_labels_csv_path = BASE_PATH + "CHECKPOINT SAVE PATH"
-  train_img_dir = BASE_PATH + "train_crops/"
+  train_labels_csv_path = CSV_BASE_PATH + "CSV PATH HERE"
+  train_img_dir = IMAGE_BASE_PATH + "train_crops/"
 
   # load our custom train/val sidewalk crops dataset
   train_val_dataset = SidewalkCropsDataset(train_labels_csv_path, train_img_dir, image_transform, eval=False)
