@@ -2,8 +2,10 @@ import argparse
 from enum import Enum
 import glob
 import pandas as pd
+import random
+import json
 
-DEFAULT_CSV_FOLDER = "/tmp/datasets/"
+DEFAULT_CSV_FOLDER = "../datasets/"
 
 class Operations(str, Enum):
     LOAD = "load"
@@ -25,13 +27,19 @@ def receive_operation():
 def combine(dataset_dfs):
     return pd.concat(dataset_dfs)
 
-def binarize(dataframe, positive_class):
-    dataframe.loc[dataframe['label_type'] != positive_class, 'label_type'] = 0
-    dataframe.loc[dataframe['label_type'] == positive_class, 'label_type'] = 1
+def binarize(dataframe, positive_class, is_label_set=True):
+    if is_label_set:
+        dataframe.loc[dataframe['label_set'].str.contains(str(positive_class)) == False, 'label_type'] = 0
+        dataframe.loc[dataframe['label_set'].str.contains(str(positive_class)), 'label_type'] = 1
+        dataframe['label_type'] = dataframe['label_type'].astype(int)
+    else:
+        dataframe.loc[dataframe['label_type'] != positive_class, 'label_type'] = 0
+        dataframe.loc[dataframe['label_type'] == positive_class, 'label_type'] = 1
 
 def balance(dataframe, fraction_positive=.5):
     positives = dataframe.loc[dataframe['label_type'] == 1]
     negatives = dataframe.loc[dataframe['label_type'] == 0]
+
 
     if len(negatives) > len(positives):
         num_negatives = int(len(positives) * (1 - fraction_positive) / fraction_positive)
@@ -44,7 +52,7 @@ def balance(dataframe, fraction_positive=.5):
     else:
         num_positive = int(len(negatives) * fraction_positive / (1 - fraction_positive))
         positives = positives.sample(n=num_positive)
-    
+    print(len(combine([negatives, positives])))
     return combine([negatives, positives])
 
 def subset(dataframe, subset_size):
@@ -81,6 +89,7 @@ if __name__ == "__main__":
         print(operation.value)
 
     print()
+    print(random.choice([1, 2, 3, 4]))
 
     output_df = None
     
@@ -90,6 +99,7 @@ if __name__ == "__main__":
 
         print(command)
         print(arguments)
+
 
         if command == Operations.QUIT:
             break
