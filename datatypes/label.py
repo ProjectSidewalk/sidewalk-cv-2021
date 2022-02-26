@@ -52,10 +52,7 @@ class Label(object):
             return Point(self.final_sv_image_x, self.final_sv_image_y)
         return Point(self.sv_image_x, self.sv_image_y)
     
-    # def __str__(self):
-    #     label = GSVutils.utils.label_from_int[self.label_type-1]
-    #     return '{} at {}'.format(label, self.point() )
-    
+    # TODO: remove since we may no longer need this now that we're batching
     @classmethod
     def header_row(cls):
         row = ['gsv_panorama_id', 'sv_image_x', 'sv_image_y', 'canvas_x', 'canvas_y', 'canvas_width', 'canvas_height', 'zoom', 'label_type_id',

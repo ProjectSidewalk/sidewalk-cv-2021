@@ -1,30 +1,13 @@
-"""
-** Crop Extractor for Project Sidewalk **
-
-Given label metadata from the Project Sidewalk database, this script will
-extract JPEG crops of the features that have been labeled. The required metadata
-may be obtained by running the SQL query in "samples/getFullLabelList.sql" on the
-Sidewalk database, and exporting the results in CSV format. You must supply the
-path to the CSV file containing this data below. You can find an example of what
-this file should look like in "samples/labeldata.csv".
-
-Additionally, you should have downloaded original panorama
-images from Street View using DownloadRunner.py. You will need to supply the
-path to the folder containing these files.
-
-"""
-
 import csv
 import logging
 import multiprocessing as mp
 import numpy as np
 import os
-import pandas as pd
-from itertools import islice
-from time import perf_counter
 
 from PIL import Image, ImageDraw, ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
+
+from time import perf_counter
 
 # The number of crops per multicrop
 MULTICROP_COUNT = 1
@@ -37,6 +20,7 @@ CANVAS_HEIGHT = 480
 
 logging.basicConfig(filename='crop.log', level=logging.DEBUG)
 
+# TODO: reimplement for future study
 def predict_crop_size(sv_image_y):
     """
     # Calculate distance from point to image center
@@ -144,18 +128,6 @@ def label_point(label_pov, photographer_pov, img_dim):
     return round(final_point[0]), round(final_point[1])
 
 def make_crop(pano_img_path, label_pov, photographer_heading, photographer_pitch, destination_dir, label_name, lock, multicrop=True, draw_mark=True):
-    """
-    Makes a crop around the object of interest
-    :param path_to_image: where the GSV pano is stored
-    :param sv_image_x: position
-    :param sv_image_y: position
-    :param PanoYawDeg: heading
-    :param destination_dir: path of the crop directory
-    :param label_name: label name
-    :param multicrop: whether or not to make multiple crops for the label
-    :param draw_mark: if a dot should be drawn in the centre of the object/image
-    :return: crop_names: a list of crop_names
-    """
     crop_names = []
     try:
         im = Image.open(pano_img_path)
@@ -187,15 +159,6 @@ def make_crop(pano_img_path, label_pov, photographer_heading, photographer_pitch
         x, y = label_point(label_pov, photographer_pov, img_dim)
         print(x, y)
 
-        # y_adjustment = im_height * photographer_pitch / 180
-
-        # x = ((float(pano_yaw_deg) / 360) * im_width + sv_image_x) % im_width
-        # y = im_height / 2 - sv_image_y
-
-        # new_y = im_height / 2 - sv_image_y + y_adjustment
-
-        # print("old y, new y: ", old_y, y)
-
         r = 20
         if draw_mark:
             lock.acquire()
@@ -203,9 +166,6 @@ def make_crop(pano_img_path, label_pov, photographer_heading, photographer_pitch
             im.save(pano_img_path)
             lock.release()
 
-        # print("Plotting at " + str(x) + "," + str(y) + " using yaw " + str(pano_yaw_deg))
-
-        # print(x, y)
         for i in range(MULTICROP_COUNT):
             top_left_x = int(x - crop_width / 2)
             top_left_y = int(y - crop_height / 2)
@@ -248,10 +208,6 @@ def make_crop(pano_img_path, label_pov, photographer_heading, photographer_pitch
 
 def bulk_extract_crops(data_chunk, path_to_gsv_scrapes, destination_dir, output_csv, panos):
     t_start = perf_counter()
-    # create reader to read input csv with pano info
-    # csv_file = open(path_to_db_export)
-    # csv_f = csv.reader(csv_file)
-    # label_list = list(csv_f)
     row_count = len(data_chunk)
 
     # make the output directory if needed
@@ -272,7 +228,7 @@ def bulk_extract_crops(data_chunk, path_to_gsv_scrapes, destination_dir, output_
         processes = []
         while i < row_count:
             chunk_size = (row_count - i) // cpu_count
-            labels = data_chunk.iloc[i:i + chunk_size, :]# list(islice(label_list, i, i + chunk_size))
+            labels = data_chunk.iloc[i:i + chunk_size, :]
             process = mp.Process(target=crop_label_subset, args=(labels, output_rows, path_to_gsv_scrapes, destination_dir, lock))
             processes.append(process)
             cpu_count -= 1
@@ -291,7 +247,6 @@ def bulk_extract_crops(data_chunk, path_to_gsv_scrapes, destination_dir, output_
         # and label_type as the output
         successful_crop_count = len(output_rows)
         no_pano_fail = (row_count * MULTICROP_COUNT) - successful_crop_count
-        # no_metadata_fail = 0
         with open(output_csv, 'a+', newline='') as csv_out:
             csv_w = csv.writer(csv_out)
             for row in output_rows:

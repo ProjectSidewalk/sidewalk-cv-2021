@@ -20,9 +20,6 @@ class Panorama(object):
 
         if self.photog_pitch is None:
             self.photog_pitch = feat.photographer_pitch
-        
-        # if feat.label_id not in self.feats:
-        #     self.feats[feat.label_type] = []
 
         if feat.label_id not in self.feats:
             self.feats[feat.label_id] = feat

@@ -3,16 +3,17 @@ import math
 import multiprocessing as mp
 import os
 import pandas as pd
+import re
 
 from CropRunner import bulk_extract_crops
 from PanoScraper import bulk_scrape_panos, clean_panos
 from time import perf_counter
 
 # current city we are gathering data for
-CITY = "seattle"
+CITY = "spgg"
 
 # the raw label data
-PATH_TO_LABELDATA_CSV = f'rawdata/labels-cv-2-9-2022-{CITY}.csv'
+PATH_TO_LABELDATA_CSV = 'rawdata/test.csv' #f'rawdata/labels-cv-2-9-2022-{CITY}.csv'
 
 # the local directory panos will be downloaded to
 LOCAL_DIR = 'pano-downloads/'
@@ -30,8 +31,13 @@ CSV_CROP_INFO = "crop_info.csv"
 FINAL_CROP_CSV = "final_crop_info.csv"
 
 def get_nearest_label_types(crop_info, panos, threshold=750):
-    # remove the suffix we append to get image name
-    label_id = int(crop_info[0][:-6])
+    # remove the suffix we append to get image name by splitting
+    # at first occurence of non-digit character
+    # TODO: Note this will likely only work for crops prefixed with the label_id.
+    #       We may consider a different strategy when acquiring null crops
+    res = re.search(r'\D+', crop_info[0]).start()
+    label_id = int(crop_info[0][:res])
+    print(label_id)
     current_label_type = crop_info[1]
     pano_id = crop_info[2]
     curr_pano = panos[pano_id]
@@ -43,6 +49,8 @@ def get_nearest_label_types(crop_info, panos, threshold=750):
     # add current label
     label_set.add(current_label_type)
 
+    # check to see which features are in range of the dominant label of the crop
+    # to account for the label in the label set of the crop
     for _, label in curr_pano.feats.items():
         curr_label_point = current_label.point()
         other_label_point = label.point()
@@ -58,10 +66,6 @@ def get_nearest_label_types(crop_info, panos, threshold=750):
     return final_list
 
 if __name__ ==  '__main__':
-    # scrape panos from SFTP server
-    # n = 20
-    # start_row = 1
-
     print("CPU count: ", mp.cpu_count())
 
     # local directory to write to (relative to shell root)
@@ -71,8 +75,8 @@ if __name__ ==  '__main__':
     # A datastructure containing panorama and associated label data
     panos = {}
 
-    # create output dataset csv
-    # TODO: modify this so that we have a label set not just a single label type
+    # TODO: probably want to not do this
+    # create intermediary output dataset csv
     with open(CSV_CROP_INFO, 'w', newline='') as csv_out:
         fields = ['image_name', 'label_set', 'pano_id']
         csv_w = csv.writer(csv_out)
@@ -83,11 +87,8 @@ if __name__ ==  '__main__':
 
     t_start = perf_counter()
     for chunk in pd.read_csv(PATH_TO_LABELDATA_CSV, chunksize=10000):
-
-        # output_csv_name = 'gathered_panos.csv'
-        # gather panos for current data batch
+        # gather panos for current data batch then scrape panos from SFTP server
         pano_set_size, scraper_exec_time = bulk_scrape_panos(chunk, panos, LOCAL_DIR, REMOTE_DIR)
-        # bulk_scrape_panos(n, start_row, PATH_TO_LABELDATA_CSV, local_dir, remote_dir, output_csv_name)
 
         # clean panos
         clean_time = clean_panos(LOCAL_DIR)
@@ -122,7 +123,8 @@ if __name__ ==  '__main__':
     t_stop = perf_counter()
     total_execution_time = t_stop - t_start
 
-    # adjust label sets to be multi-sets
+    # TODO: might want to remove
+    # sanity checks
     total_count = 0
     for _, pano in panos.items():
         if pano.width is None and pano.height is None:
@@ -144,31 +146,3 @@ if __name__ ==  '__main__':
     print(f'Total successful crop extractions: {total_successful_extractions}')
     print(f'Total failed extractions: {total_failed_extractions}')
     print(f'Total execution time in seconds: {total_execution_time}')
-
-
-
-    # # clean panos
-    # gsv_pano_path = 'pano-downloads'
-    # clean_time = clean_panos(gsv_pano_path)
-
-    # # crop labels with scrapped panos
-    # csv_export_path = 'pano-downloads/gathered_panos.csv'
-    # destination_path = 'crops'
-    # metrics = bulk_extract_crops(csv_export_path, gsv_pano_path, destination_path, mark_label=False)
-
-    # # output execution metrics
-    # print("====================================================================================================")
-    # print("Pano Scraping metrics:")
-    # print("Elapsed time scraping {} panos for {} labels in seconds:".format(pano_set_size, n),
-    #                                         scraper_exec_time)
-    # print()
-    # print("Pano Cleaning metrics:")
-    # print("Elapsed time cleaning {} panos in seconds:".format(pano_set_size),
-    #                                         clean_time)
-    # print()
-    # print("Label Cropping metrics:")
-    # print(str(metrics[1]) + " successful crop extractions")
-    # print(str(metrics[2]) + " extractions failed because panorama image was not found.")
-    # print("Elapsed time during bulk cropping in seconds for {} labels:".format(metrics[0]),
-    #                                         metrics[3])
-
