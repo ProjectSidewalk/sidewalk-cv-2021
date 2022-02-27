@@ -89,7 +89,6 @@ if __name__ == "__main__":
         print(operation.value)
 
     print()
-    print(random.choice([1, 2, 3, 4]))
 
     output_df = None
     
