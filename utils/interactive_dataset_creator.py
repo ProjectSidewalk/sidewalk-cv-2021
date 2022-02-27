@@ -1,9 +1,12 @@
 import argparse
 from enum import Enum
+from ast import literal_eval
 import glob
 import pandas as pd
+import random
+import json
 
-DEFAULT_CSV_FOLDER = "/tmp/datasets/"
+DEFAULT_CSV_FOLDER = "../datasets/"
 
 class Operations(str, Enum):
     LOAD = "load"
@@ -20,18 +23,24 @@ def receive_operation():
     print("Provide an operation")
     operation = input()
     operation_components = operation.split()
-    return operation_components[0], operation_components[1:] if len(operation_components) > 1 else None
+    if len(operation_components):
+        return operation_components[0], operation_components[1:] if len(operation_components) > 1 else None
+    else:
+        return None, None
 
 def combine(dataset_dfs):
     return pd.concat(dataset_dfs)
 
-def binarize(dataframe, positive_class):
-    dataframe.loc[dataframe['label_type'] != positive_class, 'label_type'] = 0
-    dataframe.loc[dataframe['label_type'] == positive_class, 'label_type'] = 1
+def binarize(dataframe, positive_class, is_label_set=True):
+    if is_label_set:
+        dataframe['label_type'] = dataframe['label_set'].apply(lambda labels: int(positive_class in labels))
+    else:
+        dataframe['label_type'] = (dataframe['label_type'] == positive_class).astype(int)
 
 def balance(dataframe, fraction_positive=.5):
     positives = dataframe.loc[dataframe['label_type'] == 1]
     negatives = dataframe.loc[dataframe['label_type'] == 0]
+
 
     if len(negatives) > len(positives):
         num_negatives = int(len(positives) * (1 - fraction_positive) / fraction_positive)
@@ -44,7 +53,6 @@ def balance(dataframe, fraction_positive=.5):
     else:
         num_positive = int(len(negatives) * fraction_positive / (1 - fraction_positive))
         positives = positives.sample(n=num_positive)
-    
     return combine([negatives, positives])
 
 def subset(dataframe, subset_size):
@@ -91,24 +99,26 @@ if __name__ == "__main__":
         print(command)
         print(arguments)
 
+
         if command == Operations.QUIT:
             break
         elif command == Operations.LOAD:
             csv_idx = int(arguments[0]) - 1
-            output_df = pd.read_csv(csv_list[csv_idx])
+            output_df = pd.read_csv(csv_list[csv_idx], converters={'label_set': eval})
             print("loaded")
         elif command == Operations.COMBINE:
             dataframes = [output_df] if output_df is not None else []
             for i in arguments:
-                dataset_df = pd.read_csv(csv_list[int(i) - 1])
+                dataset_df = pd.read_csv(csv_list[int(i) - 1], converters={'label_set': eval})
                 dataframes.append(dataset_df)
             combined_df = combine(dataframes)
             output_df = combined_df
             print("combined")
         elif command == Operations.BINARIZE:
             positive_class = int(arguments[0])
+            is_label_set = int(arguments[1]) if len(arguments) > 1 else True
             if output_df is not None:
-                binarize(output_df, positive_class)
+                binarize(output_df, positive_class, is_label_set)
                 print("binarized")
         elif command == Operations.BALANCE:
             fraction_positive = float(arguments[0]) if arguments else .5
