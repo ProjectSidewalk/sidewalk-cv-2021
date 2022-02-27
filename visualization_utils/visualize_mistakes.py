@@ -9,10 +9,11 @@ from PIL import Image, ImageOps
 from torchvision import transforms
 
 
-SESSION_NAME = "curb_ramp_balanced"
-MISTAKES_SAVE_PATH = "../visualizations/" + SESSION_NAME + "_mistakes"
-FALSE_POSITIVES_SAVE_PATH = "../visualizations/" + SESSION_NAME + "_false_positives"
-FALSE_NEGATIVES_SAVE_PATH = "../visualizations/" + SESSION_NAME + "_false_negatives"
+SESSION_NAME = 'SESSION NAME HERE'
+MISTAKES_SAVE_PATH = '../visualizations/' + SESSION_NAME + '_mistakes'
+IMAGE_BASE_PATH = "/tmp/datasets/crops/"
+FALSE_POSITIVES_SAVE_PATH = '../visualizations/' + SESSION_NAME + '_false_positives'
+FALSE_NEGATIVES_SAVE_PATH = '../visualizations/' + SESSION_NAME + '_false_negatives'
 
 CROP_SIZE = 1250
 
@@ -21,17 +22,17 @@ IMAGES_PER_COL = 3
 IMAGE_SIZE = 5
 IMAGES_PER_PLOT = IMAGES_PER_ROW * IMAGES_PER_COL
 label_types = {
-    0: "null",
-    1: "curb ramp",
-    2: "missing curb ramp",
-    3: "obstacle", 
-    4: "surface problem"
+    0: 'null',
+    1: 'curb ramp',
+    2: 'missing curb ramp',
+    3: 'obstacle', 
+    4: 'surface problem'
 }
 
 def add_border(image, mistake_type):
     width, height = image.size
     pixels = image.load()
-    color = (255, 0, 0) if mistake_type == "false positives" else (255, 215, 0)
+    color = (255, 0, 0) if mistake_type == 'false positives' else (255, 215, 0)
 
     for y in range(0, 20):
         for x in range(0, width):
@@ -66,28 +67,30 @@ def make_plots(mistakes, num_plots, mistake_type):
         plot_rows = mistakes.iloc[start_row:end_row]
         plot_rows.reset_index(drop=True, inplace=True)
         fig = plt.figure(num=1, figsize=(IMAGES_PER_ROW * IMAGE_SIZE, IMAGES_PER_COL * IMAGE_SIZE))
-        fig.suptitle(f"{SESSION_NAME} {mistake_type} {plot_idx}", fontsize=30)
+        fig.suptitle(f'{SESSION_NAME} {mistake_type} {plot_idx}', fontsize=30)
         for i, mistake in plot_rows.iterrows():
             image = Image.open(f'{mistake["image path"]}')
 
             image = crop(image)
             add_border(image, mistake_type)
 
+            path = mistake["image path"][len(IMAGE_BASE_PATH):]
             predicted = label_types[mistake['prediction']]
             actual = label_types[mistake['ground truth']]
+            confidence = mistake['confidence']
             ax = plt.subplot(IMAGES_PER_COL, IMAGES_PER_ROW, i+1)
-            plt.axis("off")
-            ax.set_title(f"{mistake['image path'][28:]}\npred: {predicted}\n actual: {actual}", fontsize=15)
+            plt.axis('off')
+            ax.set_title(f'{path}\npred: {predicted}, actual: {actual}\n confidence: {confidence:.4f}', fontsize=15)
             ax.spines['bottom'].set_color('0.5')
             plt.imshow(image)
-        save_path = FALSE_POSITIVES_SAVE_PATH if mistake_type == "false positives" else FALSE_NEGATIVES_SAVE_PATH
-        plt.savefig(f"{save_path}{plot_idx}.png", bbox_inches="tight")
-        print("done")
+        save_path = FALSE_POSITIVES_SAVE_PATH if mistake_type == 'false positives' else FALSE_NEGATIVES_SAVE_PATH
+        plt.savefig(f'{save_path}{plot_idx}.png', bbox_inches='tight')
+        print('done')
         plt.clf()
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     num_plots = int(sys.argv[1]) if len(sys.argv) > 1 else 5
-    all_mistakes = pd.read_csv(f"{MISTAKES_SAVE_PATH}.csv")
+    all_mistakes = pd.read_csv(f'{MISTAKES_SAVE_PATH}.csv')
     all_mistakes = all_mistakes.sample(frac=1, random_state=1).reset_index(drop=True)
 
     print(len(all_mistakes))
@@ -95,7 +98,7 @@ if __name__ == "__main__":
     false_negatives = all_mistakes[all_mistakes['prediction'] == 0]
     false_positives = all_mistakes[all_mistakes['prediction'] != 0]
 
-    make_plots(false_negatives, num_plots, "false negatives")
-    make_plots(false_positives, num_plots, "false positives")
+    make_plots(false_negatives, num_plots, 'false negatives')
+    make_plots(false_positives, num_plots, 'false positives')
 
     
