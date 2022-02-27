@@ -26,7 +26,7 @@ MODEL_SAVE_FOLDER = "./models/"
 MODEL_NAME = "MODEL NAME HERE"
 
 # number of output classes
-NUM_CLASSES = 2 # (1,2,3,4) for label types, 0 for null crops
+NUM_CLASSES = "NUM CLASSES"
 
 # the actual classes
 CLASSES = ["null", "curb ramp", "missing ramp", "obstruction", "sfc problem"]
@@ -36,7 +36,7 @@ SESSION_NAME = "SESSION NAME HERE"
 PRETRAINED_SAVE_PATH = MODEL_SAVE_FOLDER + SESSION_NAME + ".pt"
 
 # for zoom testing
-CROP_SIZE = 1250
+CROP_SIZE = "CROP SIZE HERE"
 
 # check for GPU
 if torch.cuda.is_available():  
