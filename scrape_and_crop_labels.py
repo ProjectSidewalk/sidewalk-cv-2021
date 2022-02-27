@@ -10,10 +10,10 @@ from PanoScraper import bulk_scrape_panos, clean_panos
 from time import perf_counter
 
 # current city we are gathering data for
-CITY = "spgg"
+CITY = "CITY HERE"
 
 # the raw label data
-PATH_TO_LABELDATA_CSV = 'rawdata/test.csv' #f'rawdata/labels-cv-2-9-2022-{CITY}.csv'
+PATH_TO_LABELDATA_CSV = f'rawdata/labels-cv-2-9-2022-{CITY}.csv'
 
 # the local directory panos will be downloaded to
 LOCAL_DIR = 'pano-downloads/'
