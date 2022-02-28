@@ -14,7 +14,7 @@ if not os.path.isdir(VISUALIZATIONS_PATH):
     os.makedirs(VISUALIZATIONS_PATH)
 
 # set base path to training/test data folder
-IMAGE_BASE_PATH = "/tmp/datasets/"
+IMAGE_BASE_PATH = "/tmp/datasets/crops/"
 
 # set different base path for CSVs in case /tmp gets deleted
 CSV_BASE_PATH = "./datasets/"
@@ -26,13 +26,13 @@ MODEL_SAVE_FOLDER = "./models/"
 MODEL_NAME = "MODEL NAME HERE"
 
 # number of output classes
-NUM_CLASSES = "NUM CLASSES"  # (1,2,3,4) for label types, 0 for null crops
+NUM_CLASSES = "NUM CLASSES"
 
 # the actual classes
 CLASSES = ["null", "curb ramp", "missing ramp", "obstruction", "sfc problem"]
 
 # name of training session for loading purposes
-SESSION_NAME = "SESSION NAME"
+SESSION_NAME = "SESSION NAME HERE"
 PRETRAINED_SAVE_PATH = MODEL_SAVE_FOLDER + SESSION_NAME + ".pt"
 
 # for zoom testing
@@ -65,9 +65,8 @@ image_transform = transforms.Compose([
   transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
-test_labels_csv_path = CSV_BASE_PATH + "CSV PATH"
-test_img_dir = IMAGE_BASE_PATH + "train_crops/"
-test_dataset = SidewalkCropsDataset(test_labels_csv_path, test_img_dir, transform=image_transform, eval=True)
+test_labels_csv_path = CSV_BASE_PATH + "CSV NAME HERE"
+test_dataset = SidewalkCropsDataset(test_labels_csv_path, IMAGE_BASE_PATH, transform=image_transform, eval=True)
 
 batch_size = 12
 
