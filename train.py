@@ -16,19 +16,19 @@ IMAGE_BASE_PATH = "/tmp/datasets/"
 CSV_BASE_PATH = "./datasets/"
 
 # name of model architecture
-MODEL_NAME = "MODEL NAME HERE"
+MODEL_NAME = "hrnet"
 
 # number of output classes
-NUM_CLASSES = "NUM CLASSES"  # (1,2,3,4) for label types, 0 for null crops
+NUM_CLASSES = 2  # (1,2,3,4) for label types, 0 for null crops
 
 # name of training session for saving purposes
-TRAIN_SESSION_NAME = "SESSION NAME HERE"
+TRAIN_SESSION_NAME = "hrnet_surface_problem_binary_classification_unbalanced_new_data"
 
 # save path for model
 CHECKPOINT_SAVE_PATH = "./models/" + TRAIN_SESSION_NAME + ".pt"
 
 # for zoom testing
-CROP_SIZE = "CROP SIZE HERE"
+CROP_SIZE = 1250
 
 if __name__ == "__main__":
   # check for GPU
@@ -71,10 +71,10 @@ if __name__ == "__main__":
   ])
 
   # having issues with CUDA running out of memory, so lowering batch size
-  batch_size = 12
+  batch_size = 8
 
-  train_labels_csv_path = CSV_BASE_PATH + "CSV PATH HERE"
-  train_img_dir = IMAGE_BASE_PATH + "train_crops/"
+  train_labels_csv_path = CSV_BASE_PATH + "2-23-2022-surface-problem-unbalanced.csv"
+  train_img_dir = IMAGE_BASE_PATH + "crops/"
 
   # load our custom train/val sidewalk crops dataset
   train_val_dataset = SidewalkCropsDataset(train_labels_csv_path, train_img_dir, image_transform, eval=False)
@@ -98,7 +98,7 @@ if __name__ == "__main__":
 
   # =================================================================================================
   # train for n epochs
-  epochs = 26
+  epochs = 25
   dataLoaders = {
     "training": train_dataloader,
     "validation": val_dataloader
