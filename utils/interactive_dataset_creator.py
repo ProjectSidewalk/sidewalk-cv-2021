@@ -41,7 +41,6 @@ def balance(dataframe, fraction_positive=.5):
     positives = dataframe.loc[dataframe['label_type'] == 1]
     negatives = dataframe.loc[dataframe['label_type'] == 0]
 
-
     if len(negatives) > len(positives):
         num_negatives = int(len(positives) * (1 - fraction_positive) / fraction_positive)
         if num_negatives > len(negatives):
@@ -58,8 +57,9 @@ def balance(dataframe, fraction_positive=.5):
 def subset(dataframe, subset_size):
     return dataframe.sample(n=subset_size)
 
-def filter(dataframe, label_type):
-    # This function is incomplete
+def filter(dataframe, label_type, is_label_set=True):
+    if is_label_set:
+        return dataframe.loc[dataframe['label_set'].apply(lambda labels: label_type in labels)]
     return dataframe.loc[dataframe['label_type'] == label_type]
 
 def label_city(dataframe, city):
@@ -99,7 +99,6 @@ if __name__ == "__main__":
         print(command)
         print(arguments)
 
-
         if command == Operations.QUIT:
             break
         elif command == Operations.LOAD:
@@ -130,11 +129,12 @@ if __name__ == "__main__":
             subset_size = int(arguments[0])
             if output_df is not None:
                 output_df = subset(output_df, subset_size)
-                print("subsetted lol")
+                print("subsetted")
         elif command == Operations.FILTER:
             label_type = int(arguments[0])
+            is_label_set = int(arguments[1]) if len(arguments) > 1 else True
             if output_df is not None:
-                output_df = filter(output_df, label_type)
+                output_df = filter(output_df, label_type, is_label_set)
                 print("filtered")
         elif command == Operations.LABEL_CITY:
             city = arguments[0]
@@ -149,6 +149,3 @@ if __name__ == "__main__":
                 output_df = None
         else:
             print("Unrecognized operation")
-
-        
-
