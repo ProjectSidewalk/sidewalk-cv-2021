@@ -1,3 +1,4 @@
+import citysurfaces.network.hrnetv2 as hrnetv2
 import copy
 import numpy as np
 import os
@@ -5,11 +6,13 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torchvision
-import citysurfaces.network.hrnetv2 as hrnetv2
+import tqdm
+
 from architectures.two_model_ensemble import TwoModelEnsembleNet
 from sklearn.metrics import confusion_matrix
 from time import perf_counter
 from torch.optim import lr_scheduler
+from tqdm import tqdm
 
 
 CITYSURFACES_PRETRAINED_MODEL_PATH = "./models/block_c_10classes.pth"
@@ -143,13 +146,12 @@ def train(model, num_classes, is_inception, optimizer, scheduler, loss_func, epo
       pred_positive_counts = torch.zeros(num_classes).to(device)
       actual_positive_counts = torch.zeros(num_classes).to(device)
       true_positive_counts = torch.zeros(num_classes).to(device)
-      for inputs, labels in datasetLoaders[mode]:
+      for inputs, labels in tqdm(datasetLoaders[mode]):
         if is_two_model_ensemble:
           inputs_small, inputs_large, labels = inputs[0].to(device), inputs[1].to(device), labels.to(device)
         else:
           inputs, labels = inputs.to(device), labels.to(device)
         epoch_count += inputs_large.size(0) if is_two_model_ensemble else inputs.size(0)
-        print("epoch {}: percent {}".format(epoch, epoch_count / n))
         # For code brevity, we'll set the reset gradients for model params
         # with the intention of using it for training.
         # We'll use the set_grad_enabled to toggle whether we actually use the

@@ -16,13 +16,13 @@ IMAGE_BASE_PATH = "/tmp/datasets/"
 CSV_BASE_PATH = "./datasets/"
 
 # name of model architecture
-MODEL_NAME = "hrnet"
+MODEL_NAME = "MODEL NAME HERE"
 
 # number of output classes
-NUM_CLASSES = 2  # (1,2,3,4) for label types, 0 for null crops
+NUM_CLASSES = "NUM CLASSES HERE"
 
 # name of training session for saving purposes
-TRAIN_SESSION_NAME = "hrnet_surface_problem_binary_classification_unbalanced_new_data"
+TRAIN_SESSION_NAME = "SESSION NAME HERE"
 
 # save path for model
 CHECKPOINT_SAVE_PATH = "./models/" + TRAIN_SESSION_NAME + ".pt"
@@ -73,7 +73,7 @@ if __name__ == "__main__":
   # having issues with CUDA running out of memory, so lowering batch size
   batch_size = 8
 
-  train_labels_csv_path = CSV_BASE_PATH + "2-23-2022-surface-problem-unbalanced.csv"
+  train_labels_csv_path = CSV_BASE_PATH + "CSV NAME HERE"
   train_img_dir = IMAGE_BASE_PATH + "crops/"
 
   # load our custom train/val sidewalk crops dataset
