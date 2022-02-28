@@ -8,7 +8,7 @@ from http import HTTPStatus
 
 # Instructions for use:
 # 1. If ssh-ing, use 'ssh -L local_port:remote_ip:remote_port user@hostname.com'.
-#    For example, 'ssh -L 40296:rainbowdash:40296 shokiami@attu.cs.washington.edu'
+#    For example, 'ssh -L 40296:rainbowdash:40296 shokiami@attu.cs.washington.edu'.
 #    Make sure the port address matches `PORT`.
 # 2. If test_set.csv doesn't exist yet, run init_testset.py.
 # 3. Run server_tool.py.
@@ -32,7 +32,6 @@ for index, row in enumerate(csv_reader):
   label_ids = eval(row[1])
   csv_list.append([filename, label_ids])
 
-
   # different filename formats that are accepted by search tool
   acceptable_filenames = [filename]
 
@@ -47,7 +46,6 @@ for index, row in enumerate(csv_reader):
 
   for name in acceptable_filenames:
     label_ids_to_csv_indices[name] = index
-
 
 def save_to_file():
   csv_out = open(TESTSET_PATH, 'w')
