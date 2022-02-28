@@ -28,7 +28,7 @@ TRAIN_SESSION_NAME = "SESSION NAME HERE"
 CHECKPOINT_SAVE_PATH = "./models/" + TRAIN_SESSION_NAME + ".pt"
 
 # for zoom testing
-CROP_SIZE = 1250
+CROP_SIZE = "CROP SIZE HERE"
 
 if __name__ == "__main__":
   # check for GPU
