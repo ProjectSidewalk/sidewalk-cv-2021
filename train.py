@@ -19,7 +19,7 @@ CSV_BASE_PATH = "./datasets/"
 MODEL_NAME = "MODEL NAME HERE"
 
 # number of output classes
-NUM_CLASSES = "NUM CLASSES"  # (1,2,3,4) for label types, 0 for null crops
+NUM_CLASSES = "NUM CLASSES HERE"
 
 # name of training session for saving purposes
 TRAIN_SESSION_NAME = "SESSION NAME HERE"
@@ -71,10 +71,10 @@ if __name__ == "__main__":
   ])
 
   # having issues with CUDA running out of memory, so lowering batch size
-  batch_size = 12
+  batch_size = 8
 
-  train_labels_csv_path = CSV_BASE_PATH + "CSV PATH HERE"
-  train_img_dir = IMAGE_BASE_PATH + "train_crops/"
+  train_labels_csv_path = CSV_BASE_PATH + "CSV NAME HERE"
+  train_img_dir = IMAGE_BASE_PATH + "crops/"
 
   # load our custom train/val sidewalk crops dataset
   train_val_dataset = SidewalkCropsDataset(train_labels_csv_path, train_img_dir, image_transform, eval=False)
@@ -98,7 +98,7 @@ if __name__ == "__main__":
 
   # =================================================================================================
   # train for n epochs
-  epochs = 26
+  epochs = 25
   dataLoaders = {
     "training": train_dataloader,
     "validation": val_dataloader
