@@ -317,5 +317,6 @@ def evaluate(model, is_inception, loss_func, dataset_loader, test, mistakes_save
     # display a Confusion matrix
     conf_mat = confusion_matrix(lbllist.numpy(), predlist.numpy())
     print(conf_mat)
-
-  return  correct / n, total_loss / n, conf_mat, all_output_probabilities, all_ground_truths
+  print(f"Test accuracy: {correct / n}")
+  print(f"Test loss: {total_loss / n}")
+  return conf_mat, all_output_probabilities, all_ground_truths

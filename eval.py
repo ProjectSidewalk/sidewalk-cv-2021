@@ -86,9 +86,7 @@ test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_siz
 # =================================================================================================
 # evaluate loaded model on test set
 MISTAKES_SAVE_PATH = "./visualizations/" + SESSION_NAME + "_mistakes.csv"
-test_accuracy, test_loss, cm, output_probabilities, corresponding_ground_truths = evaluate(model, (MODEL_NAME == "inception"), loss_func, test_dataloader, True, MISTAKES_SAVE_PATH,device)
-print("Test accuracy for {} as FT: ".format(MODEL_NAME), test_accuracy)
-print("Test loss for {} as FT: ".format(MODEL_NAME), test_loss)
+cm, output_probabilities, corresponding_ground_truths = evaluate(model, (MODEL_NAME == "inception"), loss_func, test_dataloader, True, MISTAKES_SAVE_PATH,device)
 if cm is not None:
   plot_confusion_matrix(VISUALIZATIONS_PATH, SESSION_NAME, cm, CLASSES, normalize=True)
 
