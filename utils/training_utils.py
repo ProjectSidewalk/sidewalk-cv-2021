@@ -9,6 +9,7 @@ import torchvision
 import tqdm
 
 from architectures.two_model_ensemble import TwoModelEnsembleNet
+from architectures.coatnet import coatnet_0
 from sklearn.metrics import confusion_matrix
 from time import perf_counter
 from torch.optim import lr_scheduler
@@ -60,6 +61,11 @@ def get_pretrained_model(model_name, num_classes, use_pretrained=True):
     """ Maryam's custom architecture trained on her citysurfaces dataset
     """
     model = hrnetv2.get_hrnet_with_citysurface_weights(CITYSURFACES_PRETRAINED_MODEL_PATH, num_classes)
+    input_size = 224
+  elif model_name == "coatnet":
+    """ CoAtNet 0
+    """
+    model = coatnet_0(num_classes)
     input_size = 224
   else:
     print("Invalid model name, exiting...")
