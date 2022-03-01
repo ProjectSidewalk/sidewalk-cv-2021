@@ -185,7 +185,7 @@ def train(model, num_classes, is_inception, optimizer, scheduler, loss_func, epo
             if is_cyclic_lr:
               scheduler.step()
         
-        correct_preds = torch.where(preds == labels, preds, torch.tensor([-1 for i in preds]).to(device))
+        correct_preds = torch.where(preds == labels, preds, -1)
         for i in range(num_classes):
           true_positive_counts[i] += torch.count_nonzero(correct_preds == i)
           pred_positive_counts[i] += torch.count_nonzero(preds == i)
@@ -251,8 +251,12 @@ def evaluate(model, is_inception, loss_func, dataset_loader, test, mistakes_save
   conf_mat = None
   
   incorrect_predictions = []
+  corresponding_confidences = []
   corresponding_ground_truths = []
   corresponding_image_names = []
+
+  all_output_probabilities = torch.empty(0)
+  all_ground_truths = torch.empty(0)
 
   epoch_count = 0
 
@@ -277,7 +281,11 @@ def evaluate(model, is_inception, loss_func, dataset_loader, test, mistakes_save
       # we ignore aux output in test loss calculation
       # since we aren't updating weights
       loss = loss_func(outputs, labels)
-      _, predictions = torch.max(outputs, 1)
+      batch_probabilities = nn.functional.softmax(outputs, dim=1)
+      confidences, predictions = torch.max(batch_probabilities, 1)
+
+      all_output_probabilities = torch.cat((all_output_probabilities, batch_probabilities[:, 1].cpu()), dim=0)
+      all_ground_truths = torch.cat((all_ground_truths, labels.cpu()), dim=0)
 
       # append batch prediction results and labels
       predlist=torch.cat([predlist, predictions.view(-1).cpu()])
@@ -289,6 +297,7 @@ def evaluate(model, is_inception, loss_func, dataset_loader, test, mistakes_save
       incorrect_indices = torch.nonzero(predictions != labels, as_tuple=True)[0]
       for index in incorrect_indices:
         incorrect_predictions.append(predictions[index].item())
+        corresponding_confidences.append(confidences[index].item())
         corresponding_ground_truths.append(labels[index].item())
         corresponding_image_names.append(paths[index])
 
@@ -297,6 +306,7 @@ def evaluate(model, is_inception, loss_func, dataset_loader, test, mistakes_save
   mistakes = pd.DataFrame(
     {
       'prediction': incorrect_predictions,
+      'confidence': corresponding_confidences,
       'ground truth': corresponding_ground_truths,
       'image path': corresponding_image_names
     }
@@ -308,5 +318,6 @@ def evaluate(model, is_inception, loss_func, dataset_loader, test, mistakes_save
     # display a Confusion matrix
     conf_mat = confusion_matrix(lbllist.numpy(), predlist.numpy())
     print(conf_mat)
-
-  return  correct / n, total_loss / n, conf_mat
+  print(f"Test accuracy: {correct / n}")
+  print(f"Test loss: {total_loss / n}")
+  return conf_mat, all_output_probabilities, all_ground_truths
