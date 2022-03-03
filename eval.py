@@ -92,7 +92,7 @@ if cm is not None:
 
 precisions = []
 recalls = []
-for prob_cutoff in torch.linspace(.001, .999, 1000):
+for prob_cutoff in torch.linspace(0, 1, 100000):
   precision, recall = get_precision_recall(output_probabilities, corresponding_ground_truths, prob_cutoff)
   precisions.append(precision)
   recalls.append(recall)
