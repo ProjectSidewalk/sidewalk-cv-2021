@@ -82,7 +82,7 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
   def send_head(self):
     if '/save' in self.path:
-      index = int(self.path[self.path.index("?") - 1])
+      index = int(self.path.replace('/save', '').partition('?')[0])
       form_data = self.path.partition('?')[2]
       if form_data != '':
         label_ids = list(map(int, form_data.replace('=on','').split('&')))
@@ -96,12 +96,22 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
       self.send_header('Content-Length', '0')
       self.end_headers()
       return None
+    if '/delete' in self.path:
+      index = int(self.path.replace('/delete', '').partition('?')[0])
+      csv_list.pop(index)
+      save_to_file()
+      self.send_response(HTTPStatus.MOVED_PERMANENTLY)
+      self.send_header('Location', '/test_set_maker/' + str(index))
+      self.send_header('Cache-Control', 'no-store')
+      self.send_header('Content-Length', '0')
+      self.end_headers()
+      return None
     elif self.path == '/test_set_maker' or self.path == '/test_set_maker/':
-        self.send_response(HTTPStatus.MOVED_PERMANENTLY)
-        self.send_header('Location', '/test_set_maker/0')
-        self.send_header('Content-Length', '0')
-        self.end_headers()
-        return None
+      self.send_response(HTTPStatus.MOVED_PERMANENTLY)
+      self.send_header('Location', '/test_set_maker/0')
+      self.send_header('Content-Length', '0')
+      self.end_headers()
+      return None
     elif '/test_set_maker' in self.path:
       # one-indexed
       if "search=" in self.path:
@@ -146,6 +156,9 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
         <a href="/test_set_maker/{}" style="margin-left: 125px;">Next</a>
       </div>
       <div style="display: flex; justify-content: center; margin-top: 15px;">
+        <a href="/delete{}" style="margin-left: 430px;">Delete</a>
+      </div>
+      <div style="display: flex; justify-content: center; margin-top: 15px;">
         <form action="/test_set_maker">
             Search by label ID:
             <input type="text" name="search" id="search">
@@ -163,8 +176,9 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
         'checked' if csv_list[index][1].count(1) else '', 
         'checked' if csv_list[index][1].count(2) else '', 
         'checked' if csv_list[index][1].count(3) else '', 
-        'checked' if csv_list[index][1].count(4) else '', 
-        index + 1 if index < len(csv_list) - 1 else index
+        'checked' if csv_list[index][1].count(4) else '',
+        index + 1 if index < len(csv_list) - 1 else index,
+        index
       )
       encoded = text.encode('utf-8')
       f = io.BytesIO()
