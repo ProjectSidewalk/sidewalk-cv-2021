@@ -10,6 +10,7 @@ DEFAULT_CSV_FOLDER = "../datasets/"
 
 class Operations(str, Enum):
     LOAD = "load"
+    CONTAINS = "contains"
     COMBINE = "combine"
     BINARIZE = "binarize"
     BALANCE = "balance"
@@ -30,6 +31,9 @@ def receive_operation():
 
 def combine(dataset_dfs):
     return pd.concat(dataset_dfs)
+
+def contains(df, subset_df):
+    return len(subset_df.merge(df, on='image_name')) == len(subset_df)
 
 def binarize(dataframe, positive_class, is_label_set=True):
     if is_label_set:
@@ -113,6 +117,11 @@ if __name__ == "__main__":
             combined_df = combine(dataframes)
             output_df = combined_df
             print("combined")
+        elif command == Operations.CONTAINS:
+            csv_idx = int(arguments[0]) - 1
+            subset_df = pd.read_csv(csv_list[csv_idx], converters={'label_set': eval})
+            if output_df is not None:
+                print(contains(output_df, subset_df))
         elif command == Operations.BINARIZE:
             positive_class = int(arguments[0])
             is_label_set = int(arguments[1]) if len(arguments) > 1 else True
