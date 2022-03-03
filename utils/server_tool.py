@@ -162,7 +162,7 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
         <form action="/test_set_maker">
             Search by label ID:
             <input type="text" name="search" id="search">
-            <button type="submit" id="go">go</button>
+            <button type="submit" id="go">Go</button>
         </form>
       </div>
       """.format(
