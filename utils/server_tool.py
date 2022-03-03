@@ -11,17 +11,17 @@ from http import HTTPStatus
 #    For example, 'ssh -L 42069:rainbowdash:42069 shokiami@attu.cs.washington.edu'.
 #    Make sure the port address matches `PORT`.
 # 2. Run server_tool.py.
-# 3. Navigate to 'http://localhost:42069/test_set_maker' in your browser and begin editing!
+# 3. Navigate to 'http://localhost:42069/crop_viewer' in your browser and begin editing!
 #    Click through crops with "Next" and "Prev". 
 #    Clicking "Save" saves and goes to the next crop.
 # 4. Use Ctrl+C to exit.
 
 PORT = 42069
-TEST_SET_PATH = '../datasets/test_set.csv'
+DATA_SET_PATH = '../datasets/test_set.csv'
 ROOT_DIRECTORY = '/tmp/datasets'
 CROPS_DIRECTORY = '/crops/'
 
-csv_in = open(TEST_SET_PATH, 'r')
+csv_in = open(DATA_SET_PATH, 'r')
 csv_reader = csv.reader(csv_in)
 next(csv_reader)
 csv_list = []
@@ -49,7 +49,7 @@ for index, row in enumerate(csv_reader):
     label_ids_to_csv_indices[name] = index
 
 def save_to_file():
-  csv_out = open(TEST_SET_PATH, 'w')
+  csv_out = open(DATA_SET_PATH, 'w')
   csv_writer = csv.writer(csv_out)
   csv_writer.writerow(['image_name', 'label_set', 'pano_id'])
   for row in csv_list:
@@ -88,10 +88,11 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
         label_ids = list(map(int, form_data.replace('=on','').split('&')))
       else:
         label_ids = []
+      label_ids += filter(lambda label_id: label_id >= 5, csv_list[index][1])
       csv_list[index][1] = label_ids
       save_to_file()
       self.send_response(HTTPStatus.MOVED_PERMANENTLY)
-      self.send_header('Location', '/test_set_maker/' + str(index + 1))
+      self.send_header('Location', '/crop_viewer/' + str(index + 1))
       self.send_header('Cache-Control', 'no-store')
       self.send_header('Content-Length', '0')
       self.end_headers()
@@ -101,18 +102,18 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
       csv_list.pop(index)
       save_to_file()
       self.send_response(HTTPStatus.MOVED_PERMANENTLY)
-      self.send_header('Location', '/test_set_maker/' + str(index))
+      self.send_header('Location', '/crop_viewer/' + str(index))
       self.send_header('Cache-Control', 'no-store')
       self.send_header('Content-Length', '0')
       self.end_headers()
       return None
-    elif self.path == '/test_set_maker' or self.path == '/test_set_maker/':
+    elif self.path == '/crop_viewer' or self.path == '/crop_viewer/':
       self.send_response(HTTPStatus.MOVED_PERMANENTLY)
-      self.send_header('Location', '/test_set_maker/0')
+      self.send_header('Location', '/crop_viewer/0')
       self.send_header('Content-Length', '0')
       self.end_headers()
       return None
-    elif '/test_set_maker' in self.path:
+    elif '/crop_viewer' in self.path:
       # one-indexed
       if "search=" in self.path:
         searched_label_id = urllib.parse.unquote(self.path[self.path.index("=") + 1:])
@@ -121,7 +122,7 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
         else:
           index = 0
       else:
-        index = int(self.path.replace('/test_set_maker/', '').partition('?')[0])
+        index = int(self.path.replace('/crop_viewer/', '').partition('?')[0])
       img_id = csv_list[index][0].replace('.jpg', '')
 
       text = """
@@ -131,7 +132,7 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
         <img src="{}{}.jpg" width="500" height="500"></img>
       </div>
       <div style="display: flex; justify-content: center; margin-top: 15px;">
-        <a href="/test_set_maker/{}" style="margin-right: 125px;">Prev</a>
+        <a href="/crop_viewer/{}" style="margin-right: 125px;">Prev</a>
         <form method="get" action="/save{}">
           <div>
             <input type="checkbox" id="1" name="1" {}>
@@ -153,13 +154,13 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
             <input type="submit" value="Save">
           </div>
         </form>
-        <a href="/test_set_maker/{}" style="margin-left: 125px;">Next</a>
+        <a href="/crop_viewer/{}" style="margin-left: 125px;">Next</a>
       </div>
       <div style="display: flex; justify-content: center; margin-top: 15px;">
         <a href="/delete{}" style="margin-left: 430px;">Delete</a>
       </div>
       <div style="display: flex; justify-content: center; margin-top: 15px;">
-        <form action="/test_set_maker">
+        <form action="/crop_viewer">
             Search by label ID:
             <input type="text" name="search" id="search">
             <button type="submit" id="go">Go</button>
