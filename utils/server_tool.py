@@ -8,21 +8,20 @@ from http import HTTPStatus
 
 # Instructions for use:
 # 1. If ssh-ing, use 'ssh -L local_port:remote_ip:remote_port user@hostname.com'.
-#    For example, 'ssh -L 40296:rainbowdash:40296 shokiami@attu.cs.washington.edu'.
+#    For example, 'ssh -L 42069:rainbowdash:42069 shokiami@attu.cs.washington.edu'.
 #    Make sure the port address matches `PORT`.
-# 2. If test_set.csv doesn't exist yet, run init_testset.py.
-# 3. Run server_tool.py.
-# 4. Navigate to 'http://localhost:40296/testset_maker' in your browser and begin editing!
+# 2. Run server_tool.py.
+# 3. Navigate to 'http://localhost:42069/test_set_maker' in your browser and begin editing!
 #    Click through crops with "Next" and "Prev". 
 #    Clicking "Save" saves and goes to the next crop.
-# 5. Use Ctrl+C to exit.
+# 4. Use Ctrl+C to exit.
 
-PORT = 40296
-TESTSET_PATH = '../datasets/test_set.csv'
+PORT = 42069
+TEST_SET_PATH = '../datasets/test_set.csv'
 ROOT_DIRECTORY = '/tmp/datasets'
 CROPS_DIRECTORY = '/crops/'
 
-csv_in = open(TESTSET_PATH, 'r')
+csv_in = open(TEST_SET_PATH, 'r')
 csv_reader = csv.reader(csv_in)
 next(csv_reader)
 csv_list = []
@@ -30,7 +29,8 @@ label_ids_to_csv_indices = dict()
 for index, row in enumerate(csv_reader):
   filename = row[0]
   label_ids = eval(row[1])
-  csv_list.append([filename, label_ids])
+  pano_id = row[2]
+  csv_list.append([filename, label_ids, pano_id])
 
   # different filename formats that are accepted by search tool
   acceptable_filenames = [filename]
@@ -38,19 +38,20 @@ for index, row in enumerate(csv_reader):
   # without extension
   acceptable_filenames.append(filename[:filename.index('.jpg')]) 
   # without _0 size indicator at end or extension
-  acceptable_filenames.append(filename[:filename.index("_0")])
+  if "_0" in filename:
+    acceptable_filenames.append(filename[:filename.index("_0")])
   # without city prefix or extension
   acceptable_filenames.append(filename[filename.index("/") + 1:filename.index(".jpg")])
   # without city prefix or _0 size indicator at end or extension
-  acceptable_filenames.append(filename[filename.index("/") + 1:filename.index("_0")])
+  acceptable_filenames.append(filename[filename.index("/") + 1:filename.index("_0") if "_0" in filename else len(filename)])
 
   for name in acceptable_filenames:
     label_ids_to_csv_indices[name] = index
 
 def save_to_file():
-  csv_out = open(TESTSET_PATH, 'w')
+  csv_out = open(TEST_SET_PATH, 'w')
   csv_writer = csv.writer(csv_out)
-  csv_writer.writerow(['image_name', 'label_type'])
+  csv_writer.writerow(['image_name', 'label_set', 'pano_id'])
   for row in csv_list:
     csv_writer.writerow(row)
 
@@ -90,18 +91,18 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
       csv_list[index][1] = label_ids
       save_to_file()
       self.send_response(HTTPStatus.MOVED_PERMANENTLY)
-      self.send_header('Location', '/testset_maker/' + str(index + 1))
+      self.send_header('Location', '/test_set_maker/' + str(index + 1))
       self.send_header('Cache-Control', 'no-store')
       self.send_header('Content-Length', '0')
       self.end_headers()
       return None
-    elif (self.path == '/testset_maker' or self.path == '/testset_maker/'):
+    elif self.path == '/test_set_maker' or self.path == '/test_set_maker/':
         self.send_response(HTTPStatus.MOVED_PERMANENTLY)
-        self.send_header('Location', '/testset_maker/0')
+        self.send_header('Location', '/test_set_maker/0')
         self.send_header('Content-Length', '0')
         self.end_headers()
         return None
-    elif '/testset_maker' in self.path:
+    elif '/test_set_maker' in self.path:
       # one-indexed
       if "search=" in self.path:
         searched_label_id = urllib.parse.unquote(self.path[self.path.index("=") + 1:])
@@ -110,7 +111,7 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
         else:
           index = 0
       else:
-        index = int(self.path.replace('/testset_maker/', '').partition('?')[0])
+        index = int(self.path.replace('/test_set_maker/', '').partition('?')[0])
       img_id = csv_list[index][0].replace('.jpg', '')
 
       text = """
@@ -120,7 +121,7 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
         <img src="{}{}.jpg" width="500" height="500"></img>
       </div>
       <div style="display: flex; justify-content: center; margin-top: 15px;">
-        <a href="/testset_maker/{}" style="margin-right: 125px;">Prev</a>
+        <a href="/test_set_maker/{}" style="margin-right: 125px;">Prev</a>
         <form method="get" action="/save{}">
           <div>
             <input type="checkbox" id="1" name="1" {}>
@@ -142,10 +143,10 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
             <input type="submit" value="Save">
           </div>
         </form>
-        <a href="/testset_maker/{}" style="margin-left: 125px;">Next</a>
+        <a href="/test_set_maker/{}" style="margin-left: 125px;">Next</a>
       </div>
       <div style="display: flex; justify-content: center; margin-top: 15px;">
-        <form action="/testset_maker">
+        <form action="/test_set_maker">
             Search by label ID:
             <input type="text" name="search" id="search">
             <button type="submit" id="go">go</button>
