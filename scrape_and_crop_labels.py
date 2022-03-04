@@ -13,7 +13,7 @@ from time import perf_counter
 CITY = "CITY HERE"
 
 # the raw label data
-PATH_TO_LABELDATA_CSV = f'rawdata/labels-cv-2-9-2022-{CITY}.csv'
+PATH_TO_LABELDATA_CSV = f'rawdata/labels-cv-2-23-2022-{CITY}.csv'
 
 # the local directory panos will be downloaded to
 LOCAL_DIR = 'pano-downloads/'
@@ -87,6 +87,9 @@ if __name__ ==  '__main__':
 
     t_start = perf_counter()
     for chunk in pd.read_csv(PATH_TO_LABELDATA_CSV, chunksize=10000):
+        # filter out deleted or tutorial labels from data chunk
+        chunk = chunk.loc[(chunk['deleted'] == 'f') & (chunk['tutorial'] == 'f')]
+
         # gather panos for current data batch then scrape panos from SFTP server
         pano_set_size, scraper_exec_time = bulk_scrape_panos(chunk, panos, LOCAL_DIR, REMOTE_DIR)
 
