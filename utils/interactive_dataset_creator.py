@@ -16,7 +16,9 @@ class Operations(str, Enum):
     BALANCE = "balance"
     SUBSET = "subset"
     FILTER = "filter"
+    SETDIFF = "setdiff"
     LABEL_CITY = "label_city"
+    REFRESH = "refresh"
     QUIT = "quit"
     OUTPUT = "output"
 
@@ -66,8 +68,19 @@ def filter(dataframe, label_type, is_label_set=True):
         return dataframe.loc[dataframe['label_set'].apply(lambda labels: label_type in labels)]
     return dataframe.loc[dataframe['label_type'] == label_type]
 
+def setdiff(df1, df2):
+    return pd.concat([df1, df2]).drop_duplicates(keep=False)
+
 def label_city(dataframe, city):
     dataframe['image_name'] = dataframe['image_name'].apply(lambda x: f"{city}/{x}")
+
+def refresh(dataset_csv_folder):
+    csv_list = glob.glob(dataset_csv_folder + "*.csv")
+    print("The following CSVs are available:")
+    for i in range(len(csv_list)):
+        print(f'{i + 1}: {csv_list[i]}')
+
+    return csv_list
 
 def output(dataframe, output_path):
     dataframe.to_csv(output_path, index=False)
@@ -80,10 +93,7 @@ if __name__ == "__main__":
     dataset_csv_folder = args.csv_folder
 
     # get a list of dataset csvs
-    csv_list = glob.glob(dataset_csv_folder + "*.csv")
-    print("The following CSVs are available:")
-    for i in range(len(csv_list)):
-        print(f'{i + 1}: {csv_list[i]}')
+    csv_list = refresh(dataset_csv_folder)
     
     print()
 
@@ -145,11 +155,18 @@ if __name__ == "__main__":
             if output_df is not None:
                 output_df = filter(output_df, label_type, is_label_set)
                 print("filtered")
+        elif command == Operations.SETDIFF:
+            csv_idx_1, csv_idx_2 = int(arguments[0]) - 1, int(arguments[1]) - 1
+            df1, df2 = pd.read_csv(csv_list[csv_idx_1]), pd.read_csv(csv_list[csv_idx_2])
+            output_df = setdiff(df1, df2)
         elif command == Operations.LABEL_CITY:
             city = arguments[0]
             if output_df is not None:
                 label_city(output_df, city)
                 print("labeled")
+        elif command == Operations.REFRESH:
+            csv_list = refresh(dataset_csv_folder)
+            print()
         elif command == Operations.OUTPUT:
             output_path = dataset_csv_folder + arguments[0]
             if output_df is not None:
