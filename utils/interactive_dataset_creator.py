@@ -69,13 +69,14 @@ def filter(dataframe, label_type, is_label_set=True):
     return dataframe.loc[dataframe['label_type'] == label_type]
 
 def setdiff(df1, df2):
-    return pd.concat([df1, df2]).drop_duplicates(keep=False)
+    return pd.concat([df1, df2, df2]).drop_duplicates(keep=False)
 
 def label_city(dataframe, city):
     dataframe['image_name'] = dataframe['image_name'].apply(lambda x: f"{city}/{x}")
 
 def refresh(dataset_csv_folder):
     csv_list = glob.glob(dataset_csv_folder + "*.csv")
+    csv_list.sort()
     print("The following CSVs are available:")
     for i in range(len(csv_list)):
         print(f'{i + 1}: {csv_list[i]}')
@@ -117,23 +118,23 @@ if __name__ == "__main__":
             break
         elif command == Operations.LOAD:
             csv_idx = int(arguments[0]) - 1
-            output_df = pd.read_csv(csv_list[csv_idx], converters={'label_set': eval})
+            output_df = pd.read_csv(csv_list[csv_idx])
             print("loaded")
         elif command == Operations.COMBINE:
             dataframes = [output_df] if output_df is not None else []
             for i in arguments:
-                dataset_df = pd.read_csv(csv_list[int(i) - 1], converters={'label_set': eval})
+                dataset_df = pd.read_csv(csv_list[int(i) - 1])
                 dataframes.append(dataset_df)
             combined_df = combine(dataframes)
             output_df = combined_df
             print("combined")
         elif command == Operations.CONTAINS:
             csv_idx = int(arguments[0]) - 1
-            subset_df = pd.read_csv(csv_list[csv_idx], converters={'label_set': eval})
+            subset_df = pd.read_csv(csv_list[csv_idx])
             if output_df is not None:
                 print(contains(output_df, subset_df))
         elif command == Operations.BINARIZE:
-            positive_class = int(arguments[0])
+            positive_class = arguments[0]
             is_label_set = int(arguments[1]) if len(arguments) > 1 else True
             if output_df is not None:
                 binarize(output_df, positive_class, is_label_set)
@@ -150,15 +151,17 @@ if __name__ == "__main__":
                 output_df = subset(output_df, subset_size)
                 print("subsetted")
         elif command == Operations.FILTER:
-            label_type = int(arguments[0])
+            label_type = arguments[0]
             is_label_set = int(arguments[1]) if len(arguments) > 1 else True
             if output_df is not None:
                 output_df = filter(output_df, label_type, is_label_set)
                 print("filtered")
         elif command == Operations.SETDIFF:
-            csv_idx_1, csv_idx_2 = int(arguments[0]) - 1, int(arguments[1]) - 1
-            df1, df2 = pd.read_csv(csv_list[csv_idx_1]), pd.read_csv(csv_list[csv_idx_2])
-            output_df = setdiff(df1, df2)
+            csv_idx = int(arguments[0]) - 1
+            df = pd.read_csv(csv_list[csv_idx])
+            if output_df is not None:
+                output_df = setdiff(output_df, df)
+                print("setdiffed")
         elif command == Operations.LABEL_CITY:
             city = arguments[0]
             if output_df is not None:
