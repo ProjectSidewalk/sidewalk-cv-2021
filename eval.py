@@ -8,6 +8,7 @@ from datatypes.dataset import SidewalkCropsDataset
 from utils.training_utils import get_pretrained_model, load_best_weights, evaluate
 from visualization_utils.confusion_matrix import plot_confusion_matrix
 from torchvision import transforms
+from sklearn.metrics import precision_recall_curve, roc_curve
 
 def get_precision_recall(output_probabilities, corresponding_ground_truths, prob_cutoff=.5):
   classifications = torch.where(output_probabilities > prob_cutoff, 1, 0)
@@ -78,9 +79,7 @@ image_transform = transforms.Compose([
 
 test_labels_csv_path = CSV_BASE_PATH + "CSV NAME HERE"
 test_dataset = SidewalkCropsDataset(test_labels_csv_path, IMAGE_BASE_PATH, transform=image_transform, eval=True)
-
 batch_size = 12
-
 test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=8)
 
 # =================================================================================================
@@ -90,16 +89,25 @@ cm, output_probabilities, corresponding_ground_truths = evaluate(model, (MODEL_N
 if cm is not None:
   plot_confusion_matrix(VISUALIZATIONS_PATH, SESSION_NAME, cm, CLASSES, normalize=True)
 
-precisions = []
-recalls = []
-for prob_cutoff in torch.linspace(0, 1, 100000):
-  precision, recall = get_precision_recall(output_probabilities, corresponding_ground_truths, prob_cutoff)
-  precisions.append(precision)
-  recalls.append(recall)
-plt.scatter(recalls, precisions)
+precisions, recalls, _ = precision_recall_curve(corresponding_ground_truths, output_probabilities)
+plt.plot(recalls, precisions)
 plt.xlabel("recall")
 plt.ylabel("precision")
 plt.xlim([0, 1])
 plt.ylim([0, 1])
 plt.title("precision vs recall " + SESSION_NAME)
 plt.savefig(VISUALIZATIONS_PATH + "precision_recall_" + SESSION_NAME)
+plt.clf()
+
+false_positive_rates, true_positive_rates, _ = roc_curve(corresponding_ground_truths, output_probabilities)
+plt.plot(false_positive_rates, true_positive_rates)
+plt.xlabel("false positive rate")
+plt.ylabel("true positive rate")
+plt.xlim([0, 1])
+plt.ylim([0, 1])
+plt.title("ROC " + SESSION_NAME)
+plt.savefig(VISUALIZATIONS_PATH + "roc_" + SESSION_NAME)
+
+precision_default_cutoff, recall_default_cutoff = get_precision_recall(output_probabilities, corresponding_ground_truths, .5)
+print("precision at default cutoff: " + str(precision_default_cutoff))
+print("recall at default cutoff: " + str(recall_default_cutoff))
