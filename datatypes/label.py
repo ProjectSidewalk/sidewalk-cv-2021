@@ -19,6 +19,8 @@ class Label(object):
         self.agree_count = int(row[14]) if row[14] is not None else None
         self.disagree_count = int(row[15]) if row[15] is not None else None
         self.notsure_count = int(row[16]) if row[16] is not None else None
+        self.deleted = row[17] == 't' if row[17] is not None else None
+        self.tutorial = row[18] == 't' if row[18] is not None else None
         self.final_sv_image_x = None
         self.final_sv_image_y = None
         
@@ -41,6 +43,8 @@ class Label(object):
         row.append(self.agree_count)
         row.append(self.disagree_count)
         row.append(self.notsure_count)
+        row.append(self.deleted)
+        row.append(self.tutorial)
         return row
 
     def finalize_sv_position(self, x, y):
@@ -52,9 +56,3 @@ class Label(object):
             return Point(self.final_sv_image_x, self.final_sv_image_y)
         return Point(self.sv_image_x, self.sv_image_y)
     
-    # TODO: remove since we may no longer need this now that we're batching
-    @classmethod
-    def header_row(cls):
-        row = ['gsv_panorama_id', 'sv_image_x', 'sv_image_y', 'canvas_x', 'canvas_y', 'canvas_width', 'canvas_height', 'zoom', 'label_type_id',
-               'photographer_heading', 'photographer_pitch', 'heading', 'pitch', 'label_id', 'agree_count', 'disagree_count', 'notsure_count']
-        return row

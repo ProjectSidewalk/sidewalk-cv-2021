@@ -200,11 +200,13 @@ def make_crop(pano_img_path, label_pov, photographer_heading, photographer_pitch
             crop_width = int(crop_width * MULTICROP_SCALE_FACTOR)
             crop_height = int(crop_height * MULTICROP_SCALE_FACTOR)
         im.close()
+
+        return crop_names, (x, y), img_dim
     except Exception as e:
         print(e)
         print("Error for {}".format(pano_img_path))
 
-    return crop_names, (x, y), img_dim
+        return crop_names, None, None
 
 def bulk_extract_crops(data_chunk, path_to_gsv_scrapes, destination_dir, output_csv, panos):
     t_start = perf_counter()
@@ -250,8 +252,8 @@ def bulk_extract_crops(data_chunk, path_to_gsv_scrapes, destination_dir, output_
         with open(output_csv, 'a+', newline='') as csv_out:
             csv_w = csv.writer(csv_out)
             for row in output_rows:
-                # row format: [crop_name, primary_label_type, pano_id, label_id, final_sv_position, pano_size]
-                csv_w.writerow(row[:3])
+                # row format: [crop_name, primary_label_type, pano_id, label_id, final_sv_position, pano_size, agree_count, disagree_count, notsure_count]
+                csv_w.writerow(row[:3] + row[-3:])
 
                 # update final sv position per label
                 if row[2] in panos and row[3] in panos[row[2]].feats:
@@ -287,6 +289,9 @@ def crop_label_subset(input_rows, output_rows, path_to_gsv_scrapes, destination_
         photographer_pitch = float(row[10])
         camera_heading = float(row[11])
         camera_pitch = float(row[12])
+        agree_count = int(row[14])
+        disagree_count = int(row[15])
+        notsure_count = int(row[16])
 
         pano_img_path = os.path.join(path_to_gsv_scrapes, pano_id + ".jpg")
 
@@ -318,7 +323,7 @@ def crop_label_subset(input_rows, output_rows, path_to_gsv_scrapes, destination_
                 crop_names, pos, pano_size = make_crop(pano_img_path, label_pov, photographer_heading, photographer_pitch, destination_dir, label_name, lock, False, False)
 
             for crop_name in crop_names:
-                output_rows.append([crop_name, label_type, pano_id, int(label_name), pos, pano_size])
+                output_rows.append([crop_name, label_type, pano_id, int(label_name), pos, pano_size, agree_count, disagree_count, notsure_count])
         else:
             print("Panorama image not found.")
             try:

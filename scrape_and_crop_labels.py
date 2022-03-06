@@ -78,7 +78,7 @@ if __name__ ==  '__main__':
     # TODO: probably want to not do this
     # create intermediary output dataset csv
     with open(CSV_CROP_INFO, 'w', newline='') as csv_out:
-        fields = ['image_name', 'label_set', 'pano_id']
+        fields = ['image_name', 'label_set', 'pano_id', 'agree_count', 'disagree_count', 'notsure_count']
         csv_w = csv.writer(csv_out)
         csv_w.writerow(fields)
 
