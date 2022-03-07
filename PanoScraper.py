@@ -19,7 +19,7 @@ NULLS_PER_PANO = 0
 
 BLACK_THRESHOLD = (10, 10, 10)
 
-def bulk_scrape_panos(data_chunk, panos, local_dir, remote_dir):   #(n, start_row, path_to_labeldata_csv, local_dir, remote_dir, output_csv_name):
+def bulk_scrape_panos(data_chunk, panos, local_dir, remote_dir):
     t_start = perf_counter()
 
     pano_set = set()
@@ -117,8 +117,7 @@ def clean_panos(path_to_panos):
     panos = glob.glob(path_to_panos + "/*.jpg")
 
     # get available cpu_count
-    cpu_count = mp.cpu_count() if mp.cpu_count() <= 8 else 8
-    # cpu_count = 1
+    cpu_count = mp.cpu_count()
 
     # split pano set into chunks for multithreading
     pano_set_size = len(panos)
