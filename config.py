@@ -1,24 +1,22 @@
 # Training Parameters
 
 # path to training/test image data
-IMAGE_BASE_PATH = "/tmp/datasets/crops/"
+IMAGE_BASE_PATH = "IMAGE_BASE_PATH HERE"
 # path to training/test CSV data
-CSV_BASE_PATH = "./datasets/"
+CSV_BASE_PATH = "CSV_BASE_PATH HERE"
 # training set CSV filename
-TRAINING_SET_CSV = "crop_info.csv"
+TRAINING_SET_CSV = "TRAINING_SET_CSV HERE"
 # training set CSV filename
-TEST_SET_CSV = "test_sho.csv"
+TEST_SET_CSV = "TEST_SET_CSV HERE"
 # name of model architecture
-MODEL_NAME = "efficientnet"
+MODEL_NAME = "MODEL_NAME HERE"
 # number of output classes
-NUM_CLASSES = 2
+NUM_CLASSES = "NUM_CLASSES HERE"
 # save path for model weights
-MODEL_SAVE_FOLDER = "./models/"
+MODEL_SAVE_FOLDER = "MODEL_SAVE_FOLDER HERE"
 # name of training session
-SESSION_NAME = "test"
+SESSION_NAME = "SESSION_NAME HERE"
 # crop size
-CROP_SIZE = 1500
+CROP_SIZE = "CROP_SIZE HERE"
 # save path the visualizations
-VISUALIZATIONS_PATH = "./visualizations/"
-# the actual classes
-CLASSES = ["null", "curb ramp", "missing ramp", "obstruction", "sfc problem"]
+VISUALIZATIONS_PATH = "VISUALIZATIONS_PATH HERE"
