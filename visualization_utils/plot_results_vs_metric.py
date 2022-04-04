@@ -3,6 +3,7 @@ import numpy as np
 import os
 import torch
 from matplotlib.pyplot import figure
+import config
  
 label_types = {
     0: "null",
@@ -12,7 +13,7 @@ label_types = {
     4: "surface problem"
 }
 
-VISUALIZATIONS_PATH = "../visualizations/"
+VISUALIZATIONS_PATH = os.join.path("..", config.VISUALIZATIONS_PATH)
 if not os.path.isdir(VISUALIZATIONS_PATH):
     os.makedirs(VISUALIZATIONS_PATH)
 
