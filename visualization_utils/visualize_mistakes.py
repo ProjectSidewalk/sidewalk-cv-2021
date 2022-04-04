@@ -7,13 +7,12 @@ import torch.nn as nn
 import torchvision
 from PIL import Image, ImageOps
 from torchvision import transforms
+import config
 
-
-SESSION_NAME = 'SESSION NAME HERE'
-MISTAKES_SAVE_PATH = '../visualizations/' + SESSION_NAME + '_mistakes'
+MISTAKES_SAVE_PATH = '../visualizations/' + config.config.config.SESSION_NAME + '_mistakes'
 IMAGE_BASE_PATH = "/tmp/datasets/crops/"
-FALSE_POSITIVES_SAVE_PATH = '../visualizations/' + SESSION_NAME + '_false_positives'
-FALSE_NEGATIVES_SAVE_PATH = '../visualizations/' + SESSION_NAME + '_false_negatives'
+FALSE_POSITIVES_SAVE_PATH = '../visualizations/' + config.SESSION_NAME + '_false_positives'
+FALSE_NEGATIVES_SAVE_PATH = '../visualizations/' + config.SESSION_NAME + '_false_negatives'
 
 CROP_SIZE = 1250
 
@@ -67,7 +66,7 @@ def make_plots(mistakes, num_plots, mistake_type):
         plot_rows = mistakes.iloc[start_row:end_row]
         plot_rows.reset_index(drop=True, inplace=True)
         fig = plt.figure(num=1, figsize=(IMAGES_PER_ROW * IMAGE_SIZE, IMAGES_PER_COL * IMAGE_SIZE))
-        fig.suptitle(f'{SESSION_NAME} {mistake_type} {plot_idx}', fontsize=30)
+        fig.suptitle(f'{config.SESSION_NAME} {mistake_type} {plot_idx}', fontsize=30)
         for i, mistake in plot_rows.iterrows():
             image = Image.open(f'{mistake["image path"]}')
 
