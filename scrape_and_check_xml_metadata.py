@@ -7,7 +7,7 @@ from time import perf_counter
 from xml.etree import ElementTree as ET
 
 # current city we are gathering xml metadata for
-CITY = "columbus"
+CITY = "CITY HERE"
 
 # unretrievable pano ids csv
 PATH_TO_PANO_ID_CSV = f'rawdata/{CITY}_unretrievable_panos.csv'
