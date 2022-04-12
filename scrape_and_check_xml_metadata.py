@@ -19,7 +19,7 @@ LOCAL_DIR = 'xml-metadata/'
 REMOTE_DIR = f'sidewalk_panos/Panoramas/scrapes_dump_{CITY}'
 
 # pano metadata csv
-PANO_METADATA_CSV = f'{CITY}_pano_metadata.csv'
+PANO_METADATA_CSV = f'{CITY}_unretrievable_pano_metadata.csv'
 
 def bulk_scrape_xml_metadata(data_chunk, local_dir, remote_dir):
     t_start = perf_counter()
@@ -97,9 +97,11 @@ def extract_pano_metadata_from_xml(path_to_metadata_xml):
                 row['image_height'] = child.attrib['image_height']
                 row['tile_width'] = child.attrib['tile_width']
                 row['tile_height'] = child.attrib['tile_height']
-            elif child.tag == 'copyright':
-                # get copyright
-                row['copyright'] = child.text
+
+                # copyright is child element of data_properties
+                copyright = child.findall('copyright')[0]
+                row['copyright'] = copyright.text
+                print(copyright)
 
         return row
 
