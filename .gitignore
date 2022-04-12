@@ -39,3 +39,6 @@ visualizations
 
 # Ignore env folder
 env
+
+# Ignore xml metadata download folder
+xml-metadata
