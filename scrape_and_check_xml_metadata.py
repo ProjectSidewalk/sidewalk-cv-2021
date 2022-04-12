@@ -7,10 +7,10 @@ from time import perf_counter
 from xml.etree import ElementTree as ET
 
 # current city we are gathering xml metadata for
-CITY = "spgg"
+CITY = "columbus"
 
 # unretrievable pano ids csv
-PATH_TO_PANO_ID_CSV = 'rawdata/test.csv' #f'rawdata/{CITY}_unretrievable_panos.csv'
+PATH_TO_PANO_ID_CSV = f'rawdata/{CITY}_unretrievable_panos.csv'
 
 # the local directory xml metadat will be downloaded to
 LOCAL_DIR = 'xml-metadata/'
@@ -101,7 +101,6 @@ def extract_pano_metadata_from_xml(path_to_metadata_xml):
                 # copyright is child element of data_properties
                 copyright = child.findall('copyright')[0]
                 row['copyright'] = copyright.text
-                print(copyright)
 
         return row
 
@@ -118,7 +117,7 @@ if __name__ ==  '__main__':
     total_failed_extractions = 0
 
     t_start = perf_counter()
-    for chunk in pd.read_csv(PATH_TO_PANO_ID_CSV, chunksize=10000):
+    for chunk in pd.read_csv(PATH_TO_PANO_ID_CSV, chunksize=5000):
         pano_id_list = chunk.to_dict('records')
 
         # scrape xml metadata for each pano id in current batch from SFTP server
