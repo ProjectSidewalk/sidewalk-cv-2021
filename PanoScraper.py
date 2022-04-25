@@ -1,5 +1,6 @@
 import glob
 import multiprocessing as mp
+import os
 import random
 import subprocess
 
@@ -19,10 +20,15 @@ NULLS_PER_PANO = 0
 
 BLACK_THRESHOLD = (10, 10, 10)
 
+BATCH_TXT_FOLDER = "batches"
+
 def bulk_scrape_panos(data_chunk, panos, local_dir, remote_dir):
     t_start = perf_counter()
 
     pano_set = set()
+
+    if not os.path.isdir(BATCH_TXT_FOLDER):
+        os.makedirs(BATCH_TXT_FOLDER)
 
     # accumulate list of pano ids to gather from sftp
     df_dict = data_chunk.to_dict('records')
@@ -60,6 +66,10 @@ def bulk_scrape_panos(data_chunk, panos, local_dir, remote_dir):
     # join processes once finished
     for p in processes:
         p.join()
+
+    # remove batch txts
+    for file in os.scandir(BATCH_TXT_FOLDER):
+        os.remove(file.path)
 
     t_stop = perf_counter()
     execution_time = t_stop - t_start
@@ -99,8 +109,8 @@ def acquire_n_panos(remote_dir, local_dir, pano_ids, thread_id):
         # get jpg for pano id
         sftp_command_list.append('-get ./{prefix}/{full_id}.jpg'.format(prefix=two_chars, full_id=pano_id))
     
-    thread_batch_txt = 'batch{}.text'.format(thread_id)
-    bash_command = "sftp -b {} -P 9000 -i alphie-sftp/alphie_pano ml-sftp@sftp.cs.washington.edu".format(thread_batch_txt)
+    thread_batch_txt = f'{BATCH_TXT_FOLDER}/batch{thread_id}.text'
+    bash_command = f'sftp -b {thread_batch_txt} -P 9000 -i alphie-sftp/alphie_pano ml-sftp@sftp.cs.washington.edu'
     with open(thread_batch_txt, 'w', newline='') as sftp_file:
         for sftp_command in sftp_command_list:
             sftp_file.write("%s\n" % sftp_command)

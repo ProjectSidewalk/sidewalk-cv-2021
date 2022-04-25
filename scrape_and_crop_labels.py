@@ -1,4 +1,4 @@
-import csv
+import argparse
 import math
 import multiprocessing as mp
 import os
@@ -8,27 +8,6 @@ import re
 from CropRunner import bulk_extract_crops
 from PanoScraper import bulk_scrape_panos
 from time import perf_counter
-
-# current city we are gathering data for
-CITY = "CITY HERE"
-
-# the raw label data
-PATH_TO_LABELDATA_CSV = f'rawdata/labels-cv-4-20-2022-{CITY}.csv'
-
-# the local directory panos will be downloaded to
-LOCAL_DIR = 'pano-downloads/'
-
-# the remote directory panos will be scraped from
-REMOTE_DIR = f'sidewalk_panos/Panoramas/scrapes_dump_{CITY}'
-
-# destination folder for crops
-CROP_DESTINATION_PATH = 'crops'
-
-# name of csv containing preliminary (unilabel) info about crops
-CSV_CROP_INFO = "crop_info.csv"
-
-# finalized crop info csv
-FINAL_CROP_CSV = "final_crop_info.csv"
 
 def get_nearest_label_types(crop_info, panos, threshold=750):
     # remove the suffix we append to get image name by splitting
@@ -68,27 +47,50 @@ def get_nearest_label_types(crop_info, panos, threshold=750):
     return final_list
 
 if __name__ ==  '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('local_dir', help='local_dir - the local directory panos will be downloaded to, i.e. pano-downloads/')
+    parser.add_argument('crops', help='crops - destination folder for crops')
+    parser.add_argument('city', help='city - city from which we want to gather pano data from')
+    args = parser.parse_args()
+
+    local_dir = args.local_dir
+    base_crops_path = args.crops
+    city = args.city
+
+    # the raw label data
+    path_to_labeldata_csv = f'rawdata/labels-cv-4-20-2022-{city}.csv'
+
+    # the remote directory panos will be scraped from
+    remote_dir = f'sidewalk_panos/Panoramas/scrapes_dump_{city}'
+
+    # destination folder for crops
+    crop_destination_path = f'{base_crops_path}/{city}'
+
+    # finalized crop info csv
+    final_crop_csv = f'{city}_final_crop_info.csv'  
+
     print("CPU count: ", mp.cpu_count())
 
     # local directory to write to (relative to shell root)
-    if not os.path.isdir(LOCAL_DIR):
-        os.makedirs(LOCAL_DIR)
+    if not os.path.isdir(local_dir):
+        os.makedirs(local_dir)
 
     # A datastructure containing panorama and associated label data
     panos = {}
 
     # TODO: probably want to not do this
     # create intermediary output dataset csv
-    with open(CSV_CROP_INFO, 'w', newline='') as csv_out:
-        fields = ['image_name', 'label_set', 'pano_id', 'agree_count', 'disagree_count', 'notsure_count']
-        csv_w = csv.writer(csv_out)
-        csv_w.writerow(fields)
+    # with open(CSV_CROP_INFO, 'w', newline='') as csv_out:
+    #     fields = ['image_name', 'label_set', 'pano_id', 'agree_count', 'disagree_count', 'notsure_count']
+    #     csv_w = csv.writer(csv_out)
+    #     csv_w.writerow(fields)
+    crop_info = []
 
     total_successful_extractions = 0
     total_failed_extractions = 0
 
     t_start = perf_counter()
-    for chunk in pd.read_csv(PATH_TO_LABELDATA_CSV, chunksize=10000):
+    for chunk in pd.read_csv(path_to_labeldata_csv, chunksize=10000):
         # filter out deleted or tutorial labels from data chunk
         chunk = chunk.loc[(chunk['deleted'] == 'f') & (chunk['tutorial'] == 'f')]
 
@@ -97,13 +99,13 @@ if __name__ ==  '__main__':
         chunk = chunk[has_image_size_filter]
 
         # gather panos for current data batch then scrape panos from SFTP server
-        pano_set_size, scraper_exec_time = bulk_scrape_panos(chunk, panos, LOCAL_DIR, REMOTE_DIR)
+        pano_set_size, scraper_exec_time = bulk_scrape_panos(chunk, panos, local_dir, remote_dir)
 
         # clean panos
         # clean_time = clean_panos(LOCAL_DIR)
 
         # make crops for current batch
-        metrics = bulk_extract_crops(chunk, LOCAL_DIR, CROP_DESTINATION_PATH, CSV_CROP_INFO, panos)
+        metrics = bulk_extract_crops(chunk, local_dir, crop_destination_path, crop_info, panos)
 
         # output execution metrics
         print("====================================================================================================")
@@ -126,7 +128,7 @@ if __name__ ==  '__main__':
         total_failed_extractions += metrics[2]
 
         # delete pano downloads from current batch
-        for file in os.scandir(LOCAL_DIR):
+        for file in os.scandir(local_dir):
             os.remove(file.path)
 
     t_stop = perf_counter()
@@ -144,9 +146,9 @@ if __name__ ==  '__main__':
     #             print(f"something spooky with final sv positoon of {label.label_id}")
 
     # make sure crops have label sets rather than single labels
-    crop_df = pd.read_csv(CSV_CROP_INFO)
+    crop_df = pd.DataFrame.from_records(crop_info)
     crop_df['label_set'] = crop_df.apply(lambda x: get_nearest_label_types(x, panos), axis=1)
-    crop_df.to_csv(FINAL_CROP_CSV, index=False)
+    crop_df.to_csv(final_crop_csv, index=False)
 
     
     # print(total_count)

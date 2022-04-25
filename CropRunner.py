@@ -222,7 +222,7 @@ def make_crop(pano_info, label_pov, destination_dir, label_name, lock, multicrop
 
         return crop_names, None, None
 
-def bulk_extract_crops(data_chunk, path_to_gsv_scrapes, destination_dir, output_csv, panos):
+def bulk_extract_crops(data_chunk, path_to_gsv_scrapes, destination_dir, crop_info, panos):
     t_start = perf_counter()
     row_count = len(data_chunk)
 
@@ -263,19 +263,25 @@ def bulk_extract_crops(data_chunk, path_to_gsv_scrapes, destination_dir, output_
         # and label_type as the output
         successful_crop_count = len(output_rows)
         no_pano_fail = (row_count * MULTICROP_COUNT) - successful_crop_count
-        with open(output_csv, 'a+', newline='') as csv_out:
-            csv_w = csv.writer(csv_out)
-            for row in output_rows:
-                # row format: [crop_name, primary_label_type, pano_id, label_id, final_sv_position, pano_size, agree_count, disagree_count, notsure_count]
-                csv_w.writerow(row[:3] + row[-3:])
+        for row in output_rows:
+            # row format: [crop_name, primary_label_type, pano_id, label_id, final_sv_position, pano_size, agree_count, disagree_count, notsure_count]
+            # csv_w.writerow(row[:3] + row[-3:])
+            crop_info.append({
+                'image_name': row[0],
+                'label_set': row[1],
+                'pano_id': row[2],
+                'agree_count': row[-3],
+                'disagree_count': row[-2],
+                'notsure_count': row[-1]
+            })
 
-                # update final sv position per label
-                if row[2] in panos and row[3] in panos[row[2]].feats:
-                    if panos[row[2]].width is None and panos[row[2]].height is None:
-                        panos[row[2]].update_pano_size(row[5][0], row[5][1])
+            # update final sv position per label
+            if row[2] in panos and row[3] in panos[row[2]].feats:
+                if panos[row[2]].width is None and panos[row[2]].height is None:
+                    panos[row[2]].update_pano_size(row[5][0], row[5][1])
 
-                    label = panos[row[2]].feats[row[3]]
-                    label.finalize_sv_position(row[4][0], row[4][1])
+                label = panos[row[2]].feats[row[3]]
+                label.finalize_sv_position(row[4][0], row[4][1])
 
         t_stop = perf_counter()
         execution_time = t_stop - t_start
