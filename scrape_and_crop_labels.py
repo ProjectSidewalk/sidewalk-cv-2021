@@ -92,9 +92,9 @@ if __name__ ==  '__main__':
         # filter out deleted or tutorial labels from data chunk
         chunk = chunk.loc[(chunk['deleted'] == 'f') & (chunk['tutorial'] == 'f')]
 
-        bool_series = pd.isnull(chunk["image_width"] | chunk["image_height"]) 
-
-        print(chunk[bool_series])
+        # filter out labels from panos with missing pano metadata
+        has_image_size_filter = pd.notnull(chunk["image_width"]) 
+        chunk = chunk[has_image_size_filter]
 
         # gather panos for current data batch then scrape panos from SFTP server
         pano_set_size, scraper_exec_time = bulk_scrape_panos(chunk, panos, LOCAL_DIR, REMOTE_DIR)
