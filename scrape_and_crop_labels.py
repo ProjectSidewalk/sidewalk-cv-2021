@@ -6,14 +6,14 @@ import pandas as pd
 import re
 
 from CropRunner import bulk_extract_crops
-from PanoScraper import bulk_scrape_panos, clean_panos
+from PanoScraper import bulk_scrape_panos
 from time import perf_counter
 
 # current city we are gathering data for
 CITY = "CITY HERE"
 
 # the raw label data
-PATH_TO_LABELDATA_CSV = f'rawdata/labels-cv-2-23-2022-{CITY}.csv'
+PATH_TO_LABELDATA_CSV = f'rawdata/labels-cv-4-20-2022-{CITY}.csv'
 
 # the local directory panos will be downloaded to
 LOCAL_DIR = 'pano-downloads/'
@@ -41,7 +41,10 @@ def get_nearest_label_types(crop_info, panos, threshold=750):
     current_label_type = crop_info[1]
     pano_id = crop_info[2]
     curr_pano = panos[pano_id]
+
+    # Work with the assumption that current label will have finalized sv positions
     current_label = curr_pano.feats[label_id]
+    curr_label_point = current_label.point()
 
     # set to hold our labels for this crop
     label_set = set()
@@ -52,15 +55,14 @@ def get_nearest_label_types(crop_info, panos, threshold=750):
     # check to see which features are in range of the dominant label of the crop
     # to account for the label in the label set of the crop
     for _, label in curr_pano.feats.items():
-        curr_label_point = current_label.point()
         other_label_point = label.point()
+        if other_label_point is not None:
+            absolute_x_dist = abs(curr_label_point.x - other_label_point.x)
+            complement_x_dist = curr_pano.width - absolute_x_dist
+            y_dist = curr_label_point.y - other_label_point.y
 
-        absolute_x_dist = abs(curr_label_point.x - other_label_point.x)
-        complement_x_dist = curr_pano.width - absolute_x_dist
-        y_dist = curr_label_point.y - other_label_point.y
-
-        if math.sqrt(absolute_x_dist**2 + y_dist**2) < threshold or math.sqrt(complement_x_dist**2 + y_dist**2) < threshold:
-            label_set.add(label.label_type)
+            if math.sqrt(absolute_x_dist**2 + y_dist**2) < threshold or math.sqrt(complement_x_dist**2 + y_dist**2) < threshold:
+                label_set.add(label.label_type)
     
     final_list = list(label_set)
     return final_list
@@ -94,7 +96,7 @@ if __name__ ==  '__main__':
         pano_set_size, scraper_exec_time = bulk_scrape_panos(chunk, panos, LOCAL_DIR, REMOTE_DIR)
 
         # clean panos
-        clean_time = clean_panos(LOCAL_DIR)
+        # clean_time = clean_panos(LOCAL_DIR)
 
         # make crops for current batch
         metrics = bulk_extract_crops(chunk, LOCAL_DIR, CROP_DESTINATION_PATH, CSV_CROP_INFO, panos)
@@ -104,10 +106,10 @@ if __name__ ==  '__main__':
         print("Pano Scraping metrics:")
         print("Elapsed time scraping {} panos for {} labels in seconds:".format(pano_set_size, len(chunk)),
                                                 scraper_exec_time)
-        print()
-        print("Pano Cleaning metrics:")
-        print("Elapsed time cleaning {} panos in seconds:".format(pano_set_size),
-                                                clean_time)
+        # print()
+        # print("Pano Cleaning metrics:")
+        # print("Elapsed time cleaning {} panos in seconds:".format(pano_set_size),
+        #                                         clean_time)
         print()
         print("Label Cropping metrics:")
         print(str(metrics[1]) + " successful crop extractions")
@@ -128,14 +130,14 @@ if __name__ ==  '__main__':
 
     # TODO: might want to remove
     # sanity checks
-    total_count = 0
-    for _, pano in panos.items():
-        if pano.width is None and pano.height is None:
-            print(f'somethign spooky with pano size of {pano.pano_id}')
-        total_count += len(pano)
-        for _, label in pano.feats.items():
-            if label.final_sv_image_x is None and label.final_sv_image_y is None:
-                print(f"something spooky with final sv positoon of {label.label_id}")
+    # total_count = 0
+    # for _, pano in panos.items():
+    #     if pano.width is None and pano.height is None:
+    #         print(f'somethign spooky with pano size of {pano.pano_id}')
+    #     total_count += len(pano)
+    #     for _, label in pano.feats.items():
+    #         if label.final_sv_image_x is None and label.final_sv_image_y is None:
+    #             print(f"something spooky with final sv positoon of {label.label_id}")
 
     # make sure crops have label sets rather than single labels
     crop_df = pd.read_csv(CSV_CROP_INFO)
@@ -143,7 +145,7 @@ if __name__ ==  '__main__':
     crop_df.to_csv(FINAL_CROP_CSV, index=False)
 
     
-    print(total_count)
+    # print(total_count)
     print()
     print("====================================================================================================")
     print(f'Total successful crop extractions: {total_successful_extractions}')

@@ -127,18 +127,22 @@ def label_point(label_pov, photographer_pov, img_dim):
 
     return round(final_point[0]), round(final_point[1])
 
-def make_crop(pano_img_path, label_pov, photographer_heading, photographer_pitch, destination_dir, label_name, lock, multicrop=True, draw_mark=True):
+def make_crop(pano_info, label_pov, destination_dir, label_name, lock, multicrop=True, draw_mark=True):
+    # TODO: how to handle labels that are calculated to be outside of physical pano?
     crop_names = []
     try:
+        pano_img_path = pano_info["pano_img_path"]
         im = Image.open(pano_img_path)
         draw = ImageDraw.Draw(im)
 
-        # im_width = im.size[0]
-        # im_height = im.size[1]
-        # print(im_width, im_height)
-        img_dim = im.size
-        im_width = im.size[0]
-        im_height = im.size[1]
+        # use metadata sizes even if the downloaded pano isn't correct size
+        im_width = pano_info["image_width"]
+        im_height = pano_info["image_height"]
+        img_dim = (im_width, im_height)
+        # print(img_dim)
+
+        # the image dimensions of the jpg (may not match metadata dimensions)
+        actual_img_dim = im.size
 
         # predicted_crop_size = predict_crop_size(sv_image_y)
         # crop_width = int(predicted_crop_size)
@@ -152,12 +156,22 @@ def make_crop(pano_img_path, label_pov, photographer_heading, photographer_pitch
         # sv_image_y *= scaling_factor
         
         photographer_pov = {
-            "heading": photographer_heading,
-            "pitch": photographer_pitch
+            "heading": pano_info["photographer_heading"],
+            "pitch": pano_info["photographer_pitch"]
         }
 
         x, y = label_point(label_pov, photographer_pov, img_dim)
         print(x, y)
+
+        # if the actual image size is less than the metadata size, only include the crop if all dimensions are within the actual pano dims
+        if actual_img_dim < img_dim:
+            # make sure entire crop can fit in actual image
+            top_left_x = int(x - crop_width / 2)
+            top_left_y = int(y - crop_height / 2)
+            bottom_right_x = int(x + crop_width / 2)
+            bottom_right_y = int(y + crop_width / 2)
+            if top_left_x < 0 or top_left_y < 0 or bottom_right_x > actual_img_dim[0] or bottom_right_y > actual_img_dim[1]:
+                return crop_names, None, None
 
         r = 20
         if draw_mark:
@@ -174,18 +188,18 @@ def make_crop(pano_img_path, label_pov, photographer_heading, photographer_pitch
             else:
                 crop_name = label_name + ".jpg"
             crop_destination = os.path.join(destination_dir, crop_name)
-            if not os.path.exists(crop_destination) and 0 <= top_left_y and top_left_y + crop_height <= im_height:
+            if not os.path.exists(crop_destination) and 0 <= top_left_y and top_left_y + crop_height <= actual_img_dim[1]:
                 crop = Image.new('RGB', (crop_width, crop_height))
                 if top_left_x < 0:
-                    crop_1 = im.crop((top_left_x + im_width, top_left_y, im_width, top_left_y + crop_height))
+                    crop_1 = im.crop((top_left_x + actual_img_dim[0], top_left_y, actual_img_dim[0], top_left_y + crop_height))
                     crop_2 = im.crop((0, top_left_y, top_left_x + crop_width, top_left_y + crop_height))
                     crop.paste(crop_1, (0,0))
                     crop.paste(crop_2, (- top_left_x, 0))
-                elif top_left_x + crop_width > im_width:
-                    crop_1 = im.crop((top_left_x, top_left_y, im_width, top_left_y + crop_height))
-                    crop_2 = im.crop((0, top_left_y, top_left_x + crop_width - im_width, top_left_y + crop_height))
+                elif top_left_x + crop_width > actual_img_dim[0]:
+                    crop_1 = im.crop((top_left_x, top_left_y, actual_img_dim[0], top_left_y + crop_height))
+                    crop_2 = im.crop((0, top_left_y, top_left_x + crop_width - actual_img_dim[0], top_left_y + crop_height))
                     crop.paste(crop_1, (0,0))
-                    crop.paste(crop_2, (im_width - top_left_x, 0))
+                    crop.paste(crop_2, (actual_img_dim[0] - top_left_x, 0))
                 else:
                     crop = im.crop((top_left_x, top_left_y, top_left_x + crop_width, top_left_y + crop_height))
                 crop.save(crop_destination)
@@ -292,8 +306,18 @@ def crop_label_subset(input_rows, output_rows, path_to_gsv_scrapes, destination_
         agree_count = int(row[14])
         disagree_count = int(row[15])
         notsure_count = int(row[16])
+        image_width = int(row[19])
+        image_height = int(row[20])
 
         pano_img_path = os.path.join(path_to_gsv_scrapes, pano_id + ".jpg")
+
+        pano_info = {
+            "pano_img_path": pano_img_path,
+            "image_width": image_width,
+            "image_height": image_height,
+            "photographer_heading": photographer_heading,
+            "photographer_pitch": photographer_pitch
+        }
 
         camera_pov = {
             "heading": camera_heading,
@@ -314,13 +338,13 @@ def crop_label_subset(input_rows, output_rows, path_to_gsv_scrapes, destination_
             if not label_type == 0:
                 # TODO: currently the only case being supported
                 label_name = str(row[13])
-                crop_names, pos, pano_size = make_crop(pano_img_path, label_pov, photographer_heading, photographer_pitch, destination_dir, label_name, lock, True, False)
-            else:
-                # TODO: this may need to be its own function since null cropping should be independent
-                # In order to uniquely identify null crops, we concatenate the pid of process they
-                # were generated on and the counter within the process to the name of the null crop.
-                label_name = "null_" + str(process_pid) + "_" +  str(counter)
-                crop_names, pos, pano_size = make_crop(pano_img_path, label_pov, photographer_heading, photographer_pitch, destination_dir, label_name, lock, False, False)
+                crop_names, pos, pano_size = make_crop(pano_info, label_pov, destination_dir, label_name, lock, True, False)
+            # else:
+            #     # TODO: this may need to be its own function since null cropping should be independent
+            #     # In order to uniquely identify null crops, we concatenate the pid of process they
+            #     # were generated on and the counter within the process to the name of the null crop.
+            #     label_name = "null_" + str(process_pid) + "_" +  str(counter)
+            #     crop_names, pos, pano_size = make_crop(pano_img_path, label_pov, photographer_heading, photographer_pitch, destination_dir, label_name, lock, False, False)
 
             for crop_name in crop_names:
                 output_rows.append([crop_name, label_type, pano_id, int(label_name), pos, pano_size, agree_count, disagree_count, notsure_count])
