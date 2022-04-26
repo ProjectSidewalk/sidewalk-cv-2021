@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import torch
 import torch.nn as nn
 import torchvision
@@ -8,27 +9,10 @@ from datatypes.dataset import SidewalkCropsDataset
 from utils.training_utils import get_pretrained_model, load_training_checkpoint, train
 from torch.optim import lr_scheduler
 from torchvision import transforms
-
-# set base path to training/test data folder
-IMAGE_BASE_PATH = "/tmp/datasets/"
-
-# set different base path for CSVs in case /tmp gets deleted
-CSV_BASE_PATH = "./datasets/"
-
-# name of model architecture
-MODEL_NAME = "MODEL NAME HERE"
-
-# number of output classes
-NUM_CLASSES = "NUM CLASSES HERE"
-
-# name of training session for saving purposes
-TRAIN_SESSION_NAME = "SESSION NAME HERE"
+import config
 
 # save path for model
-CHECKPOINT_SAVE_PATH = "./models/" + TRAIN_SESSION_NAME + ".pt"
-
-# for zoom testing
-CROP_SIZE = "CROP SIZE HERE"
+CHECKPOINT_SAVE_PATH = os.path.join(config.MODEL_SAVE_FOLDER, config.SESSION_NAME + ".pt")
 
 if __name__ == "__main__":
   # check for GPU
@@ -41,7 +25,7 @@ if __name__ == "__main__":
 
   # =================================================================================================
   # setup model for fine tuning
-  model, input_size = get_pretrained_model(MODEL_NAME, NUM_CLASSES)
+  model, input_size = get_pretrained_model(config.MODEL_NAME, config.NUM_CLASSES)
   model.to(device)
 
   lr = 0.01
@@ -64,7 +48,7 @@ if __name__ == "__main__":
   # =================================================================================================
   # load train datasets
   image_transform = transforms.Compose([
-    transforms.CenterCrop(CROP_SIZE),
+    transforms.CenterCrop(config.CROP_SIZE),
     transforms.Resize(input_size),
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
@@ -73,8 +57,8 @@ if __name__ == "__main__":
   # having issues with CUDA running out of memory, so lowering batch size
   batch_size = 8
 
-  train_labels_csv_path = CSV_BASE_PATH + "CSV NAME HERE"
-  train_img_dir = IMAGE_BASE_PATH + "crops/"
+  train_labels_csv_path = os.path.join(config.CSV_BASE_PATH, config.TRAINING_SET_CSV)
+  train_img_dir = config.IMAGE_BASE_PATH
 
   # load our custom train/val sidewalk crops dataset
   train_val_dataset = SidewalkCropsDataset(train_labels_csv_path, train_img_dir, image_transform, eval=False)
@@ -107,5 +91,5 @@ if __name__ == "__main__":
   print("next epoch: " + str(last_epoch + 1))
   print("resuming training...\n")
 
-  train(model, NUM_CLASSES, (MODEL_NAME == "inception"), optimizer, scheduler, loss_func, epochs, dataLoaders,
+  train(model, config.NUM_CLASSES, (config.MODEL_NAME == "inception"), optimizer, scheduler, loss_func, epochs, dataLoaders,
         CHECKPOINT_SAVE_PATH, metrics, last_epoch + 1, device)
