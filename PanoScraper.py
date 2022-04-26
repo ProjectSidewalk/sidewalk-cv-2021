@@ -12,9 +12,6 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 from time import perf_counter
 
-# GSV_IMAGE_WIDTH  = 13312
-# GSV_IMAGE_HEIGHT = 6656
-
 # null crops per pano
 NULLS_PER_PANO = 0
 
@@ -47,7 +44,6 @@ def bulk_scrape_panos(data_chunk, panos, local_dir, remote_dir):
     cpu_count = mp.cpu_count() if mp.cpu_count() <= 8 else 8
 
     # split pano set into chunks for multithreading
-    # pano_set = panos.keys()
     pano_set_size = len(pano_set)
     i = 0
     processes = []

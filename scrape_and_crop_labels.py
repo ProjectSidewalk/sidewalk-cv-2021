@@ -79,12 +79,7 @@ if __name__ ==  '__main__':
     # A datastructure containing panorama and associated label data
     panos = {}
 
-    # TODO: probably want to not do this
-    # create intermediary output dataset csv
-    # with open(CSV_CROP_INFO, 'w', newline='') as csv_out:
-    #     fields = ['image_name', 'label_set', 'pano_id', 'agree_count', 'disagree_count', 'notsure_count']
-    #     csv_w = csv.writer(csv_out)
-    #     csv_w.writerow(fields)
+    # stores intermediary metadata info about crops
     crop_info = []
 
     total_successful_extractions = 0
@@ -102,9 +97,6 @@ if __name__ ==  '__main__':
         # gather panos for current data batch then scrape panos from SFTP server
         pano_set_size, scraper_exec_time = bulk_scrape_panos(chunk, panos, local_dir, remote_dir)
 
-        # clean panos
-        # clean_time = clean_panos(LOCAL_DIR)
-
         # make crops for current batch
         metrics = bulk_extract_crops(chunk, local_dir, crop_destination_path, crop_info, panos)
 
@@ -113,10 +105,7 @@ if __name__ ==  '__main__':
         print("Pano Scraping metrics:")
         print("Elapsed time scraping {} panos for {} labels in seconds:".format(pano_set_size, len(chunk)),
                                                 scraper_exec_time)
-        # print()
-        # print("Pano Cleaning metrics:")
-        # print("Elapsed time cleaning {} panos in seconds:".format(pano_set_size),
-        #                                         clean_time)
+
         print()
         print("Label Cropping metrics:")
         print(str(metrics[1]) + " successful crop extractions")
@@ -135,24 +124,11 @@ if __name__ ==  '__main__':
     t_stop = perf_counter()
     total_execution_time = t_stop - t_start
 
-    # TODO: might want to remove
-    # sanity checks
-    # total_count = 0
-    # for _, pano in panos.items():
-    #     if pano.width is None and pano.height is None:
-    #         print(f'somethign spooky with pano size of {pano.pano_id}')
-    #     total_count += len(pano)
-    #     for _, label in pano.feats.items():
-    #         if label.final_sv_image_x is None and label.final_sv_image_y is None:
-    #             print(f"something spooky with final sv positoon of {label.label_id}")
-
     # make sure crops have label sets rather than single labels
     crop_df = pd.DataFrame.from_records(crop_info)
     crop_df['label_set'] = crop_df.apply(lambda x: get_nearest_label_types(x, panos), axis=1)
     crop_df.to_csv(final_crop_csv, index=False)
 
-    
-    # print(total_count)
     print()
     print("====================================================================================================")
     print(f'Total successful crop extractions: {total_successful_extractions}')

@@ -15,9 +15,6 @@ MULTICROP_COUNT = 1
 # The scale factor for each multicrop
 MULTICROP_SCALE_FACTOR = 1.5
 
-CANVAS_WIDTH = 720
-CANVAS_HEIGHT = 480
-
 logging.basicConfig(filename='crop.log', level=logging.DEBUG)
 
 # TODO: reimplement for future study
@@ -128,7 +125,6 @@ def label_point(label_pov, photographer_pov, img_dim):
     return round(final_point[0]), round(final_point[1])
 
 def make_crop(pano_info, label_pov, destination_dir, label_name, lock, multicrop=True, draw_mark=True):
-    # TODO: how to handle labels that are calculated to be outside of physical pano?
     crop_names = []
     try:
         pano_img_path = pano_info["pano_img_path"]
@@ -149,11 +145,6 @@ def make_crop(pano_info, label_pov, destination_dir, label_name, lock, multicrop
         # crop_height = int(predicted_crop_size)
         crop_width = 1500
         crop_height = 1500
-
-        # Work out scaling factor based on image dimensions
-        # scaling_factor = im_width / 13312
-        # sv_image_x *= scaling_factor
-        # sv_image_y *= scaling_factor
         
         photographer_pov = {
             "heading": pano_info["photographer_heading"],
@@ -258,14 +249,10 @@ def bulk_extract_crops(data_chunk, path_to_gsv_scrapes, destination_dir, crop_in
         for p in processes:
             p.join()
 
-        # create writer to write output csv with crop info
-        # TODO: for now, we will just have image_name point to a cropped jpg as model input 
-        # and label_type as the output
         successful_crop_count = len(output_rows)
         no_pano_fail = (row_count * MULTICROP_COUNT) - successful_crop_count
         for row in output_rows:
             # row format: [crop_name, primary_label_type, pano_id, label_id, final_sv_position, pano_size, agree_count, disagree_count, notsure_count]
-            # csv_w.writerow(row[:3] + row[-3:])
             crop_info.append({
                 'image_name': row[0],
                 'label_set': row[1],
