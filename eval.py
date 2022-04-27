@@ -23,10 +23,7 @@ def get_precision_recall(output_probabilities, corresponding_ground_truths, prob
 
 if not os.path.isdir(config.VISUALIZATIONS_PATH):
     print("made visualization folder")
-    os.makedirs(config.VISUALIZATIONS_PATH)
 
-# the actual classes
-CLASSES = ["null", "curb ramp", "missing curb ramp", "obstacle", "surface problem"]
 
 # save path for model
 CHECKPOINT_SAVE_PATH = os.path.join(config.MODEL_SAVE_FOLDER, config.SESSION_NAME + ".pt")
