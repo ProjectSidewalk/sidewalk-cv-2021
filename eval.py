@@ -9,6 +9,7 @@ from utils.training_utils import get_pretrained_model, load_best_weights, evalua
 from visualization_utils.confusion_matrix import plot_confusion_matrix
 from torchvision import transforms
 import config
+from sklearn.metrics import precision_recall_curve, roc_curve
 
 def get_precision_recall(output_probabilities, corresponding_ground_truths, prob_cutoff=.5):
   classifications = torch.where(output_probabilities > prob_cutoff, 1, 0)
@@ -22,10 +23,7 @@ def get_precision_recall(output_probabilities, corresponding_ground_truths, prob
 
 if not os.path.isdir(config.VISUALIZATIONS_PATH):
     print("made visualization folder")
-    os.makedirs(config.VISUALIZATIONS_PATH)
 
-# the actual classes
-CLASSES = ["null", "curb ramp", "missing curb ramp", "obstacle", "surface problem"]
 
 # save path for model
 CHECKPOINT_SAVE_PATH = os.path.join(config.MODEL_SAVE_FOLDER, config.SESSION_NAME + ".pt")
@@ -61,26 +59,34 @@ test_labels_csv_path = os.path.join(config.CSV_BASE_PATH, TEST_SET_CSV)
 test_dataset = SidewalkCropsDataset(test_labels_csv_path, config.IMAGE_BASE_PATH, transform=image_transform, eval=True)
 
 batch_size = 12
-
 test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=8)
 
 # =================================================================================================
 # evaluate loaded model on test set
-MISTAKES_SAVE_PATH = os.path.join(VISUALIZATIONS_PATH, config.SESSION_NAME + "_mistakes.csv")
+MISTAKES_SAVE_PATH = os.path.join(config.VISUALIZATIONS_PATH, config.SESSION_NAME + "_mistakes.csv")
 cm, output_probabilities, corresponding_ground_truths = evaluate(model, (config.MODEL_NAME == "inception"), loss_func, test_dataloader, True, MISTAKES_SAVE_PATH,device)
 if cm is not None:
-  plot_confusion_matrix(VISUALIZATIONS_PATH, config.SESSION_NAME, cm, config.CLASSES, normalize=True)
+  plot_confusion_matrix(config.VISUALIZATIONS_PATH, config.SESSION_NAME, cm, config.CLASSES, normalize=True)
 
-precisions = []
-recalls = []
-for prob_cutoff in torch.linspace(0, 1, 100000):
-  precision, recall = get_precision_recall(output_probabilities, corresponding_ground_truths, prob_cutoff)
-  precisions.append(precision)
-  recalls.append(recall)
-plt.scatter(recalls, precisions)
+precisions, recalls, _ = precision_recall_curve(corresponding_ground_truths, output_probabilities)
+plt.plot(recalls, precisions)
 plt.xlabel("recall")
 plt.ylabel("precision")
 plt.xlim([0, 1])
 plt.ylim([0, 1])
 plt.title("precision vs recall " + config.SESSION_NAME)
-plt.savefig(os.path.join(VISUALIZATIONS_PATH, "precision_recall_" + config.SESSION_NAME))
+plt.savefig(os.path.join(config.VISUALIZATIONS_PATH, "precision_recall_" + config.SESSION_NAME))
+plt.clf()
+
+false_positive_rates, true_positive_rates, _ = roc_curve(corresponding_ground_truths, output_probabilities)
+plt.plot(false_positive_rates, true_positive_rates)
+plt.xlabel("false positive rate")
+plt.ylabel("true positive rate")
+plt.xlim([0, 1])
+plt.ylim([0, 1])
+plt.title("ROC " + SESSION_NAME)
+plt.savefig(os.path.join(config.VISUALIZATIONS_PATH, "roc_" + config.SESSION_NAME))
+
+precision_default_cutoff, recall_default_cutoff = get_precision_recall(output_probabilities, corresponding_ground_truths, .5)
+print("precision at default cutoff: " + str(precision_default_cutoff))
+print("recall at default cutoff: " + str(recall_default_cutoff))

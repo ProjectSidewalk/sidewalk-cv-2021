@@ -9,18 +9,12 @@ if not os.path.isdir(config.VISUALIZATIONS_PATH):
     os.makedirs(config.VISUALIZATIONS_PATH)
 
 TRAIN_SAVE_PATH = os.path.join("../", config.MODEL_SAVE_FOLDER, config.SESSION_NAME + ".pt")
-label_types = {
-    0: "null",
-    1: "curb ramp",
-    2: "missing curb ramp",
-    3: "obstacle", 
-    4: "surface problem"
-}
-
-binary_labels = {
-    0: "negative",
-    1: "positive"
-}
+multiclass_labels = dict()
+for i, c in enumerate(config.CLASSES):
+    multiclass_labels[i] = c
+binary_labels = dict()
+for i, c in enumerate(config.BINARY_CLASSES):
+    binary_labels[i] = c 
 
 results = torch.load(TRAIN_SAVE_PATH)
 metrics = results['metrics']
@@ -33,7 +27,7 @@ def plot_label_metric(metric_name, num_classes):
     is_binary = (num_classes == 2)
     for i, metric in enumerate(flipped_metric):
         metric = metric.cpu()
-        plt.plot(np.arange(epochs), metric, label = (binary_labels if is_binary else label_types)[i])
+        plt.plot(np.arange(epochs), metric, label = (binary_labels if is_binary else multiclass_labels)[i])
     plt.title(f'{metric_name} vs epoch', fontsize=20)
     plt.xlabel("epoch", fontsize=16)
     plt.ylabel(metric_name, fontsize=16)
