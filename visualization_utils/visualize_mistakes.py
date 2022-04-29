@@ -7,15 +7,11 @@ import torch.nn as nn
 import torchvision
 from PIL import Image, ImageOps
 from torchvision import transforms
+import config
 
-
-SESSION_NAME = 'SESSION NAME HERE'
-MISTAKES_SAVE_PATH = '../visualizations/' + SESSION_NAME + '_mistakes'
-IMAGE_BASE_PATH = "/tmp/datasets/crops/"
-FALSE_POSITIVES_SAVE_PATH = '../visualizations/' + SESSION_NAME + '_false_positives'
-FALSE_NEGATIVES_SAVE_PATH = '../visualizations/' + SESSION_NAME + '_false_negatives'
-
-CROP_SIZE = 1250
+MISTAKES_SAVE_PATH = os.path.join('..', config.VISUALIZATIONS_PATH, config.SESSION_NAME + '_mistakes')
+FALSE_POSITIVES_SAVE_PATH = os.path.join('..', config.VISUALIZATIONS_PATH, config.SESSION_NAME + '_false_positives')
+FALSE_NEGATIVES_SAVE_PATH = os.path.join('..', config.VISUALIZATIONS_PATH, config.SESSION_NAME + '_false_negatives')
 
 IMAGES_PER_ROW = 5
 IMAGES_PER_COL = 3
@@ -52,10 +48,10 @@ def add_border(image, mistake_type):
 def crop(image):
     width, height = image.size   # Get dimensions
 
-    left = (width - CROP_SIZE)/2
-    top = (height - CROP_SIZE)/2
-    right = (width + CROP_SIZE)/2
-    bottom = (height + CROP_SIZE)/2
+    left = (width - config.CROP_SIZE)/2
+    top = (height - config.CROP_SIZE)/2
+    right = (width + config.CROP_SIZE)/2
+    bottom = (height + config.CROP_SIZE)/2
 
     # Crop the center of the image
     return image.crop((left, top, right, bottom))
@@ -67,14 +63,14 @@ def make_plots(mistakes, num_plots, mistake_type):
         plot_rows = mistakes.iloc[start_row:end_row]
         plot_rows.reset_index(drop=True, inplace=True)
         fig = plt.figure(num=1, figsize=(IMAGES_PER_ROW * IMAGE_SIZE, IMAGES_PER_COL * IMAGE_SIZE))
-        fig.suptitle(f'{SESSION_NAME} {mistake_type} {plot_idx}', fontsize=30)
+        fig.suptitle(f'{config.SESSION_NAME} {mistake_type} {plot_idx}', fontsize=30)
         for i, mistake in plot_rows.iterrows():
             image = Image.open(f'{mistake["image path"]}')
 
             image = crop(image)
             add_border(image, mistake_type)
 
-            path = mistake["image path"][len(IMAGE_BASE_PATH):]
+            path = mistake["image path"][len(config.IMAGE_BASE_PATH):]
             predicted = label_types[mistake['prediction']]
             actual = label_types[mistake['ground truth']]
             confidence = mistake['confidence']

@@ -270,11 +270,6 @@ def evaluate(model, is_inception, loss_func, dataset_loader, test, mistakes_save
   correct = 0
   total_loss = 0
 
-  temperature = 40
-  def softmax_with_temperature(outputs):
-    e_x = torch.exp(outputs / temperature)
-    return e_x / torch.sum(e_x)
-
   with torch.no_grad():
     for inputs, labels, paths in dataset_loader:
       if is_two_model_ensemble:
@@ -293,7 +288,7 @@ def evaluate(model, is_inception, loss_func, dataset_loader, test, mistakes_save
       # we ignore aux output in test loss calculation
       # since we aren't updating weights
       loss = loss_func(outputs, labels)
-      batch_probabilities = softmax_with_temperature(outputs)
+      batch_probabilities = nn.functional.softmax(outputs)
       confidences, predictions = torch.max(batch_probabilities, 1)
 
       all_output_probabilities = torch.cat((all_output_probabilities, batch_probabilities[:, 1].cpu()), dim=0)
