@@ -17,7 +17,7 @@ pano-downloads
 crops
 
 # Ignore crop log
-crop.log
+crop_failure.log
 
 # Ignore datasets folder
 datasets
