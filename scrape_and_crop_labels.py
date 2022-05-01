@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 import argparse
+import http
+import json
 import math
 import multiprocessing as mp
+import numpy as np
 import os
 import pandas as pd
 import re
@@ -9,6 +12,44 @@ import re
 from CropRunner import bulk_extract_crops
 from PanoScraper import bulk_scrape_panos
 from time import perf_counter
+
+def label_metadata_from_csv(metadata_csv_path):
+    df_meta = pd.read_csv(metadata_csv_path)
+    return df_meta
+    
+def label_metadata_from_api(sidewalk_server_fqdn):
+    conn = http.client.HTTPSConnection(sidewalk_server_fqdn)
+    conn.request("GET", "/adminapi/labels/cvMetadata")
+    r1 = conn.getresponse()
+    data = r1.read()
+    pano_info = json.loads(data)
+
+    # Structure of JSON data
+    # [
+    #     {
+    #         "label_id": 173572,
+    #         "gsv_panorama_id": "qos0p3mBdh7Pynq2N-1SWw",
+    #         "label_type_id": 4,
+    #         "deleted": false,
+    #         "tutorial": false,
+    #         "agree_count": 0,
+    #         "disagree_count": 0,
+    #         "notsure_count": 1,
+    #         "sv_image_x": 9927,
+    #         "sv_image_y": -624,
+    #         "canvas_width": 720,
+    #         "canvas_height": 480,
+    #         "canvas_x": 384,
+    #         "canvas_y": 212,
+    #         "zoom": 3,
+    #         "heading": 267.84820556640625,
+    #         "pitch": -18.546875,
+    #         "photographer_heading": 180.2176055908203,
+    #         "photographer_pitch": 0.13916778564453125
+    #     },
+    #     ...
+    # ]
+    return pd.DataFrame.from_records(pano_info)
 
 def get_nearest_label_types(crop_info, panos, threshold=750):
     # remove the suffix we append to get image name by splitting
@@ -52,14 +93,26 @@ if __name__ ==  '__main__':
     parser.add_argument('local_dir', help='local_dir - the local directory panos will be downloaded to, i.e. pano-downloads/')
     parser.add_argument('crops', help='crops - destination folder for crops')
     parser.add_argument('city', help='city - city from which we want to gather pano data from')
+    parser.add_argument('-c', nargs='?', default=None, help='csv_path - location of csv from which to read label metadata')
+    parser.add_argument('-d', nargs='?', default=None, help='sidewalk_server_domain - FDQN of SidewalkWebpage server to fetch pano list from, i.e. sidewalk-sea.cs.washington.edu')
     args = parser.parse_args()
 
     local_dir = args.local_dir
     base_crops_path = args.crops
     city = args.city
+    label_metadata_csv = args.c
+    sidewalk_server_fqdn = args.d
 
     # the raw label data
-    path_to_labeldata_csv = f'rawdata/labels-cv-4-20-2022-{city}.csv'
+    # path_to_labeldata_csv = f'rawdata/test-seattle.csv' #f'rawdata/labels-cv-4-20-2022-{city}.csv'
+    if label_metadata_csv is not None:
+        label_metadata = label_metadata_from_csv(label_metadata_csv)
+    elif sidewalk_server_fqdn is not None:
+        label_metadata = label_metadata_from_api(sidewalk_server_fqdn)
+    else:
+        # no option to read data
+        print("No options from which to read data")
+        os._exit(0)
 
     # the remote directory panos will be scraped from
     remote_dir = f'sidewalk_panos/Panoramas/scrapes_dump_{city}'
@@ -86,7 +139,9 @@ if __name__ ==  '__main__':
     total_failed_extractions = 0
 
     t_start = perf_counter()
-    for chunk in pd.read_csv(path_to_labeldata_csv, chunksize=10000):
+    batch_size = 10000
+    for _, chunk in label_metadata.groupby(np.arange(len(label_metadata)) // batch_size):
+        print(chunk)
         # filter out deleted or tutorial labels from data chunk
         chunk = chunk.loc[(chunk['deleted'] == 'f') & (chunk['tutorial'] == 'f')]
 
