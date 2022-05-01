@@ -141,7 +141,6 @@ if __name__ ==  '__main__':
     t_start = perf_counter()
     batch_size = 10000
     for _, chunk in label_metadata.groupby(np.arange(len(label_metadata)) // batch_size):
-        print(chunk)
         # filter out deleted or tutorial labels from data chunk
         chunk = chunk.loc[(chunk['deleted'] == 'f') & (chunk['tutorial'] == 'f')]
 
