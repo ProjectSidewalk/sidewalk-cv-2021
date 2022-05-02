@@ -21,6 +21,8 @@ class Label(object):
         self.notsure_count = int(row[16]) if row[16] is not None else None
         self.deleted = row[17] == 't' if row[17] is not None else None
         self.tutorial = row[18] == 't' if row[18] is not None else None
+        self.image_width = int(row[19]) if row[19] is not None else None
+        self.image_height = int(row[20]) if row[20] is not None else None
         self.final_sv_image_x = None
         self.final_sv_image_y = None
         
@@ -52,7 +54,7 @@ class Label(object):
         self.final_sv_image_y = y
     
     def point(self):
-        if self.final_sv_image_x is not None and self.final_sv_image_y is not None:
-            return Point(self.final_sv_image_x, self.final_sv_image_y)
-        return Point(self.sv_image_x, self.sv_image_y)
+        if self.final_sv_image_x is None or self.final_sv_image_y is None:
+            return None
+        return Point(self.final_sv_image_x, self.final_sv_image_y)
     
