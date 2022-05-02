@@ -2,6 +2,7 @@
 import argparse
 import http
 import json
+import logging
 import math
 import multiprocessing as mp
 import numpy as np
@@ -12,6 +13,8 @@ import re
 from CropRunner import bulk_extract_crops
 from PanoScraper import bulk_scrape_panos
 from time import perf_counter
+
+CROP_LOGS_FOLDER = "crop_logs"
 
 def label_metadata_from_csv(metadata_csv_path):
     df_meta = pd.read_csv(metadata_csv_path)
@@ -102,6 +105,11 @@ if __name__ ==  '__main__':
     city = args.city
     label_metadata_csv = args.c
     sidewalk_server_fqdn = args.d
+
+    if not os.path.isdir(CROP_LOGS_FOLDER):
+        os.makedirs(CROP_LOGS_FOLDER)
+
+    logging.basicConfig(filename=f'{CROP_LOGS_FOLDER}/{city}_crop_failure.log', level=logging.DEBUG)
 
     # the raw label data
     # path_to_labeldata_csv = f'rawdata/test-seattle.csv' #f'rawdata/labels-cv-4-20-2022-{city}.csv'

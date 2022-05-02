@@ -21,8 +21,6 @@ class CropFailureReason(int, Enum):
     SKIPPED = 3
     IO = 4
 
-logging.basicConfig(filename='crop_failure.log', level=logging.DEBUG)
-
 # TODO: reimplement for future study
 def predict_crop_size(sv_image_y):
     """
