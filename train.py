@@ -23,6 +23,9 @@ args = parser.parse_args()
 
 NUM_CLASSES = 2
 
+if not os.path.isdir(args.model_save_folder):
+  os.makedirs(args.model_save_folder)
+
 # save path for model
 CHECKPOINT_SAVE_PATH = os.path.join(args.model_save_folder, args.session_name + ".pt")
 

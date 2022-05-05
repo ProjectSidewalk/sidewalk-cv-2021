@@ -97,7 +97,7 @@ plt.xlabel("false positive rate")
 plt.ylabel("true positive rate")
 plt.xlim([0, 1])
 plt.ylim([0, 1])
-plt.title("ROC " + SESSION_NAME)
+plt.title("ROC " + args.session_name)
 plt.savefig(os.path.join(args.visualizations_path, "roc_" + args.session_name))
 
 precision_default_cutoff, recall_default_cutoff = get_precision_recall(output_probabilities, corresponding_ground_truths, .5)

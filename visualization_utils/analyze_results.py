@@ -14,11 +14,12 @@ args = parser.parse_args()
 CLASSES = ["null", "curb ramp", "missing curb ramp", "obstacle", "surface problem"]
 BINARY_CLASSES = ["negative", "positive"]
 NUM_CLASSES = 2
- 
+
 if not os.path.isdir(args.visualizations_path):
     os.makedirs(args.visualizations_path)
 
 TRAIN_SAVE_PATH = os.path.join(args.model_save_folder, args.session_name + ".pt")
+
 multiclass_labels = dict()
 for i, c in enumerate(CLASSES):
     multiclass_labels[i] = c

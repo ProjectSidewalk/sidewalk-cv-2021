@@ -89,7 +89,6 @@ def make_plots(mistakes, num_plots, mistake_type):
             plt.imshow(image)
         save_path = FALSE_POSITIVES_SAVE_PATH if mistake_type == 'false positives' else FALSE_NEGATIVES_SAVE_PATH
         plt.savefig(f'{save_path}{plot_idx}.png', bbox_inches='tight')
-        print('done')
         plt.clf()
 
 if __name__ == '__main__':

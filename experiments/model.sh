@@ -30,7 +30,7 @@ python3 ../utils/binary_relabeler.py $csv_base_path $training_set_csv crop_info_
 # train model
 python3 ../train.py $image_base_path $csv_base_path crop_info_1.csv $model_name $model_save_folder $session_name $crop_size
 # evaluate model
-python3 ../eval.py $image_base_path $csv_base_path $test_set_csv $model_name $model_save_folder $session_name $crop_size $visualizations_path
+python3 ../eval.py $image_base_path $csv_base_path crop_info_1.csv $model_name $model_save_folder $session_name $crop_size $visualizations_path
 # analyze/visualize results
 python3 ../visualization_utils/analyze_results.py $model_save_folder $session_name $visualizations_path
 python3 ../visualization_utils/visualize_mistakes.py $image_base_path $session_name $crop_size $visualizations_path 5
