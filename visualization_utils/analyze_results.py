@@ -1,19 +1,29 @@
+import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 import torch
 from matplotlib.pyplot import figure
-import config
- 
-if not os.path.isdir(config.VISUALIZATIONS_PATH):
-    os.makedirs(config.VISUALIZATIONS_PATH)
 
-TRAIN_SAVE_PATH = os.path.join("../", config.MODEL_SAVE_FOLDER, config.SESSION_NAME + ".pt")
+parser = argparse.ArgumentParser()
+parser.add_argument('model_save_folder', type=str)
+parser.add_argument('session_name', type=str)
+parser.add_argument('visualizations_path', type=str)
+args = parser.parse_args()
+
+CLASSES = ["null", "curb ramp", "missing curb ramp", "obstacle", "surface problem"]
+BINARY_CLASSES = ["negative", "positive"]
+NUM_CLASSES = 2
+ 
+if not os.path.isdir(args.visualizations_path):
+    os.makedirs(args.visualizations_path)
+
+TRAIN_SAVE_PATH = os.path.join(args.model_save_folder, args.session_name + ".pt")
 multiclass_labels = dict()
-for i, c in enumerate(config.CLASSES):
+for i, c in enumerate(CLASSES):
     multiclass_labels[i] = c
 binary_labels = dict()
-for i, c in enumerate(config.BINARY_CLASSES):
+for i, c in enumerate(BINARY_CLASSES):
     binary_labels[i] = c 
 
 results = torch.load(TRAIN_SAVE_PATH)
@@ -32,12 +42,12 @@ def plot_label_metric(metric_name, num_classes):
     plt.xlabel("epoch", fontsize=16)
     plt.ylabel(metric_name, fontsize=16)
     plt.legend(prop={'size': 16})
-    plt.savefig(os.path.join(config.VISUALIZATIONS_PATH, metric_name + "_" + config.SESSION_NAME))
+    plt.savefig(os.path.join(args.visualizations_path, metric_name + "_" + args.session_name))
 
-plot_label_metric('precision_validation', config.NUM_CLASSES)
-plot_label_metric('precision_train', config.NUM_CLASSES)
-plot_label_metric('recall_validation', config.NUM_CLASSES)
-plot_label_metric('recall_train', config.NUM_CLASSES)
+plot_label_metric('precision_validation', NUM_CLASSES)
+plot_label_metric('precision_train', NUM_CLASSES)
+plot_label_metric('recall_validation', NUM_CLASSES)
+plot_label_metric('recall_train', NUM_CLASSES)
 
 print("accuracy: " + str(metrics['accuracy_validation']))
 figure(figsize=(16, 12))
@@ -47,7 +57,7 @@ plt.title(f'accuracy vs epoch', fontsize=20)
 plt.xlabel("epoch", fontsize=16)
 plt.ylabel("accuracy", fontsize=16)
 plt.legend(prop={'size': 16})
-plt.savefig(os.path.join(config.VISUALIZATIONS_PATH, "accuracies_" + config.SESSION_NAME))
+plt.savefig(os.path.join(args.visualizations_path, "accuracies_" + args.session_name))
 
 figure(figsize=(16, 12))
 plt.plot(np.arange(epochs), metrics['loss_train'], label = 'train loss')
@@ -56,4 +66,4 @@ plt.title(f'loss vs epoch', fontsize=20)
 plt.xlabel("epoch", fontsize=16)
 plt.ylabel("loss", fontsize=16)
 plt.legend(prop={'size': 16})
-plt.savefig(os.path.join(config.VISUALIZATIONS_PATH, "losses_" + config.SESSION_NAME))
+plt.savefig(os.path.join(args.visualizations_path, "losses_" + args.session_name))

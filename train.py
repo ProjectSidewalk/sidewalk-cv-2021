@@ -1,3 +1,4 @@
+import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -9,10 +10,21 @@ from datatypes.dataset import SidewalkCropsDataset
 from utils.training_utils import get_pretrained_model, load_training_checkpoint, train
 from torch.optim import lr_scheduler
 from torchvision import transforms
-import config
+
+parser = argparse.ArgumentParser()
+parser.add_argument('image_base_path', type=str)
+parser.add_argument('csv_base_path', type=str)
+parser.add_argument('training_set_csv', type=str)
+parser.add_argument('model_name', type=str)
+parser.add_argument('model_save_folder', type=str)
+parser.add_argument('session_name', type=str)
+parser.add_argument('crop_size', type=int)
+args = parser.parse_args()
+
+NUM_CLASSES = 2
 
 # save path for model
-CHECKPOINT_SAVE_PATH = os.path.join(config.MODEL_SAVE_FOLDER, config.SESSION_NAME + ".pt")
+CHECKPOINT_SAVE_PATH = os.path.join(args.model_save_folder, args.session_name + ".pt")
 
 if __name__ == "__main__":
   # check for GPU
@@ -21,11 +33,11 @@ if __name__ == "__main__":
   else:  
     dev = "cpu"
   device = torch.device(dev) 
-  print(device)
+  print("device:", device)
 
   # =================================================================================================
   # setup model for fine tuning
-  model, input_size = get_pretrained_model(config.MODEL_NAME, config.NUM_CLASSES)
+  model, input_size = get_pretrained_model(args.model_name, NUM_CLASSES)
   model.to(device)
 
   lr = 0.01
@@ -48,7 +60,7 @@ if __name__ == "__main__":
   # =================================================================================================
   # load train datasets
   image_transform = transforms.Compose([
-    transforms.CenterCrop(config.CROP_SIZE),
+    transforms.CenterCrop(args.crop_size),
     transforms.Resize(input_size),
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
@@ -57,8 +69,8 @@ if __name__ == "__main__":
   # having issues with CUDA running out of memory, so lowering batch size
   batch_size = 8
 
-  train_labels_csv_path = os.path.join(config.CSV_BASE_PATH, config.TRAINING_SET_CSV)
-  train_img_dir = config.IMAGE_BASE_PATH
+  train_labels_csv_path = os.path.join(args.csv_base_path, args.training_set_csv)
+  train_img_dir = args.image_base_path
 
   # load our custom train/val sidewalk crops dataset
   train_val_dataset = SidewalkCropsDataset(train_labels_csv_path, train_img_dir, image_transform, eval=False)
@@ -68,17 +80,13 @@ if __name__ == "__main__":
   train_val_dataset_size = len(train_val_dataset)
   train_size = int(k * train_val_dataset_size)
   val_size = train_val_dataset_size - train_size
-  print(train_size)
-  print(val_size)
+  print("train size:", train_size)
+  print("validation size:", val_size)
 
   torch.manual_seed(0)
   train_dataset, val_dataset = torch.utils.data.random_split(train_val_dataset, [train_size, val_size])
   train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
   val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
-
-  print(len(train_dataset))
-  print(len(val_dataset))
-
 
   # =================================================================================================
   # train for n epochs
@@ -88,8 +96,8 @@ if __name__ == "__main__":
     "validation": val_dataloader
   }
   metrics, last_epoch = load_training_checkpoint(model, CHECKPOINT_SAVE_PATH, optimizer, scheduler)
-  print("next epoch: " + str(last_epoch + 1))
+  print("next epoch:", last_epoch + 1)
   print("resuming training...\n")
 
-  train(model, config.NUM_CLASSES, (config.MODEL_NAME == "inception"), optimizer, scheduler, loss_func, epochs, dataLoaders,
+  train(model, NUM_CLASSES, (args.model_name == "inception"), optimizer, scheduler, loss_func, epochs, dataLoaders,
         CHECKPOINT_SAVE_PATH, metrics, last_epoch + 1, device)

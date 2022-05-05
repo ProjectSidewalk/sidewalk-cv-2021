@@ -1,9 +1,13 @@
+import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 import torch
 from matplotlib.pyplot import figure
-import config
+
+parser = argparse.ArgumentParser()
+parser.add_argument('visualizations_path', type=str)
+args = parser.parse_args()
  
 label_types = {
     0: "null",
@@ -13,9 +17,8 @@ label_types = {
     4: "surface problem"
 }
 
-VISUALIZATIONS_PATH = os.join.path("..", config.VISUALIZATIONS_PATH)
-if not os.path.isdir(VISUALIZATIONS_PATH):
-    os.makedirs(VISUALIZATIONS_PATH)
+if not os.path.isdir(args.visualizations_path):
+    os.makedirs(args.visualizations_path)
 
 sizes = [1000, 2500, 5000, 10000, 20000, 37500]
 
@@ -48,18 +51,18 @@ plt.plot(sizes, final_train_accuracies, label="train")
 plt.plot(sizes, final_val_accuracies, label="validation")
 plt.title("accuracy vs dataset size")
 plt.legend(prop={'size': 16})
-plt.savefig(f"{VISUALIZATIONS_PATH}/accuracy_vs_size")
+plt.savefig("args.visualizations_path" + /accuracy_vs_size")
 
 figure(figsize=(16, 12))
 for i in range(5):
     plt.plot(sizes, final_precisions[i], label=label_types[i])
 plt.title("precisions vs dataset size")
 plt.legend(prop={'size': 16})
-plt.savefig(f"{VISUALIZATIONS_PATH}/precision_vs_size")
+plt.savefig("args.visualizations_path" + /precision_vs_size")
 
 figure(figsize=(16, 12))
 for i in range(5):
     plt.plot(sizes, final_recalls[i], label=label_types[i])
 plt.title("recalls vs dataset size")
 plt.legend(prop={'size': 16})
-plt.savefig(f"{VISUALIZATIONS_PATH}/recall_vs_size")
+plt.savefig("args.visualizations_path" + /recall_vs_size")

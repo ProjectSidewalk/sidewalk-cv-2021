@@ -125,7 +125,6 @@ def train(model, num_classes, is_inception, optimizer, scheduler, loss_func, epo
   is_cyclic_lr = isinstance(scheduler, lr_scheduler.CyclicLR)
 
   is_two_model_ensemble = isinstance(model, TwoModelEnsembleNet)
-  print("two model ensemble ", is_two_model_ensemble)
 
   for epoch in range(start_epoch, epochs):
     epoch_t_start = perf_counter()
@@ -246,7 +245,6 @@ def evaluate(model, is_inception, loss_func, dataset_loader, test, mistakes_save
   model.eval()
 
   is_two_model_ensemble = isinstance(model, TwoModelEnsembleNet)
-  print("two model ensemble ", is_two_model_ensemble)
   
   # length of data set we are evaluating on.
   n = len(dataset_loader.dataset)
