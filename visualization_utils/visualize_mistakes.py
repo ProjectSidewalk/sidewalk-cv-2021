@@ -10,8 +10,8 @@ from PIL import Image, ImageOps
 from torchvision import transforms
 
 parser = argparse.ArgumentParser()
-parser.add_argument('image_base_path', type=str)
 parser.add_argument('session_name', type=str)
+parser.add_argument('image_base_path', type=str)
 parser.add_argument('crop_size', type=int)
 parser.add_argument('visualizations_path', type=str)
 parser.add_argument('num_plots', type=int)

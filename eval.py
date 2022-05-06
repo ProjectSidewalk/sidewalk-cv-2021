@@ -12,12 +12,12 @@ from torchvision import transforms
 from sklearn.metrics import precision_recall_curve, roc_curve
 
 parser = argparse.ArgumentParser()
+parser.add_argument('session_name', type=str)
 parser.add_argument('image_base_path', type=str)
 parser.add_argument('csv_base_path', type=str)
 parser.add_argument('test_set_csv', type=str)
 parser.add_argument('model_name', type=str)
 parser.add_argument('model_save_folder', type=str)
-parser.add_argument('session_name', type=str)
 parser.add_argument('crop_size', type=int)
 parser.add_argument('visualizations_path', type=str)
 args = parser.parse_args()

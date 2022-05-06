@@ -12,12 +12,12 @@ from torch.optim import lr_scheduler
 from torchvision import transforms
 
 parser = argparse.ArgumentParser()
+parser.add_argument('session_name', type=str)
 parser.add_argument('image_base_path', type=str)
 parser.add_argument('csv_base_path', type=str)
-parser.add_argument('training_set_csv', type=str)
+parser.add_argument('train_set_csv', type=str)
 parser.add_argument('model_name', type=str)
 parser.add_argument('model_save_folder', type=str)
-parser.add_argument('session_name', type=str)
 parser.add_argument('crop_size', type=int)
 args = parser.parse_args()
 
@@ -72,7 +72,7 @@ if __name__ == "__main__":
   # having issues with CUDA running out of memory, so lowering batch size
   batch_size = 8
 
-  train_labels_csv_path = os.path.join(args.csv_base_path, args.training_set_csv)
+  train_labels_csv_path = os.path.join(args.csv_base_path, args.train_set_csv)
   train_img_dir = args.image_base_path
 
   # load our custom train/val sidewalk crops dataset

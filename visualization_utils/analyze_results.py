@@ -6,8 +6,8 @@ import torch
 from matplotlib.pyplot import figure
 
 parser = argparse.ArgumentParser()
-parser.add_argument('model_save_folder', type=str)
 parser.add_argument('session_name', type=str)
+parser.add_argument('model_save_folder', type=str)
 parser.add_argument('visualizations_path', type=str)
 args = parser.parse_args()
 
