@@ -6,6 +6,7 @@ import os
 from enum import Enum
 from PIL import Image, ImageDraw, ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
+Image.MAX_IMAGE_PIXELS = None
 
 from time import perf_counter
 
@@ -118,7 +119,7 @@ def label_point(label_pov, photographer_pov, img_dim):
     offset_vec = np.array([1, normal_slope])
     if normal_slope < 0:
         offset_vec *= -1
-    print(offset_vec)
+    # print(offset_vec)
     
     normalized_offset_vec = offset_vec / np.linalg.norm(offset_vec)
     offset_vec_scalar = -label_pov["pitch"] / 180 * img_dim[1]
@@ -156,7 +157,7 @@ def make_crop(pano_info, label_pov, destination_dir, label_id, lock, multicrop=T
         }
 
         x, y = label_point(label_pov, photographer_pov, img_dim)
-        print(x, y)
+        # print(x, y)
 
         top_left_x = int(x - crop_width / 2)
         top_left_y = int(y - crop_height / 2)
@@ -200,7 +201,7 @@ def make_crop(pano_info, label_pov, destination_dir, label_id, lock, multicrop=T
             else:
                 crop = im.crop((top_left_x, top_left_y, top_left_x + crop_width, top_left_y + crop_height))
             crop.save(crop_destination)
-            print("Successfully extracted crop to " + crop_name)
+            # print("Successfully extracted crop to " + crop_name)
             # crop_names.append(crop_name)
             return crop_name, (x, y), img_dim
         elif os.path.exists(crop_destination):
@@ -279,8 +280,8 @@ def bulk_extract_crops(data_chunk, path_to_gsv_scrapes, destination_dir, crop_in
         t_stop = perf_counter()
         execution_time = t_stop - t_start
 
-        print("Finished Cropping.")
-        print()
+        # print("Finished Cropping.")
+        # print()
         
         return [row_count, successful_crop_count, no_pano_fail, execution_time]
 

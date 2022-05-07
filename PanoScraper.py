@@ -10,6 +10,7 @@ from itertools import islice
 from PIL import Image, ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
+from subprocess import DEVNULL, STDOUT
 from time import perf_counter
 
 # null crops per pano
@@ -30,7 +31,7 @@ def bulk_scrape_panos(data_chunk, panos, local_dir, remote_dir):
     # accumulate list of pano ids to gather from sftp
     df_dict = data_chunk.to_dict('records')
     for row in df_dict:
-        print(row['gsv_panorama_id'])
+        # print(row['gsv_panorama_id'])
         pano_id = row['gsv_panorama_id']
         pano_set.add(pano_id)
         if pano_id != 'tutorial':
@@ -70,8 +71,8 @@ def bulk_scrape_panos(data_chunk, panos, local_dir, remote_dir):
     t_stop = perf_counter()
     execution_time = t_stop - t_start
 
-    print("Finished Scraping.")
-    print()
+    # print("Finished Scraping.")
+    # print()
 
     return pano_set_size, execution_time
 
@@ -112,9 +113,9 @@ def acquire_n_panos(remote_dir, local_dir, pano_ids, thread_id):
             sftp_file.write("%s\n" % sftp_command)
         sftp_file.write('quit\n')
 
-    sftp = subprocess.Popen(bash_command.split(), shell=False)
+    sftp = subprocess.Popen(bash_command.split(), shell=False, stdout=DEVNULL, stderr=STDOUT)
     result = sftp.communicate()
-    print(result)
+    # print(result)
     if sftp.returncode != 0:
         print("sftp failed on one or more commands: {0}".format(sftp_command_list))
 

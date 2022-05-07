@@ -61,7 +61,7 @@ def get_nearest_label_types(crop_info, panos, threshold=750):
     #       We may consider a different strategy when acquiring null crops
     res = re.search(r'\D+', crop_info[0]).start()
     label_id = int(crop_info[0][:res])
-    print(label_id)
+    # print(label_id)
     current_label_type = crop_info[1]
     pano_id = crop_info[2]
     curr_pano = panos[pano_id]
@@ -147,8 +147,11 @@ if __name__ ==  '__main__':
     total_failed_extractions = 0
 
     t_start = perf_counter()
-    batch_size = 10000
-    for _, chunk in label_metadata.groupby(np.arange(len(label_metadata)) // batch_size):
+    batch_size = 1000
+    for i, chunk in label_metadata.groupby(np.arange(len(label_metadata)) // batch_size):
+        print("====================================================================================================")
+        print(f'Iteration {i + 1}/{math.ceil(len(label_metadata) / batch_size)}')
+
         # filter out deleted or tutorial labels from data chunk
         chunk = chunk.loc[(chunk['deleted'] == 'f') & (chunk['tutorial'] == 'f')]
 
@@ -163,7 +166,6 @@ if __name__ ==  '__main__':
         metrics = bulk_extract_crops(chunk, local_dir, crop_destination_path, crop_info, panos)
 
         # output execution metrics
-        print("====================================================================================================")
         print("Pano Scraping metrics:")
         print("Elapsed time scraping {} panos for {} labels in seconds:".format(pano_set_size, len(chunk)),
                                                 scraper_exec_time)
