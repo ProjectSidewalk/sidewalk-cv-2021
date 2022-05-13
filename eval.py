@@ -14,12 +14,11 @@ from sklearn.metrics import precision_recall_curve, roc_curve
 parser = argparse.ArgumentParser()
 parser.add_argument('session_name', type=str)
 parser.add_argument('image_base_path', type=str)
-parser.add_argument('csv_base_path', type=str)
 parser.add_argument('test_set_csv', type=str)
 parser.add_argument('model_name', type=str)
 parser.add_argument('model_save_folder', type=str)
-parser.add_argument('crop_size', type=int)
 parser.add_argument('visualizations_path', type=str)
+parser.add_argument('crop_size', type=int)
 args = parser.parse_args()
 
 CLASSES = ["null", "curb ramp", "missing curb ramp", "obstacle", "surface problem"]
@@ -68,7 +67,7 @@ image_transform = transforms.Compose([
   transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
-test_labels_csv_path = os.path.join(args.csv_base_path, args.test_set_csv)
+test_labels_csv_path = args.test_set_csv
 test_dataset = SidewalkCropsDataset(test_labels_csv_path, args.image_base_path, transform=image_transform, eval=True)
 
 batch_size = 12

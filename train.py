@@ -14,10 +14,10 @@ from torchvision import transforms
 parser = argparse.ArgumentParser()
 parser.add_argument('session_name', type=str)
 parser.add_argument('image_base_path', type=str)
-parser.add_argument('csv_base_path', type=str)
 parser.add_argument('train_set_csv', type=str)
 parser.add_argument('model_name', type=str)
 parser.add_argument('model_save_folder', type=str)
+parser.add_argument('num_epochs', type=int)
 parser.add_argument('crop_size', type=int)
 args = parser.parse_args()
 
@@ -72,7 +72,7 @@ if __name__ == "__main__":
   # having issues with CUDA running out of memory, so lowering batch size
   batch_size = 8
 
-  train_labels_csv_path = os.path.join(args.csv_base_path, args.train_set_csv)
+  train_labels_csv_path = args.train_set_csv
   train_img_dir = args.image_base_path
 
   # load our custom train/val sidewalk crops dataset
@@ -92,8 +92,6 @@ if __name__ == "__main__":
   val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
 
   # =================================================================================================
-  # train for n epochs
-  epochs = 25
   dataLoaders = {
     "training": train_dataloader,
     "validation": val_dataloader
@@ -102,5 +100,5 @@ if __name__ == "__main__":
   print("next epoch:", last_epoch + 1)
   print("resuming training...\n")
 
-  train(model, NUM_CLASSES, (args.model_name == "inception"), optimizer, scheduler, loss_func, epochs, dataLoaders,
+  train(model, NUM_CLASSES, (args.model_name == "inception"), optimizer, scheduler, loss_func, args.num_epochs, dataLoaders,
         CHECKPOINT_SAVE_PATH, metrics, last_epoch + 1, device)
