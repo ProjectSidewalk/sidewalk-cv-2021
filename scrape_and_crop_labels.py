@@ -124,7 +124,7 @@ if __name__ ==  '__main__':
         print("No options from which to read data")
         os._exit(0)
 
-    label_metadata = label_metadata.head(20)
+    # label_metadata = label_metadata.head(30)
 
     # the remote directory panos will be scraped from
     remote_dir = f'sidewalk_panos/Panoramas/scrapes_dump_{city}'
