@@ -125,6 +125,8 @@ if __name__ ==  '__main__':
         os._exit(0)
 
     # label_metadata = label_metadata.head(30)
+    print(f'Total metadata size: {len(label_metadata)}')
+    print()
 
     # the remote directory panos will be scraped from
     remote_dir = f'sidewalk_panos/Panoramas/scrapes_dump_{city}'
