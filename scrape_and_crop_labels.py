@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import argparse
-import http
+import http.client
 import json
 import logging
 import math
@@ -17,7 +17,7 @@ from time import perf_counter
 CROP_LOGS_FOLDER = "crop_logs"
 
 def label_metadata_from_csv(metadata_csv_path):
-    df_meta = pd.read_csv(metadata_csv_path)
+    df_meta = pd.read_csv(metadata_csv_path, true_values=['t'], false_values=['f'])
     return df_meta
     
 def label_metadata_from_api(sidewalk_server_fqdn):
@@ -48,7 +48,9 @@ def label_metadata_from_api(sidewalk_server_fqdn):
     #         "heading": 267.84820556640625,
     #         "pitch": -18.546875,
     #         "photographer_heading": 180.2176055908203,
-    #         "photographer_pitch": 0.13916778564453125
+    #         "photographer_pitch": 0.13916778564453125,
+    #         "image_width": 13312,
+    #         "image_height":6656
     #     },
     #     ...
     # ]
@@ -122,6 +124,8 @@ if __name__ ==  '__main__':
         print("No options from which to read data")
         os._exit(0)
 
+    label_metadata = label_metadata.head(20)
+
     # the remote directory panos will be scraped from
     remote_dir = f'sidewalk_panos/Panoramas/scrapes_dump_{city}'
 
@@ -137,12 +141,20 @@ if __name__ ==  '__main__':
     if not os.path.isdir(local_dir):
         os.makedirs(local_dir)
 
+    # get set of label ids we already have
+    existing_crops = None
+    existing_label_ids = set()
+    if os.path.exists(final_crop_csv):
+        existing_crops = pd.read_csv(final_crop_csv)
+        existing_label_ids = set(existing_crops['image_name'].str[:-4].astype(int))  # remove .jpg extension
+
     # A datastructure containing panorama and associated label data
     panos = {}
 
     # stores intermediary metadata info about crops
     crop_info = []
 
+    total_prefiltered_labels = 0
     total_successful_extractions = 0
     total_failed_extractions = 0
 
@@ -152,12 +164,23 @@ if __name__ ==  '__main__':
         print("====================================================================================================")
         print(f'Iteration {i + 1}/{math.ceil(len(label_metadata) / batch_size)}')
 
+        initial_chunk_size = len(chunk)
+
+        # filter out labels that already have crops for them
+        chunk = chunk[~chunk['label_id'].isin(existing_label_ids)]
+
+        crop_already_exists_count = initial_chunk_size - len(chunk)
+
         # filter out deleted or tutorial labels from data chunk
-        chunk = chunk.loc[(chunk['deleted'] == 'f') & (chunk['tutorial'] == 'f')]
+        chunk = chunk[(~chunk['deleted']) & (~chunk['tutorial'])]
+
+        deleted_or_tutorial_count = initial_chunk_size - crop_already_exists_count - len(chunk)
 
         # filter out labels from panos with missing pano metadata
         has_image_size_filter = pd.notnull(chunk["image_width"]) 
         chunk = chunk[has_image_size_filter]
+
+        missing_pano_metadata_count = initial_chunk_size - crop_already_exists_count - deleted_or_tutorial_count - len(chunk)
 
         # gather panos for current data batch then scrape panos from SFTP server
         pano_set_size, scraper_exec_time = bulk_scrape_panos(chunk, panos, local_dir, remote_dir)
@@ -166,6 +189,12 @@ if __name__ ==  '__main__':
         metrics = bulk_extract_crops(chunk, local_dir, crop_destination_path, crop_info, panos)
 
         # output execution metrics
+        print("Prefilter counts:")
+        print(f'Crop already exists: {crop_already_exists_count}')
+        print(f'Deleted or tutorial: {deleted_or_tutorial_count}')
+        print(f'Missing pano metadata: {missing_pano_metadata_count}')
+        
+        print()
         print("Pano Scraping metrics:")
         print("Elapsed time scraping {} panos for {} labels in seconds:".format(pano_set_size, len(chunk)),
                                                 scraper_exec_time)
@@ -173,11 +202,12 @@ if __name__ ==  '__main__':
         print()
         print("Label Cropping metrics:")
         print(str(metrics[1]) + " successful crop extractions")
-        print(str(metrics[2]) + " extractions failed because panorama image was not found.")
+        print(str(metrics[2]) + " extractions failed.")
         print("Elapsed time during bulk cropping in seconds for {} labels:".format(metrics[0]),
                                                 metrics[3])
         print()
 
+        total_prefiltered_labels += initial_chunk_size - len(chunk)
         total_successful_extractions += metrics[1]
         total_failed_extractions += metrics[2]
 
@@ -190,11 +220,15 @@ if __name__ ==  '__main__':
 
     # make sure crops have label sets rather than single labels
     crop_df = pd.DataFrame.from_records(crop_info)
-    crop_df['label_set'] = crop_df.apply(lambda x: get_nearest_label_types(x, panos), axis=1)
+    if 'label_set' in crop_df.columns:
+        crop_df['label_set'] = crop_df.apply(lambda x: get_nearest_label_types(x, panos), axis=1)
+    if existing_crops is not None:
+        crop_df = pd.concat([existing_crops, crop_df])
     crop_df.to_csv(final_crop_csv, index=False)
 
     print()
     print("====================================================================================================")
+    print(f'Total prefiltered labels: {total_prefiltered_labels}')
     print(f'Total successful crop extractions: {total_successful_extractions}')
     print(f'Total failed extractions: {total_failed_extractions}')
     print(f'Total execution time in seconds: {total_execution_time}')

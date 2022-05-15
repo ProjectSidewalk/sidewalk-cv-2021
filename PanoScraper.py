@@ -5,7 +5,6 @@ import random
 import subprocess
 
 from datatypes.panorama import Panorama
-from datatypes.point import Point
 from itertools import islice
 from PIL import Image, ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -39,7 +38,7 @@ def bulk_scrape_panos(data_chunk, panos, local_dir, remote_dir):
                 # create new Panorama object for new pano id and store pano size
                 panos[pano_id] = Panorama()
                 panos[pano_id].update_pano_size(row['image_width'], row['image_height'])
-            panos[pano_id].add_feature(list(row.values()))
+            panos[pano_id].add_feature(row)
     
     # get available cpu_count
     cpu_count = mp.cpu_count() if mp.cpu_count() <= 8 else 8

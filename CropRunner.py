@@ -3,6 +3,7 @@ import multiprocessing as mp
 import numpy as np
 import os
 
+from datatypes.label import Label
 from enum import Enum
 from PIL import Image, ImageDraw, ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -257,7 +258,7 @@ def bulk_extract_crops(data_chunk, path_to_gsv_scrapes, destination_dir, crop_in
             p.join()
 
         successful_crop_count = len(output_rows)
-        no_pano_fail = row_count - successful_crop_count # (row_count * MULTICROP_COUNT) - successful_crop_count
+        crop_fail_count = row_count - successful_crop_count # (row_count * MULTICROP_COUNT) - successful_crop_count
         for row in output_rows:
             # row format: [crop_name, primary_label_type, pano_id, label_id, final_sv_position, pano_size, agree_count, disagree_count, notsure_count]
             crop_info.append({
@@ -283,7 +284,7 @@ def bulk_extract_crops(data_chunk, path_to_gsv_scrapes, destination_dir, crop_in
         # print("Finished Cropping.")
         # print()
         
-        return [row_count, successful_crop_count, no_pano_fail, execution_time]
+        return [row_count, successful_crop_count, crop_fail_count, execution_time]
 
 def crop_label_subset(input_rows, output_rows, path_to_gsv_scrapes, destination_dir, lock):
     counter = 0
@@ -291,54 +292,37 @@ def crop_label_subset(input_rows, output_rows, path_to_gsv_scrapes, destination_
     input_rows_dict = input_rows.to_dict('records')
     for row in input_rows_dict:
         counter += 1
-        row = list(row.values())
-        pano_id = row[0]
-        canvas_x = int(row[3])
-        canvas_y = int(row[4])
-        canvas_width = int(row[5])
-        canvas_height = int(row[6])
-        zoom = int(row[7])
-        label_type = int(row[8])
-        photographer_heading = float(row[9])
-        photographer_pitch = float(row[10])
-        camera_heading = float(row[11])
-        camera_pitch = float(row[12])
-        label_id = str(row[13])
-        agree_count = int(row[14])
-        disagree_count = int(row[15])
-        notsure_count = int(row[16])
-        image_width = int(row[19])
-        image_height = int(row[20])
+        label = Label(row)
 
-        pano_img_path = os.path.join(path_to_gsv_scrapes, pano_id + ".jpg")
+        pano_img_path = os.path.join(path_to_gsv_scrapes, label.pano_id + ".jpg")
 
         pano_info = {
             "pano_img_path": pano_img_path,
-            "image_width": image_width,
-            "image_height": image_height,
-            "photographer_heading": photographer_heading,
-            "photographer_pitch": photographer_pitch
+            "image_width": label.image_width,
+            "image_height": label.image_height,
+            "photographer_heading": label.photographer_heading,
+            "photographer_pitch": label.photographer_pitch
         }
 
         camera_pov = {
-            "heading": camera_heading,
-            "pitch": camera_pitch,
-            "zoom": zoom
+            "heading": label.heading,
+            "pitch": label.pitch,
+            "zoom": label.zoom
         }
 
         canvas_dim = {
-            "width": canvas_width,
-            "height": canvas_height
+            "width": label.canvas_width,
+            "height": label.canvas_height
         }
 
-        label_pov = calculatePointPov(canvas_x, canvas_y, camera_pov, canvas_dim)
+        label_pov = calculatePointPov(label.canvas_x, label.canvas_y, camera_pov, canvas_dim)
 
         # Extract the crop
         if os.path.exists(pano_img_path):
             # crop_names = []
             # if not label_type == 0:
                 # TODO: currently the only case being supported
-            crop_name, pos, pano_size = make_crop(pano_info, label_pov, destination_dir, label_id, lock, False, False)
+            crop_name, pos, pano_size = make_crop(pano_info, label_pov, destination_dir, label.label_id, lock, False, False)
             # else:
             #     # TODO: this may need to be its own function since null cropping should be independent
             #     # In order to uniquely identify null crops, we concatenate the pid of process they
@@ -347,10 +331,10 @@ def crop_label_subset(input_rows, output_rows, path_to_gsv_scrapes, destination_
             #     crop_names, pos, pano_size = make_crop(pano_img_path, label_pov, photographer_heading, photographer_pitch, destination_dir, label_name, lock, False, False)
 
             if crop_name is not None:
-                output_rows.append([crop_name, label_type, pano_id, int(label_id), pos, pano_size, agree_count, disagree_count, notsure_count])
+                output_rows.append([crop_name, label.label_type, label.pano_id, int(label.label_id), pos, pano_size, label.agree_count, label.disagree_count, label.notsure_count])
         else:
             print("Panorama image not found.")
-            logging.info(f'{label_id}, {CropFailureReason.MISSING_PANO_JPG}')
+            logging.info(f'{label.label_id}, {CropFailureReason.MISSING_PANO_JPG}')
             # try:
             #     logging.warning("Skipped label id " + label_name + " due to missing image.")
             # except NameError:
