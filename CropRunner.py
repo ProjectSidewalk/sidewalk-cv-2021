@@ -116,10 +116,14 @@ def label_point(label_pov, photographer_pov, img_dim):
 
     point = np.array([original_x, original_y])
     cosine_slope = amplitude * -np.sin(horizontal_scale * original_x) * horizontal_scale
-    normal_slope = -1 / cosine_slope
-    offset_vec = np.array([1, normal_slope])
-    if normal_slope < 0:
-        offset_vec *= -1
+    if cosine_slope != 0:
+        normal_slope = -1 / cosine_slope
+        offset_vec = np.array([1, normal_slope])
+        if normal_slope < 0:
+            offset_vec *= -1
+    else:
+        print(f'cosine slope is 0, photographer pitch was {photographer_pov["pitch"]}')
+        offset_vec = np.array([0, 1])
     # print(offset_vec)
     
     normalized_offset_vec = offset_vec / np.linalg.norm(offset_vec)
