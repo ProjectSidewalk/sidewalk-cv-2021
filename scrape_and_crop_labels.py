@@ -124,7 +124,7 @@ if __name__ ==  '__main__':
         print("No options from which to read data")
         os._exit(0)
 
-    label_metadata = label_metadata.head(40)
+    # label_metadata = label_metadata.head(40)
     total_metadata_size = len(label_metadata)
     print(f'Total metadata size: {total_metadata_size}')
     print()
