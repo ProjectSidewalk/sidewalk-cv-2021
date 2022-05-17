@@ -4,8 +4,8 @@ alphie-sftp
 # Ignore rawdata folder
 rawdata
 
-# Ignore generated batch sftp commands file
-batch*.text
+# Ignore generated batch sftp commands folder
+batches
 
 # Ignore pano-downloads folder
 pano-downloads
@@ -16,8 +16,8 @@ pano-downloads
 # Ignore generated crops
 crops
 
-# Ignore crop log
-crop.log
+# Ignore crop logs
+crop_logs
 
 # Ignore datasets folder
 datasets
@@ -39,3 +39,6 @@ visualizations
 
 # Ignore env folder
 env
+
+# Ignore xml metadata download folder
+xml-metadata

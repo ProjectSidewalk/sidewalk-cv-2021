@@ -7,6 +7,12 @@ import random
 import json
 
 DEFAULT_CSV_FOLDER = "../datasets/"
+SEMANTIC_LABEL_TYPES = {
+    1: "Curb Ramp",
+    2: "Missing Curb Ramp",
+    3: "Obstacle",
+    4: "Surface Problem"
+}
 
 class Operations(str, Enum):
     LOAD = "load"
@@ -18,6 +24,7 @@ class Operations(str, Enum):
     FILTER = "filter"
     SETDIFF = "setdiff"
     LABEL_CITY = "label_city"
+    METRICS = "metrics"
     REFRESH = "refresh"
     QUIT = "quit"
     OUTPUT = "output"
@@ -73,6 +80,38 @@ def setdiff(df1, df2):
 
 def label_city(dataframe, city):
     dataframe['image_name'] = dataframe['image_name'].apply(lambda x: f"{city}/{x}")
+
+def metrics(dataset_dfs, output_path):
+    metrics = []
+    for df_tuple in dataset_dfs:
+        # csv name
+        csv_name = df_tuple[0]
+        df = df_tuple[1]
+        
+        # Total crops in city
+        total_crops = len(df)
+
+        # Crops per label type
+        label_type_counts = {}
+        for label_type in [1, 2, 3, 4]:
+            label_type_counts[SEMANTIC_LABEL_TYPES[label_type]] = len(df.loc[df['label_set'].apply(lambda labels: str(label_type) in labels)])
+
+        # validated count
+        validated_count = len(df.loc[df['agree_count'] + df['disagree_count'] + df['notsure_count'] > 0])
+
+        # agree count > disagree count
+        positively_validated_crop_count = len(df.loc[df['agree_count'] > df['disagree_count']])
+
+        metrics.append({
+            "name": csv_name,
+            "total_crops": total_crops,
+            "label_type_counts": str(label_type_counts),
+            "validated_count": validated_count,
+            "positively_validated_count": positively_validated_crop_count
+        })
+
+    metrics_df = pd.DataFrame.from_records(metrics)
+    metrics_df.to_csv(output_path, index=False)
 
 def refresh(dataset_csv_folder):
     csv_list = glob.glob(dataset_csv_folder + "*.csv")
@@ -167,6 +206,15 @@ if __name__ == "__main__":
             if output_df is not None:
                 label_city(output_df, city)
                 print("labeled")
+        elif command == Operations.METRICS:
+            output_path = dataset_csv_folder + arguments[0]
+            dataframes = []
+            for i in arguments[1:]:
+                csv_path = csv_list[int(i) - 1]
+                dataset_df = pd.read_csv(csv_path)
+                dataframes.append((csv_path, dataset_df))
+            metrics(dataframes, output_path)
+            print("outputted metrics")
         elif command == Operations.REFRESH:
             csv_list = refresh(dataset_csv_folder)
             print()
