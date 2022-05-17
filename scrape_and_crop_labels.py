@@ -124,8 +124,9 @@ if __name__ ==  '__main__':
         print("No options from which to read data")
         os._exit(0)
 
-    # label_metadata = label_metadata.head(30)
-    print(f'Total metadata size: {len(label_metadata)}')
+    label_metadata = label_metadata.head(40)
+    total_metadata_size = len(label_metadata)
+    print(f'Total metadata size: {total_metadata_size}')
     print()
 
     # the remote directory panos will be scraped from
@@ -150,13 +151,30 @@ if __name__ ==  '__main__':
         existing_crops = pd.read_csv(final_crop_csv)
         existing_label_ids = set(existing_crops['image_name'].str[:-4].astype(int))  # remove .jpg extension
 
+    # filter out labels that already have crops for them
+    label_metadata = label_metadata[~label_metadata['label_id'].isin(existing_label_ids)]
+
+    crop_already_exists_count = total_metadata_size - len(label_metadata)
+
+    # filter out deleted or tutorial labels from data chunk
+    label_metadata = label_metadata[(~label_metadata['deleted']) & (~label_metadata['tutorial'])]
+
+    deleted_or_tutorial_count = total_metadata_size - crop_already_exists_count - len(label_metadata)
+
+    # filter out labels from panos with missing pano metadata
+    has_image_size_filter = pd.notnull(label_metadata['image_width']) 
+    label_metadata = label_metadata[has_image_size_filter]
+
+    missing_pano_metadata_count = total_metadata_size - crop_already_exists_count - deleted_or_tutorial_count - len(label_metadata)
+
     # A datastructure containing panorama and associated label data
     panos = {}
 
     # stores intermediary metadata info about crops
     crop_info = []
 
-    total_prefiltered_labels = 0
+    assert crop_already_exists_count + deleted_or_tutorial_count + missing_pano_metadata_count == total_metadata_size - len(label_metadata)
+    total_prefiltered_labels = total_metadata_size - len(label_metadata)
     total_successful_extractions = 0
     total_failed_extractions = 0
 
@@ -166,24 +184,6 @@ if __name__ ==  '__main__':
         print("====================================================================================================")
         print(f'Iteration {i + 1}/{math.ceil(len(label_metadata) / batch_size)}')
 
-        initial_chunk_size = len(chunk)
-
-        # filter out labels that already have crops for them
-        chunk = chunk[~chunk['label_id'].isin(existing_label_ids)]
-
-        crop_already_exists_count = initial_chunk_size - len(chunk)
-
-        # filter out deleted or tutorial labels from data chunk
-        chunk = chunk[(~chunk['deleted']) & (~chunk['tutorial'])]
-
-        deleted_or_tutorial_count = initial_chunk_size - crop_already_exists_count - len(chunk)
-
-        # filter out labels from panos with missing pano metadata
-        has_image_size_filter = pd.notnull(chunk["image_width"]) 
-        chunk = chunk[has_image_size_filter]
-
-        missing_pano_metadata_count = initial_chunk_size - crop_already_exists_count - deleted_or_tutorial_count - len(chunk)
-
         # gather panos for current data batch then scrape panos from SFTP server
         pano_set_size, scraper_exec_time = bulk_scrape_panos(chunk, panos, local_dir, remote_dir)
 
@@ -191,11 +191,6 @@ if __name__ ==  '__main__':
         metrics = bulk_extract_crops(chunk, local_dir, crop_destination_path, crop_info, panos)
 
         # output execution metrics
-        print("Prefilter counts:")
-        print(f'Crop already exists: {crop_already_exists_count}')
-        print(f'Deleted or tutorial: {deleted_or_tutorial_count}')
-        print(f'Missing pano metadata: {missing_pano_metadata_count}')
-        
         print()
         print("Pano Scraping metrics:")
         print("Elapsed time scraping {} panos for {} labels in seconds:".format(pano_set_size, len(chunk)),
@@ -209,7 +204,6 @@ if __name__ ==  '__main__':
                                                 metrics[3])
         print()
 
-        total_prefiltered_labels += initial_chunk_size - len(chunk)
         total_successful_extractions += metrics[1]
         total_failed_extractions += metrics[2]
 
@@ -231,6 +225,11 @@ if __name__ ==  '__main__':
     print()
     print("====================================================================================================")
     print(f'Total prefiltered labels: {total_prefiltered_labels}')
+    print("Prefilter counts:")
+    print(f'Crop already exists: {crop_already_exists_count}')
+    print(f'Deleted or tutorial: {deleted_or_tutorial_count}')
+    print(f'Missing pano metadata: {missing_pano_metadata_count}')
+    print()
     print(f'Total successful crop extractions: {total_successful_extractions}')
     print(f'Total failed extractions: {total_failed_extractions}')
     print(f'Total execution time in seconds: {total_execution_time}')
