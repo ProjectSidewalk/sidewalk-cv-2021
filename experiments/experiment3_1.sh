@@ -1,6 +1,7 @@
-# Test Experiment Script
-echo "Running Experiment: Draft"
+# Script for Experiment 3.1
+echo "Starting Experiment 3.1"
 
+experiment="3.1"
 # city names
 cities=("city1" "city2" "city3" "city4" "city5")
 # path to train/test CSV data
@@ -25,24 +26,24 @@ crop_size="1500"
 num_plots="1"
 
 echo "initializing..."
-mkdir -p $csv_base_path/"tmp/"
-
 # make tmporary binarized train and test sets for each city
 for city in ${cities[@]}; do
-  mkdir -p $csv_base_path/"tmp"/$city
+  mkdir -p $csv_base_path/"tmp/"$city
   for label in {1..4}; do
     python ../utils/csv_binarizer.py $csv_base_path/$city/$train_set_csv $csv_base_path/"tmp/"$city/"train_set"$label".csv" $label
     python ../utils/csv_binarizer.py $csv_base_path/$city/$test_set_csv $csv_base_path/"tmp/"$city/"test_set"$label".csv" $label
   done
 done
 
-echo "beginning experiment 3.1"
-experiment="3.1"
-
+# make relevant directories
 mkdir -p $csv_base_path/"tmp/all_cities/"
 mkdir -p $model_save_folder/$experiment
-mkdir -p $visualizations_path/$experiment
+for city in ${cities[@]}; do
+  mkdir -p $visualizations_path/$experiment/$city
+done
+
 for label in {1..4}; do
+  echo "training label "$label" classifier on all cities..."
   # combine train sets for all cities
   head -n1 $csv_base_path/"tmp/"${cities[1]}/"train_set"$label".csv" > $csv_base_path/"tmp/all_cities/train_set"$label".csv"
   for city in ${cities[@]}; do
@@ -53,9 +54,8 @@ for label in {1..4}; do
   # train model on combined train set
   python ../train.py $model_name$label $image_base_path $csv_base_path/"tmp/all_cities/train_set"$label".csv" $model_name $model_save_folder/$experiment $num_epochs $crop_size
 
-  # test and evaluate model on each city's individual test set
   for city in ${cities[@]}; do
-    mkdir -p $visualizations_path/$experiment/$city
+    echo "testing label "$label" classifier on "$city"..."
     # evaluate model
     python ../eval.py $model_name$label $image_base_path $csv_base_path/"tmp/"$city/"test_set"$label".csv" $model_name $model_save_folder/$experiment $visualizations_path/$experiment/$city $crop_size
     # analyze results
@@ -64,3 +64,5 @@ for label in {1..4}; do
     python ../visualization_utils/visualize_mistakes.py $model_name$label $image_base_path $visualizations_path/$experiment/$city $crop_size $num_plots
   done
 done
+
+echo "Finished Experiment 3.1!"
