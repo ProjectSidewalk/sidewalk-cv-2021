@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import datetime
 import http.client
 import json
 import logging
@@ -112,6 +113,7 @@ if __name__ ==  '__main__':
         os.makedirs(CROP_LOGS_FOLDER)
 
     logging.basicConfig(filename=f'{CROP_LOGS_FOLDER}/{city}_crop_failure.log', level=logging.DEBUG)
+    logging.info(f'CROP SESSION TIMESTAMP: {datetime.datetime.now().strftime("%d %b %Y %H:%M:%S")}')
 
     # the raw label data
     # path_to_labeldata_csv = f'rawdata/test-seattle.csv' #f'rawdata/labels-cv-4-20-2022-{city}.csv'
