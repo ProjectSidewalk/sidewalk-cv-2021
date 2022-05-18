@@ -30,8 +30,8 @@ echo "initializing..."
 for city in ${cities[@]}; do
   mkdir -p $csv_base_path/"tmp/"$city
   for label in {1..4}; do
-    python ../utils/csv_binarizer.py $csv_base_path/$city/$train_set_csv $csv_base_path/"tmp/"$city/"train_set"$label".csv" $label
-    python ../utils/csv_binarizer.py $csv_base_path/$city/$test_set_csv $csv_base_path/"tmp/"$city/"test_set"$label".csv" $label
+    python ../utils/dataset_creator.py "binarize" $csv_base_path/$city/$train_set_csv $label $csv_base_path/"tmp/"$city/"train_set"$label".csv"
+    python ../utils/dataset_creator.py "binarize" $csv_base_path/$city/$test_set_csv $label $csv_base_path/"tmp/"$city/"test_set"$label".csv"
   done
 done
 
@@ -47,7 +47,7 @@ for excluded_city in ${cities[@]}; do
     head -n1 $csv_base_path/"tmp/"${cities[1]}/"train_set"$label".csv" > $csv_base_path/"tmp/exclude_"$excluded_city/"train_set"$label".csv"
     for city in ${cities[@]}; do
       if [ $city != $excluded_city ]; then
-        tail -n+2 $csv_base_path/"tmp/"$city/"train_set"$label".csv" >> $csv_base_path/"tmp/exclude_"$excluded_city/"train_set"$label".csv"
+        python ../utils/dataset_creator.py "combine" $csv_base_path/"tmp/exclude_"$excluded_city/"train_set"$label".csv" $csv_base_path/"tmp/"$city/"train_set"$label".csv" $csv_base_path/"tmp/exclude_"$excluded_city/"train_set"$label".csv"
       fi
     done
     wc $csv_base_path/"tmp/exclude_"$excluded_city/"train_set"$label".csv"
