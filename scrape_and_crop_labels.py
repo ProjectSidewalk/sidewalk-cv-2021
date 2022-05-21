@@ -138,7 +138,7 @@ if __name__ ==  '__main__':
     crop_destination_path = f'{base_crops_path}/{city}'
 
     # finalized crop info csv
-    final_crop_csv = f'{city}_final_crop_info.csv'  
+    final_crop_csv = f'{base_crops_path}/{city}_final_crop_info.csv'  
 
     print("CPU count: ", mp.cpu_count())
 
