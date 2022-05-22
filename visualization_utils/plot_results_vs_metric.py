@@ -51,18 +51,18 @@ plt.plot(sizes, final_train_accuracies, label="train")
 plt.plot(sizes, final_val_accuracies, label="validation")
 plt.title("accuracy vs dataset size")
 plt.legend(prop={'size': 16})
-plt.savefig("args.visualizations_path" + /accuracy_vs_size")
+plt.savefig(os.path.join(args.visualizations_path, "accuracy_vs_size"))
 
 figure(figsize=(16, 12))
 for i in range(5):
     plt.plot(sizes, final_precisions[i], label=label_types[i])
 plt.title("precisions vs dataset size")
 plt.legend(prop={'size': 16})
-plt.savefig("args.visualizations_path" + /precision_vs_size")
+plt.savefig(os.path.join(args.visualizations_path, "precision_vs_size"))
 
 figure(figsize=(16, 12))
 for i in range(5):
     plt.plot(sizes, final_recalls[i], label=label_types[i])
 plt.title("recalls vs dataset size")
 plt.legend(prop={'size': 16})
-plt.savefig("args.visualizations_path" + /recall_vs_size")
+plt.savefig(os.path.join(args.visualizations_path, "recall_vs_size"))
