@@ -13,20 +13,20 @@ test_set_csv="test_set.csv"
 # path to train/test image data
 image_base_path="/tmp/crops/"
 # name of model architecture
-model_name="efficientnet"
+model_name="hrnet"
 # save path for model weights
 model_save_folder="../models/"
 # save path the visualizations
 visualizations_path="../visualizations/"
 # number of epochs for training
-num_epochs="1"
+num_epochs="15"
 # crop size
 crop_size="1500"
 # number of plots for mistake visualization
-num_plots="1"
+num_plots="5"
 
 echo "initializing..."
-# make tmporary binarized train and test sets for each city
+# make binarized train and test sets for each city
 for city in ${cities[@]}; do
   mkdir -p $csv_base_path/"tmp/"$city
   for label in {1..4}; do
@@ -56,7 +56,7 @@ for label in {1..4}; do
 
   for city in ${cities[@]}; do
     echo "testing label "$label" classifier on "$city"..."
-    # evaluate model
+    # evaluate model on each city
     python ../eval.py $model_name$label $image_base_path $csv_base_path/"tmp/"$city/"test_set"$label".csv" $model_name $model_save_folder/$experiment $visualizations_path/$experiment/$city $crop_size
     # analyze results
     python ../visualization_utils/analyze_results.py $model_name$label $model_save_folder/$experiment $visualizations_path/$experiment/$city

@@ -148,22 +148,16 @@ def output(dataframe, output_path):
 if __name__ == "__main__":
     dataset_csv_folder = args.csv_folder
     interactive_mode = args.i
-
     if interactive_mode:
         # get a list of dataset csvs
         csv_list = refresh(dataset_csv_folder)
-        
         print()
-
         # give list of options
         print("Options:")
         for operation in Operations:
             print(operation.value)
-
         print()
-
         output_df = None
-        
         while True:
             operation, arguments = receive_operation()
             print()
@@ -262,7 +256,7 @@ if __name__ == "__main__":
             output(combine(dataframes), output_path)
         elif operation == Operations.SUBSET:
             csv_path = args.arguments[0]
-            subset_size = int(args.arguments[1])
+            subset_size = int(float(args.arguments[1]))
             output_path = args.arguments[2]
             dataframe = pd.read_csv(csv_path)
             output(subset(dataframe, subset_size), output_path)
