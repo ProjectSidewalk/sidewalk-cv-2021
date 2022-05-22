@@ -31,27 +31,25 @@ def label_metadata_from_api(sidewalk_server_fqdn):
     # Structure of JSON data
     # [
     #     {
-    #         "label_id": 173572,
-    #         "gsv_panorama_id": "qos0p3mBdh7Pynq2N-1SWw",
-    #         "label_type_id": 4,
-    #         "deleted": false,
-    #         "tutorial": false,
-    #         "agree_count": 0,
-    #         "disagree_count": 0,
-    #         "notsure_count": 1,
-    #         "sv_image_x": 9927,
-    #         "sv_image_y": -624,
-    #         "canvas_width": 720,
-    #         "canvas_height": 480,
-    #         "canvas_x": 384,
-    #         "canvas_y": 212,
-    #         "zoom": 3,
-    #         "heading": 267.84820556640625,
-    #         "pitch": -18.546875,
-    #         "photographer_heading": 180.2176055908203,
-    #         "photographer_pitch": 0.13916778564453125,
-    #         "image_width": 13312,
-    #         "image_height":6656
+    #         "label_id":47614,
+    #         "gsv_panorama_id":"sHMY67LdNX48BFwpbGMD3A",
+    #         "label_type_id":2,
+    #         "agree_count":1,
+    #         "disagree_count":0,
+    #         "notsure_count":0,
+    #         "image_width":16384,
+    #         "image_height":8192,
+    #         "sv_image_x":6538,
+    #         "sv_image_y":-731,
+    #         "canvas_width":720,
+    #         "canvas_height":480,
+    #         "canvas_x":275,
+    #         "canvas_y":152,
+    #         "zoom":1,
+    #         "heading":190.25,
+    #         "pitch":-34.4375,
+    #         "photographer_heading":292.4190368652344,
+    #         "photographer_pitch":-3.3052749633789062
     #     },
     #     ...
     # ]
@@ -153,21 +151,23 @@ if __name__ ==  '__main__':
         existing_crops = pd.read_csv(final_crop_csv)
         existing_label_ids = set(existing_crops['image_name'].str[:-4].astype(int))  # remove .jpg extension
 
+        # update validation counts here
+
     # filter out labels that already have crops for them
     label_metadata = label_metadata[~label_metadata['label_id'].isin(existing_label_ids)]
 
     crop_already_exists_count = total_metadata_size - len(label_metadata)
 
     # filter out deleted or tutorial labels from data chunk
-    label_metadata = label_metadata[(~label_metadata['deleted']) & (~label_metadata['tutorial'])]
+    # label_metadata = label_metadata[(~label_metadata['deleted']) & (~label_metadata['tutorial'])]
 
-    deleted_or_tutorial_count = total_metadata_size - crop_already_exists_count - len(label_metadata)
+    # deleted_or_tutorial_count = total_metadata_size - crop_already_exists_count - len(label_metadata)
 
     # filter out labels from panos with missing pano metadata
     has_image_size_filter = pd.notnull(label_metadata['image_width']) 
     label_metadata = label_metadata[has_image_size_filter]
 
-    missing_pano_metadata_count = total_metadata_size - crop_already_exists_count - deleted_or_tutorial_count - len(label_metadata)
+    missing_pano_metadata_count = total_metadata_size - crop_already_exists_count -len(label_metadata) #- deleted_or_tutorial_count - len(label_metadata)
 
     # A datastructure containing panorama and associated label data
     panos = {}
@@ -175,7 +175,7 @@ if __name__ ==  '__main__':
     # stores intermediary metadata info about crops
     crop_info = []
 
-    assert crop_already_exists_count + deleted_or_tutorial_count + missing_pano_metadata_count == total_metadata_size - len(label_metadata)
+    assert crop_already_exists_count + missing_pano_metadata_count == total_metadata_size - len(label_metadata) # deleted_or_tutorial_count + missing_pano_metadata_count == total_metadata_size - len(label_metadata)
     total_prefiltered_labels = total_metadata_size - len(label_metadata)
     total_successful_extractions = 0
     total_failed_extractions = 0
@@ -229,7 +229,7 @@ if __name__ ==  '__main__':
     print(f'Total prefiltered labels: {total_prefiltered_labels}')
     print("Prefilter counts:")
     print(f'Crop already exists: {crop_already_exists_count}')
-    print(f'Deleted or tutorial: {deleted_or_tutorial_count}')
+    # print(f'Deleted or tutorial: {deleted_or_tutorial_count}')
     print(f'Missing pano metadata: {missing_pano_metadata_count}')
     print()
     print(f'Total successful crop extractions: {total_successful_extractions}')
