@@ -233,6 +233,9 @@ def bulk_extract_crops(data_chunk, path_to_gsv_scrapes, destination_dir, crop_in
     if not os.path.isdir(destination_dir):
         os.makedirs(destination_dir)
 
+    # get city from crop destination directory
+    city = os.path.basename(destination_dir)
+
     with mp.Manager() as manager:
         # get cpu core count
         cpu_count = mp.cpu_count()
@@ -266,7 +269,7 @@ def bulk_extract_crops(data_chunk, path_to_gsv_scrapes, destination_dir, crop_in
         for row in output_rows:
             # row format: [crop_name, primary_label_type, pano_id, label_id, final_sv_position, pano_size, agree_count, disagree_count, notsure_count]
             crop_info.append({
-                'image_name': row[0],
+                'image_name': f'{city}/{row[0]}', # TODO: city here?
                 'label_set': row[1],
                 'pano_id': row[2],
                 'agree_count': row[-3],

@@ -55,13 +55,15 @@ def label_metadata_from_api(sidewalk_server_fqdn):
     # ]
     return pd.DataFrame.from_records(pano_info)
 
-def get_nearest_label_types(crop_info, panos, threshold=750):
+def get_nearest_label_types(crop_info, panos, city, threshold=750):
     # remove the suffix we append to get image name by splitting
-    # at first occurence of non-digit character
+    # at first occurence of non-digit character.
     # TODO: Note this will likely only work for crops prefixed with the label_id.
     #       We may consider a different strategy when acquiring null crops
-    res = re.search(r'\D+', crop_info[0]).start()
-    label_id = int(crop_info[0][:res])
+    # get only the image_name by removing city prefix
+    crop_base_name = crop_info[0][len(city) + 1:]
+    res = re.search(r'\D+', crop_base_name).start()
+    label_id = int(crop_base_name[:res])
     # print(label_id)
     current_label_type = crop_info[1]
     pano_id = crop_info[2]
@@ -136,7 +138,7 @@ if __name__ ==  '__main__':
     crop_destination_path = f'{base_crops_path}/{city}'
 
     # finalized crop info csv
-    final_crop_csv = f'{base_crops_path}/{city}_final_crop_info.csv'  
+    final_crop_csv = f'{base_crops_path}/{city}_crop_info.csv'  
 
     print("CPU count: ", mp.cpu_count())
 
@@ -149,9 +151,9 @@ if __name__ ==  '__main__':
     existing_label_ids = set()
     if os.path.exists(final_crop_csv):
         existing_crops = pd.read_csv(final_crop_csv)
-        existing_label_ids = set(existing_crops['image_name'].str[:-4].astype(int))  # remove .jpg extension
+        existing_label_ids = set(existing_crops['image_name'].str[len(city) + 1:-4].astype(int))  # remove city prefix and .jpg extension
 
-        # update validation counts here
+        # TODO: update validation counts here
 
     # filter out labels that already have crops for them
     label_metadata = label_metadata[~label_metadata['label_id'].isin(existing_label_ids)]
@@ -219,7 +221,7 @@ if __name__ ==  '__main__':
     # make sure crops have label sets rather than single labels
     crop_df = pd.DataFrame.from_records(crop_info)
     if 'label_set' in crop_df.columns:
-        crop_df['label_set'] = crop_df.apply(lambda x: get_nearest_label_types(x, panos), axis=1)
+        crop_df['label_set'] = crop_df.apply(lambda x: get_nearest_label_types(x, panos, city), axis=1)
     if existing_crops is not None:
         crop_df = pd.concat([existing_crops, crop_df])
     crop_df.to_csv(final_crop_csv, index=False)
