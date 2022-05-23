@@ -79,7 +79,9 @@ def filter(dataframe, label_type, is_label_set=True):
     return dataframe.loc[dataframe['label_type'] == label_type]
 
 def setdiff(df1, df2):
-    return pd.concat([df1, df2, df2]).drop_duplicates(keep=False)
+    # setdiff on image_name
+    df1_unique = pd.concat([df1['image_name'], df2['image_name'], df2['image_name']]).drop_duplicates(keep=False)
+    return df1.loc[df1['image_name'].isin(df1_unique['image_name'])]
 
 def label_city(dataframe, city):
     dataframe['image_name'] = dataframe['image_name'].apply(lambda x: f"{city}/{x}")
@@ -256,9 +258,16 @@ if __name__ == "__main__":
             output(combine(dataframes), output_path)
         elif operation == Operations.SUBSET:
             csv_path = args.arguments[0]
-            subset_size = int(float(args.arguments[1]))
+            subset_size = int(float(args.arguments[1])) # TODO: why two conversions?
             output_path = args.arguments[2]
             dataframe = pd.read_csv(csv_path)
             output(subset(dataframe, subset_size), output_path)
+        elif operation == Operations.SETDIFF:
+            df1_path = args.arguments[0]
+            df2_path = args.arguments[1]
+            output_path = args.arguments[2]
+            df1 = pd.read_csv(df1_path)
+            df2 = pd.read_csv(df2_path)
+            output(setdiff(df1, df2), output_path)
         else:
             print("Unrecognized operation")
