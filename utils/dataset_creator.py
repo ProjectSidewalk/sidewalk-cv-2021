@@ -81,7 +81,7 @@ def filter(dataframe, label_type, is_label_set=True):
 def setdiff(df1, df2):
     # setdiff on image_name
     df1_unique = pd.concat([df1['image_name'], df2['image_name'], df2['image_name']]).drop_duplicates(keep=False)
-    return df1.loc[df1['image_name'].isin(df1_unique['image_name'])]
+    return df1.loc[df1['image_name'].isin(df1_unique)]
 
 def label_city(dataframe, city):
     dataframe['image_name'] = dataframe['image_name'].apply(lambda x: f"{city}/{x}")
