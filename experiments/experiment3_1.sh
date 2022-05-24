@@ -44,11 +44,20 @@ done
 
 for label in {1..4}; do
   echo "training label "$label" classifier on all cities..."
-  # combine train sets for all cities
-  head -n1 $csv_base_path/"tmp/"${cities[1]}/"train_set"$label".csv" > $csv_base_path/"tmp/all_cities/train_set"$label".csv"
+  # compose list of train set csvs to combine
+  arguments=""
   for city in ${cities[@]}; do
-    python ../utils/dataset_creator.py "combine" $csv_base_path/"tmp/all_cities/train_set"$label".csv" $csv_base_path/"tmp/"$city/"train_set"$label".csv" $csv_base_path/"tmp/all_cities/train_set"$label".csv"
+    arguments+="$csv_base_path/tmp/$city/train_set$label.csv "
   done
+  arguments+=$csv_base_path/"tmp/all_cities/train_set"$label".csv"
+
+  # combine train sets for all cities
+  # head -n1 $csv_base_path/"tmp/"${cities[1]}/"train_set"$label".csv" > $csv_base_path/"tmp/all_cities/train_set"$label".csv"
+  # for city in ${cities[@]}; do
+  #   python ../utils/dataset_creator.py "combine" $csv_base_path/"tmp/all_cities/train_set"$label".csv" $csv_base_path/"tmp/"$city/"train_set"$label".csv" $csv_base_path/"tmp/all_cities/train_set"$label".csv"
+  # done
+
+  python3 ../utils/dataset_creator.py "combine" $arguments
   wc $csv_base_path/"tmp/all_cities/train_set"$label".csv"
 
   # train model on combined train set
