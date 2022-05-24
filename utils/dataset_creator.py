@@ -84,7 +84,7 @@ def setdiff(df1, df2):
     return df1.loc[df1['image_name'].isin(df1_unique)]
 
 def label_city(dataframe, city):
-    dataframe['image_name'] = dataframe['image_name'].apply(lambda x: f"{city}/{x}")
+    dataframe['image_name'] = dataframe['image_name'].apply(lambda x: f'{city}/{x}')
 
 def metrics(dataset_dfs, output_path):
     metrics = []
