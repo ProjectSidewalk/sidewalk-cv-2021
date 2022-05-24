@@ -1,8 +1,9 @@
 import itertools
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
+import os
 import pandas as pd
+import torch
 
 def plot_confusion_matrix(visualizations_path, model_name, cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
     plt.figure()
