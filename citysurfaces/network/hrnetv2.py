@@ -527,7 +527,7 @@ class HighResolutionNet(nn.Module):
         # return None, None, feats
         return y
 
-    def init_weights(self, pretrained="models/hrnetv2_w48_imagenet_pretrained.pth"):  #cfg.MODEL.HRNET_CHECKPOINT):
+    def init_weights(self, pretrained="../models/hrnetv2_w48_imagenet_pretrained.pth"):  #cfg.MODEL.HRNET_CHECKPOINT):
         # logx.msg('=> init weights from normal distribution')
         for name, m in self.named_modules():
             if any(part in name for part in {'cls', 'aux', 'ocr'}):

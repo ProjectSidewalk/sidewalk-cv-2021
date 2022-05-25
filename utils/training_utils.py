@@ -16,7 +16,7 @@ from torch.optim import lr_scheduler
 from tqdm import tqdm
 
 
-CITYSURFACES_PRETRAINED_MODEL_PATH = "./models/block_c_10classes.pth"
+CITYSURFACES_PRETRAINED_MODEL_PATH = "../models/block_c_10classes.pth"
 
 
 def get_pretrained_model(model_name, num_classes, use_pretrained=True):
