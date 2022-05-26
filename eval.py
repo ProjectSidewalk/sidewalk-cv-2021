@@ -108,5 +108,5 @@ metrics = [{"precision_default_cutoff":precision_default_cutoff.item(), "recall_
 "average_loss":loss, "accuracy": accuracy }]
 metrics_df = pd.DataFrame(metrics)
 metrics_path = os.path.join(args.visualizations_path, "metrics_" + args.session_name + ".csv") 
-metrics_df.to_csv(metrics_path, mode='a', header=not os.path.exists(metrics_path), index=False)
+metrics_df.to_csv(metrics_path, index=False)
 
