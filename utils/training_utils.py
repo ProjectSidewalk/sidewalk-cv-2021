@@ -325,4 +325,4 @@ def evaluate(model, is_inception, loss_func, dataset_loader, test, mistakes_save
     print(conf_mat)
   print(f"Test accuracy: {correct / n}")
   print(f"Test loss: {total_loss / n}")
-  return conf_mat, all_output_probabilities, all_ground_truths
+  return conf_mat, all_output_probabilities, all_ground_truths, correct / n, total_loss / n

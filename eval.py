@@ -10,6 +10,7 @@ from utils.training_utils import get_pretrained_model, load_best_weights, evalua
 from visualization_utils.confusion_matrix import plot_confusion_matrix
 from torchvision import transforms
 from sklearn.metrics import precision_recall_curve, roc_curve
+import pandas as pd
 
 parser = argparse.ArgumentParser()
 parser.add_argument('session_name', type=str)
@@ -76,7 +77,7 @@ test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_siz
 # =================================================================================================
 # evaluate loaded model on test set
 MISTAKES_SAVE_PATH = os.path.join(args.visualizations_path, args.session_name + "_mistakes.csv")
-cm, output_probabilities, corresponding_ground_truths = evaluate(model, (args.model_name == "inception"), loss_func, test_dataloader, True, MISTAKES_SAVE_PATH,device)
+cm, output_probabilities, corresponding_ground_truths, accuracy, loss = evaluate(model, (args.model_name == "inception"), loss_func, test_dataloader, True, MISTAKES_SAVE_PATH,device)
 if cm is not None:
   plot_confusion_matrix(args.visualizations_path, args.session_name, cm, CLASSES, normalize=True)
 
@@ -102,3 +103,10 @@ plt.savefig(os.path.join(args.visualizations_path, "roc_" + args.session_name))
 precision_default_cutoff, recall_default_cutoff = get_precision_recall(output_probabilities, corresponding_ground_truths, .5)
 print("precision at default cutoff: " + str(precision_default_cutoff))
 print("recall at default cutoff: " + str(recall_default_cutoff))
+
+metrics = [{"precision_default_cutoff":precision_default_cutoff.item(), "recall_default_cutoff": recall_default_cutoff.item(),
+"average_loss":loss, "accuracy": accuracy }]
+metrics_df = pd.DataFrame(metrics)
+metrics_path = os.path.join(args.visualizations_path, "metrics_" + args.session_name + ".csv") 
+metrics_df.to_csv(metrics_path, mode='a', header=not os.path.exists(metrics_path), index=False)
+
