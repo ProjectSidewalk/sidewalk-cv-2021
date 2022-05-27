@@ -16,7 +16,7 @@ from torch.optim import lr_scheduler
 from tqdm import tqdm
 
 
-CITYSURFACES_PRETRAINED_MODEL_PATH = "./models/block_c_10classes.pth"
+CITYSURFACES_PRETRAINED_MODEL_PATH = "../models/block_c_10classes.pth"
 
 
 def get_pretrained_model(model_name, num_classes, use_pretrained=True):
@@ -125,7 +125,6 @@ def train(model, num_classes, is_inception, optimizer, scheduler, loss_func, epo
   is_cyclic_lr = isinstance(scheduler, lr_scheduler.CyclicLR)
 
   is_two_model_ensemble = isinstance(model, TwoModelEnsembleNet)
-  print("two model ensemble ", is_two_model_ensemble)
 
   for epoch in range(start_epoch, epochs):
     epoch_t_start = perf_counter()
@@ -246,7 +245,6 @@ def evaluate(model, is_inception, loss_func, dataset_loader, test, mistakes_save
   model.eval()
 
   is_two_model_ensemble = isinstance(model, TwoModelEnsembleNet)
-  print("two model ensemble ", is_two_model_ensemble)
   
   # length of data set we are evaluating on.
   n = len(dataset_loader.dataset)
@@ -327,4 +325,4 @@ def evaluate(model, is_inception, loss_func, dataset_loader, test, mistakes_save
     print(conf_mat)
   print(f"Test accuracy: {correct / n}")
   print(f"Test loss: {total_loss / n}")
-  return conf_mat, all_output_probabilities, all_ground_truths
+  return conf_mat, all_output_probabilities, all_ground_truths, correct / n, total_loss / n

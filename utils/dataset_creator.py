@@ -3,7 +3,13 @@ from enum import Enum
 import glob
 import pandas as pd
 
-DEFAULT_CSV_FOLDER = "../datasets/"
+parser = argparse.ArgumentParser()
+parser.add_argument('-i', action='store_true', help='interactive_mode: allows the dataset creator to be used interactively')
+parser.add_argument('--csv_folder', default="../datasets/", help='directory from which to list csvs from (for interactive mode)')
+parser.add_argument('operation', nargs='?', help='desired operation (for command line use)')
+parser.add_argument('arguments', nargs='*', help='additional arguments (for command line use)')
+args = parser.parse_args()
+
 SEMANTIC_LABEL_TYPES = {
     1: "Curb Ramp",
     2: "Missing Curb Ramp",
@@ -73,10 +79,12 @@ def filter(dataframe, label_type, is_label_set=True):
     return dataframe.loc[dataframe['label_type'] == label_type]
 
 def setdiff(df1, df2):
-    return pd.concat([df1, df2, df2]).drop_duplicates(keep=False)
+    # setdiff on image_name
+    df1_unique = pd.concat([df1['image_name'], df2['image_name'], df2['image_name']]).drop_duplicates(keep=False)
+    return df1.loc[df1['image_name'].isin(df1_unique)]
 
 def label_city(dataframe, city):
-    dataframe['image_name'] = dataframe['image_name'].apply(lambda x: f"{city}/{x}")
+    dataframe['image_name'] = dataframe['image_name'].apply(lambda x: f'{city}/{x}')
 
 def metrics(dataset_dfs, output_path):
     metrics = []
@@ -140,43 +148,32 @@ def output(dataframe, output_path):
     dataframe.to_csv(output_path, index=False)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--csv_folder', default=DEFAULT_CSV_FOLDER, help='csv_folder - directory from which to list csvs from')
-    parser.add_argument('-i', action='store_true', help='interactive_mode - allows the dataset creator to be used interactively')
-    args = parser.parse_args()
-
     dataset_csv_folder = args.csv_folder
     interactive_mode = args.i
-
     if interactive_mode:
         # get a list of dataset csvs
         csv_list = refresh(dataset_csv_folder)
-        
         print()
-
         # give list of options
         print("Options:")
         for operation in Operations:
             print(operation.value)
-
         print()
-
         output_df = None
-        
         while True:
-            command, arguments = receive_operation()
+            operation, arguments = receive_operation()
             print()
 
-            print(command)
+            print(operation)
             print(arguments)
 
-            if command == Operations.QUIT:
+            if operation == Operations.QUIT:
                 break
-            elif command == Operations.LOAD:
+            elif operation == Operations.LOAD:
                 csv_idx = int(arguments[0]) - 1
                 output_df = pd.read_csv(csv_list[csv_idx])
                 print("loaded")
-            elif command == Operations.COMBINE:
+            elif operation == Operations.COMBINE:
                 dataframes = [output_df] if output_df is not None else []
                 for i in arguments:
                     dataset_df = pd.read_csv(csv_list[int(i) - 1])
@@ -184,46 +181,46 @@ if __name__ == "__main__":
                 combined_df = combine(dataframes)
                 output_df = combined_df
                 print("combined")
-            elif command == Operations.CONTAINS:
+            elif operation == Operations.CONTAINS:
                 csv_idx = int(arguments[0]) - 1
                 subset_df = pd.read_csv(csv_list[csv_idx])
                 if output_df is not None:
                     print(contains(output_df, subset_df))
-            elif command == Operations.BINARIZE:
+            elif operation == Operations.BINARIZE:
                 positive_class = arguments[0]
                 is_label_set = int(arguments[1]) if len(arguments) > 1 else True
                 if output_df is not None:
                     binarize(output_df, positive_class, is_label_set)
                     print("binarized")
-            elif command == Operations.BALANCE:
+            elif operation == Operations.BALANCE:
                 fraction_positive = float(arguments[0]) if arguments else .5
                 if output_df is not None:
                     output_df = balance(output_df, fraction_positive)
                     print("balanced")
-            elif command == Operations.SUBSET:
+            elif operation == Operations.SUBSET:
                 # right now just grabs a random subset of specified size
                 subset_size = int(arguments[0])
                 if output_df is not None:
                     output_df = subset(output_df, subset_size)
                     print("subsetted")
-            elif command == Operations.FILTER:
+            elif operation == Operations.FILTER:
                 label_type = arguments[0]
                 is_label_set = int(arguments[1]) if len(arguments) > 1 else True
                 if output_df is not None:
                     output_df = filter(output_df, label_type, is_label_set)
                     print("filtered")
-            elif command == Operations.SETDIFF:
+            elif operation == Operations.SETDIFF:
                 csv_idx = int(arguments[0]) - 1
                 df = pd.read_csv(csv_list[csv_idx])
                 if output_df is not None:
                     output_df = setdiff(output_df, df)
                     print("setdiffed")
-            elif command == Operations.LABEL_CITY:
+            elif operation == Operations.LABEL_CITY:
                 city = arguments[0]
                 if output_df is not None:
                     label_city(output_df, city)
                     print("labeled")
-            elif command == Operations.METRICS:
+            elif operation == Operations.METRICS:
                 output_path = dataset_csv_folder + arguments[0]
                 dataframes = []
                 for i in arguments[1:]:
@@ -232,10 +229,10 @@ if __name__ == "__main__":
                     dataframes.append((csv_path, dataset_df))
                 metrics(dataframes, output_path)
                 print("outputted metrics")
-            elif command == Operations.REFRESH:
+            elif operation == Operations.REFRESH:
                 csv_list = refresh(dataset_csv_folder)
                 print()
-            elif command == Operations.OUTPUT:
+            elif operation == Operations.OUTPUT:
                 output_path = dataset_csv_folder + arguments[0]
                 if output_df is not None:
                     output(output_df, output_path)
@@ -243,3 +240,34 @@ if __name__ == "__main__":
                     output_df = None
             else:
                 print("Unrecognized operation")
+    else:
+        operation = args.operation
+        if operation == Operations.BINARIZE:
+            csv_path = args.arguments[0]
+            positive_class = args.arguments[1]
+            output_path = args.arguments[2]
+            dataframe = pd.read_csv(csv_path)
+            binarize(dataframe, positive_class)
+            output(dataframe, output_path)
+        elif operation == Operations.COMBINE:
+            output_path = args.arguments.pop()
+            csv_paths = args.arguments
+            dataframes = []
+            for csv_path in csv_paths:
+                dataframes.append(pd.read_csv(csv_path))
+            output(combine(dataframes), output_path)
+        elif operation == Operations.SUBSET:
+            csv_path = args.arguments[0]
+            subset_size = int(float(args.arguments[1])) # TODO: why two conversions?
+            output_path = args.arguments[2]
+            dataframe = pd.read_csv(csv_path)
+            output(subset(dataframe, subset_size), output_path)
+        elif operation == Operations.SETDIFF:
+            df1_path = args.arguments[0]
+            df2_path = args.arguments[1]
+            output_path = args.arguments[2]
+            df1 = pd.read_csv(df1_path)
+            df2 = pd.read_csv(df2_path)
+            output(setdiff(df1, df2), output_path)
+        else:
+            print("Unrecognized operation")
