@@ -79,8 +79,6 @@ def make_plots(mistakes, num_plots, mistake_type):
             add_border(image, mistake_type)
 
             path = mistake["image path"][len(args.image_base_path):]
-            predicted = label_types[args.label_type if mistake['prediction'] else 0] label_types[mistake['prediction']]
-            actual = label_types[mistake['ground truth']]
             confidence = mistake['confidence']
             ax = plt.subplot(IMAGES_PER_COL, IMAGES_PER_ROW, i+1)
             plt.axis('off')
