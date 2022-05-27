@@ -47,19 +47,19 @@ for subsetted_city in ${cities[@]}; do
     for label in {1..4}; do
       echo "training label "$label" classifier on all cities with a "$subset" subset of "$subsetted_city"..."
       # combine subset of city of interest with full train sets of all other cities
-      head -n1 $csv_base_path/"tmp/"${cities[1]}/"train_set"$label".csv" > $csv_base_path/"tmp/subset_"$subsetted_city/$subset/"train_set"$label".csv"
+      arguments=""
       for city in ${cities[@]}; do
         if [ $city == $subsetted_city ]; then
           dataset_size=$(($(wc $csv_base_path/"tmp/"$city/"train_set"$label".csv" | awk '{print $1}') - 1))
           subset_size=$(echo $subset*$dataset_size | bc)
           python ../utils/dataset_creator.py "subset" $csv_base_path/"tmp/"$city/"train_set"$label".csv" $subset_size $csv_base_path/"tmp/subset.csv"
-          python ../utils/dataset_creator.py "combine" $csv_base_path/"tmp/subset_"$subsetted_city/$subset/"train_set"$label".csv" $csv_base_path/"tmp/subset.csv" $csv_base_path/"tmp/subset_"$subsetted_city/$subset/"train_set"$label".csv"
-          rm $csv_base_path/"tmp/subset.csv"
+          arguments+="$csv_base_path/tmp/subset.csv "
         else
-          python ../utils/dataset_creator.py "combine" $csv_base_path/"tmp/subset_"$subsetted_city/$subset/"train_set"$label".csv" $csv_base_path/"tmp/"$city/"train_set"$label".csv" $csv_base_path/"tmp/subset_"$subsetted_city/$subset/"train_set"$label".csv"
+          arguments+="$csv_base_path/tmp/$city/train_set$label.csv "
         fi
       done
-      wc $csv_base_path/"tmp/subset_"$subsetted_city/$subset/"train_set"$label".csv"
+      python ../utils/dataset_creator.py "combine" $arguments $csv_base_path/"tmp/subset_"$subsetted_city/$subset/"train_set"$label".csv"
+      rm "$csv_base_path/tmp/subset.csv"
 
       # train model on combined train set
       python ../train.py $model_name$label $image_base_path/ $csv_base_path/"tmp/subset_"$subsetted_city/$subset/"train_set"$label".csv" $model_name $model_save_folder/$experiment/"subset_"$subsetted_city/$subset/ $num_epochs $crop_size

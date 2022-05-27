@@ -49,16 +49,7 @@ for label in {1..4}; do
   for city in ${cities[@]}; do
     arguments+="$csv_base_path/tmp/$city/train_set$label.csv "
   done
-  arguments+=$csv_base_path/"tmp/all_cities/train_set"$label".csv"
-
-  # combine train sets for all cities
-  # head -n1 $csv_base_path/"tmp/"${cities[1]}/"train_set"$label".csv" > $csv_base_path/"tmp/all_cities/train_set"$label".csv"
-  # for city in ${cities[@]}; do
-  #   python ../utils/dataset_creator.py "combine" $csv_base_path/"tmp/all_cities/train_set"$label".csv" $csv_base_path/"tmp/"$city/"train_set"$label".csv" $csv_base_path/"tmp/all_cities/train_set"$label".csv"
-  # done
-
-  python ../utils/dataset_creator.py "combine" $arguments
-  wc -l $csv_base_path/"tmp/all_cities/train_set"$label".csv"
+  python ../utils/dataset_creator.py "combine" $arguments $csv_base_path/"tmp/all_cities/train_set"$label".csv"
 
   # train model on combined train set
   python ../train.py ${experiment}_${model_name}_$label $image_base_path/ $csv_base_path/"tmp/all_cities/train_set"$label".csv" $model_name $model_save_folder/$experiment $num_epochs $crop_size
