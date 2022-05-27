@@ -29,6 +29,6 @@ def plot_confusion_matrix(visualizations_path, model_name, cm, classes, normaliz
     plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
-    plt.savefig(os.path.join(visualizations_path, model_name + ".png"), format="png")
+    plt.savefig(os.path.join(visualizations_path, model_name + "_cm.png"), format="png")
     plt.show()
     plt.close()

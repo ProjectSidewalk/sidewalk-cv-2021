@@ -2,8 +2,6 @@ import argparse
 import os
 import torch
 import torch.nn as nn
-import torchvision
-import citysurfaces.network.hrnetv2 as hrnetv2
 import matplotlib.pyplot as plt
 from datatypes.dataset import SidewalkCropsDataset
 from utils.training_utils import get_pretrained_model, load_best_weights, evaluate
@@ -22,8 +20,7 @@ parser.add_argument('visualizations_path', type=str)
 parser.add_argument('crop_size', type=int)
 args = parser.parse_args()
 
-CLASSES = ["null", "curb ramp", "missing curb ramp", "obstacle", "surface problem"]
-NUM_CLASSES = 2
+CLASSES = ["negative", "positive"]# ["null", "curb ramp", "missing curb ramp", "obstacle", "surface problem"]
 
 def get_precision_recall(output_probabilities, corresponding_ground_truths, prob_cutoff=.5):
   classifications = torch.where(output_probabilities > prob_cutoff, 1, 0)
@@ -52,7 +49,7 @@ print("device:", device)
 # =================================================================================================
 # load model for evaluation
 # setup model for fine tuning
-model, input_size = get_pretrained_model(args.model_name, NUM_CLASSES)
+model, input_size = get_pretrained_model(args.model_name, len(CLASSES))
 model.to(device)
 
 load_best_weights(model, CHECKPOINT_SAVE_PATH)

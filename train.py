@@ -4,8 +4,6 @@ import numpy as np
 import os
 import torch
 import torch.nn as nn
-import torchvision
-import citysurfaces.network.hrnetv2 as hrnetv2
 from datatypes.dataset import SidewalkCropsDataset
 from utils.training_utils import get_pretrained_model, load_training_checkpoint, train
 from torch.optim import lr_scheduler
