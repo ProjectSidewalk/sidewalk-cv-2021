@@ -1,6 +1,7 @@
 import argparse
 from enum import Enum
 import glob
+import os
 import pandas as pd
 
 parser = argparse.ArgumentParser()
@@ -27,6 +28,7 @@ class Operations(str, Enum):
     FILTER = "filter"
     SETDIFF = "setdiff"
     LABEL_CITY = "label_city"
+    VALIDATE = "validate"
     METRICS = "metrics"
     REFRESH = "refresh"
     QUIT = "quit"
@@ -73,10 +75,28 @@ def balance(dataframe, fraction_positive=.5):
 def subset(dataframe, subset_size):
     return dataframe.sample(n=subset_size)
 
-def filter(dataframe, label_type, is_label_set=True):
-    if is_label_set:
-        return dataframe.loc[dataframe['label_set'].apply(lambda labels: label_type in labels)]
-    return dataframe.loc[dataframe['label_type'] == label_type]
+def filter(dataframe, filter_column, label_type=None):
+    # specify column name to filter on than have switch statement for diff column names?
+    if filter_column in dataframe.columns:
+        if filter_column == 'label_set':
+            if label_type is not None:
+                return dataframe.loc[dataframe[filter_column].apply(lambda labels: label_type in labels)]
+            else:
+                print(f'{filter_column} requires specified label_type')
+        elif filter_column == 'label_type':
+            if label_type is not None:
+                return dataframe.loc[dataframe[filter_column] == label_type]
+            else:
+                print(f'{filter_column} requires specified label_type')
+        elif filter_column == 'pv':
+            return dataframe.loc[dataframe[filter_column]]
+        else:
+            print(f'{filter_column} doesn\'t have supported filtering operation')
+    else:
+        print(f'{filter_column} doesn\'t exist in dataframe')
+    
+    # no filtering occurred, return original dataframe
+    return dataframe
 
 def setdiff(df1, df2):
     # setdiff on image_name
@@ -85,6 +105,10 @@ def setdiff(df1, df2):
 
 def label_city(dataframe, city):
     dataframe['image_name'] = dataframe['image_name'].apply(lambda x: f'{city}/{x}')
+
+def validate(dataframe):
+    # Creates/updates column containing whether a crop is positively validated
+    dataframe['pv'] = dataframe['agree_count'].gt(dataframe['disagree_count'])
 
 def metrics(dataset_dfs, output_path):
     metrics = []
@@ -136,7 +160,7 @@ def metrics(dataset_dfs, output_path):
     metrics_df.to_csv(output_path, index=False)
 
 def refresh(dataset_csv_folder):
-    csv_list = glob.glob(dataset_csv_folder + "*.csv")
+    csv_list = glob.glob(os.path.join(dataset_csv_folder, "*.csv"))
     csv_list.sort()
     print("The following CSVs are available:")
     for i in range(len(csv_list)):
@@ -205,9 +229,14 @@ if __name__ == "__main__":
                     print("subsetted")
             elif operation == Operations.FILTER:
                 label_type = arguments[0]
-                is_label_set = int(arguments[1]) if len(arguments) > 1 else True
+                # is_label_set = int(arguments[1]) if len(arguments) > 1 else True
+                filter_column = arguments[0]
+                label_type = None
+                if len(arguments) > 1:
+                    label_type = arguments[1]
+                
                 if output_df is not None:
-                    output_df = filter(output_df, label_type, is_label_set)
+                    output_df = filter(output_df, filter_column, label_type)
                     print("filtered")
             elif operation == Operations.SETDIFF:
                 csv_idx = int(arguments[0]) - 1
@@ -220,6 +249,10 @@ if __name__ == "__main__":
                 if output_df is not None:
                     label_city(output_df, city)
                     print("labeled")
+            elif operation == Operations.VALIDATE:
+                if output_df is not None:
+                    validate(output_df)
+                    print("validated")
             elif operation == Operations.METRICS:
                 output_path = dataset_csv_folder + arguments[0]
                 dataframes = []
@@ -233,11 +266,10 @@ if __name__ == "__main__":
                 csv_list = refresh(dataset_csv_folder)
                 print()
             elif operation == Operations.OUTPUT:
-                output_path = dataset_csv_folder + arguments[0]
+                output_path = arguments[0]
                 if output_df is not None:
                     output(output_df, output_path)
                     print("saved")
-                    output_df = None
             else:
                 print("Unrecognized operation")
     else:
