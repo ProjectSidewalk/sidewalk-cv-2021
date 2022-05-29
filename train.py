@@ -4,8 +4,6 @@ import numpy as np
 import os
 import torch
 import torch.nn as nn
-import torchvision
-import citysurfaces.network.hrnetv2 as hrnetv2
 from datatypes.dataset import SidewalkCropsDataset
 from utils.training_utils import get_pretrained_model, load_training_checkpoint, train
 from torch.optim import lr_scheduler
@@ -58,7 +56,7 @@ if __name__ == "__main__":
   # add normalized_weights_tensor as input to loss_func if weighted loss is desired
   loss_func = nn.CrossEntropyLoss()
   optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay) # torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-6)
-  scheduler = lr_scheduler.StepLR(optimizer, 10, gamma=0.5) #lr_scheduler.CyclicLR(optimizer, base_lr=1e-6, max_lr=lr, step_size_up = 2500, mode='triangular2')
+  scheduler = lr_scheduler.StepLR(optimizer, 3, gamma=0.5) #lr_scheduler.CyclicLR(optimizer, base_lr=1e-6, max_lr=lr, step_size_up = 2500, mode='triangular2')
 
   # =================================================================================================
   # load train datasets

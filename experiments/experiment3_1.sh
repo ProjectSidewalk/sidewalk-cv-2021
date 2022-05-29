@@ -21,9 +21,9 @@ model_save_folder="../models/"
 # save path the visualizations
 visualizations_path="../visualizations/"
 # number of epochs for training
-num_epochs="15"
+num_epochs="10"
 # crop size
-crop_size="1250"
+crop_size="1500"
 # number of plots for mistake visualization
 num_plots="5"
 
