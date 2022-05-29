@@ -57,7 +57,7 @@ def label_metadata_from_api(sidewalk_server_fqdn):
     # ]
     return pd.DataFrame.from_records(pano_info)
 
-def get_nearest_label_types(crop_info, panos, threshold=750):
+def get_nearest_label_types(crop_info, panos, threshold=300):
     # remove the suffix we append to get image name by splitting
     # at first occurence of non-digit character
     # TODO: Note this will likely only work for crops prefixed with the label_id.

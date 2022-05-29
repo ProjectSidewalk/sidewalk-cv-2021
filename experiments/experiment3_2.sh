@@ -21,7 +21,7 @@ visualizations_path="../visualizations/"
 # number of epochs for training
 num_epochs="10"
 # crop size
-crop_size="1500"
+crop_size="1000"
 # number of plots for mistake visualization
 num_plots="5"
 
