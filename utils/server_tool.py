@@ -8,17 +8,17 @@ from http import HTTPStatus
 
 # Instructions for use:
 # 1. If ssh-ing, use 'ssh -L local_port:remote_ip:remote_port user@hostname.com'.
-#    For example, 'ssh -L 42069:rainbowdash:42069 shokiami@attu.cs.washington.edu'.
+#    For example, 'gcloud compute ssh cv-main --project=computer-vision-344418 --zone=us-central1-b -- -NL 31415:localhost:31415'.
 #    Make sure the port address matches `PORT`.
 # 2. Run server_tool.py.
-# 3. Navigate to 'http://localhost:42069/crop_viewer' in your browser and begin editing!
+# 3. Navigate to 'http://localhost:31415/crop_viewer' in your browser and begin editing!
 #    Click through crops with "Next" and "Prev". 
 #    Clicking "Save" saves and goes to the next crop.
 # 4. Use Ctrl+C to exit.
 
-PORT = 42069
-DATA_SET_PATH = '../datasets/test_set.csv'
-ROOT_DIRECTORY = '/tmp/datasets'
+PORT = 31415
+DATA_SET_PATH = '../datasets/seattle/seattle_test_set.csv'
+ROOT_DIRECTORY = '/mnt/disks/shared-disk'
 CROPS_DIRECTORY = '/crops/'
 
 csv_in = open(DATA_SET_PATH, 'r')
