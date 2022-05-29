@@ -51,7 +51,7 @@ if __name__ == "__main__":
   ])
 
   # having issues with CUDA running out of memory, so lowering batch size
-  batch_size = 8
+  batch_size = 128
 
   train_labels_csv_path = args.train_set_csv
   train_img_dir = args.image_base_path
@@ -79,7 +79,9 @@ if __name__ == "__main__":
 
   # weight using inverse of each sample size
   # acquire label sample sizes from train csv
-  class_counts = Counter(train_dataset.targets)
+  train_classes = [train_val_dataset.targets[i] for i in train_dataset.indices]
+  class_counts = Counter(train_classes)
+  print(class_counts)
   samples_per_class = np.array([class_counts[0], class_counts[1]])
   weights = 1.0 / samples_per_class
   norm = np.linalg.norm(weights)
@@ -95,6 +97,7 @@ if __name__ == "__main__":
     "training": train_dataloader,
     "validation": val_dataloader
   }
+
   metrics, last_epoch = load_training_checkpoint(model, CHECKPOINT_SAVE_PATH, optimizer, scheduler)
   print("next epoch:", last_epoch + 1)
   print("resuming training...\n")
