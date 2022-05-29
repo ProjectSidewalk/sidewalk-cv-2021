@@ -11,7 +11,7 @@ from sklearn.metrics import precision_recall_curve, roc_curve
 import pandas as pd
 
 parser = argparse.ArgumentParser()
-parser.add_argument('session_group_name', type=str)
+parser.add_argument('eval_session_group_name', type=str)
 parser.add_argument('session_name', type=str)
 parser.add_argument('image_base_path', type=str)
 parser.add_argument('test_set_csv', type=str)
@@ -81,7 +81,7 @@ if cm is not None:
 
 
 
-pr_roc_save_path = os.path.join(args.session_group_name, "pr_roc_points" + args.session_name)
+pr_roc_save_path = os.path.join(args.visualizations_path, args.eval_session_group_name +  "_pr_roc_points.pt")
 if (os.path.exists(pr_roc_save_path)):
   pr_roc_data = torch.load(pr_roc_save_path)
 else:
@@ -91,8 +91,7 @@ else:
 
 
 precisions, recalls, _ = precision_recall_curve(corresponding_ground_truths, output_probabilities)
-pr_roc_data[args.session_name + "_precisions"] = precisions
-pr_roc_data[args.session_name + "_recalls"] = recalls
+pr_roc_data[args.session_name + "_precisions_recalls"] = (precisions, recalls)
 
 plt.plot(recalls, precisions)
 plt.xlabel("recall")
@@ -104,8 +103,7 @@ plt.savefig(os.path.join(args.visualizations_path, "precision_recall_" + args.se
 plt.clf()
 
 false_positive_rates, true_positive_rates, _ = roc_curve(corresponding_ground_truths, output_probabilities)
-pr_roc_data[args.session_name + "_fpr"] = false_positive_rates
-pr_roc_data[args.session_name + "_tpr"] = true_positive_rates
+pr_roc_data[args.session_name + "_fpr_tpr"] = (false_positive_rates, true_positive_rates)
 plt.plot(false_positive_rates, true_positive_rates)
 plt.xlabel("false positive rate")
 plt.ylabel("true positive rate")
@@ -124,5 +122,7 @@ metrics_df = pd.DataFrame(metrics)
 metrics_path = os.path.join(args.visualizations_path, "metrics_" + args.session_name + ".csv") 
 metrics_df.to_csv(metrics_path, index=False)
 
-torch.save(pr_roc_data)
+print(pr_roc_save_path)
+torch.save(pr_roc_data, pr_roc_save_path)
+print("saved")
 
