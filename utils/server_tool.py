@@ -48,7 +48,7 @@ def generate_label_ids_to_csv_indices_map(csv_df):
   return label_ids_to_csv_indices
 
 def save_to_file():
-  csv_df.to_csv(csv_path, index=False)
+  csv_df.to_csv(args.csv_path, index=False)
 
 class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
@@ -66,7 +66,7 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
     path = posixpath.normpath(path)
     words = path.split("/")
     words = filter(None, words)
-    path = crops_dir
+    path = args.crops_dir
     for word in words:
         if os.path.dirname(word) or word in (os.curdir, os.pardir):
             continue
@@ -192,15 +192,11 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
     else:
       return http.server.SimpleHTTPRequestHandler.send_head(self)
 
-csv_path = args.csv_path
-crops_dir = args.crops_dir
-port = args.port
-
-csv_df = pd.read_csv(csv_path, converters={'label_set': literal_eval})
+csv_df = pd.read_csv(args.csv_path, converters={'label_set': literal_eval})
 label_ids_to_csv_indices = generate_label_ids_to_csv_indices_map(csv_df)
 
 Handler = MyHTTPHandler
 
-with http.server.HTTPServer(("", port), Handler) as httpd:
-  print("Serving at port", port)
+with http.server.HTTPServer(("", args.port), Handler) as httpd:
+  print("Serving at port", args.port)
   httpd.serve_forever()
