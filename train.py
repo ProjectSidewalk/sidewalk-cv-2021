@@ -1,9 +1,9 @@
 import argparse
-import matplotlib.pyplot as plt
 import numpy as np
 import os
 import torch
 import torch.nn as nn
+from collections import Counter
 from datatypes.dataset import SidewalkCropsDataset
 from utils.training_utils import get_pretrained_model, load_training_checkpoint, train
 from torch.optim import lr_scheduler
@@ -41,23 +41,6 @@ if __name__ == "__main__":
   model, input_size = get_pretrained_model(args.model_name, NUM_CLASSES)
   model.to(device)
 
-  lr = 0.01
-  momentum = 0.9
-  weight_decay = 1e-6
-
-  # weight using inverse of each sample size
-  # acquire label sample sizes from train csv
-  # samples_per_class = np.array([10000, 11187, 8788, 2678, 7204])
-  # weights = 1.0 / samples_per_class
-  # norm = np.linalg.norm(weights)
-  # normalized_weights = weights / norm
-  # normalized_weights_tensor = torch.from_numpy(normalized_weights).float().to(device)
-
-  # add normalized_weights_tensor as input to loss_func if weighted loss is desired
-  loss_func = nn.CrossEntropyLoss()
-  optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay) # torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-6)
-  scheduler = lr_scheduler.StepLR(optimizer, 10, gamma=0.5) #lr_scheduler.CyclicLR(optimizer, base_lr=1e-6, max_lr=lr, step_size_up = 2500, mode='triangular2')
-
   # =================================================================================================
   # load train datasets
   image_transform = transforms.Compose([
@@ -68,7 +51,7 @@ if __name__ == "__main__":
   ])
 
   # having issues with CUDA running out of memory, so lowering batch size
-  batch_size = 8
+  batch_size = 128
 
   train_labels_csv_path = args.train_set_csv
   train_img_dir = args.image_base_path
@@ -90,10 +73,31 @@ if __name__ == "__main__":
   val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
 
   # =================================================================================================
+  lr = 0.01
+  momentum = 0.9
+  weight_decay = 1e-6
+
+  # weight using inverse of each sample size
+  # acquire label sample sizes from train csv
+  train_classes = [train_val_dataset.targets[i] for i in train_dataset.indices]
+  class_counts = Counter(train_classes)
+  print(class_counts)
+  samples_per_class = np.array([class_counts[0], class_counts[1]])
+  weights = 1.0 / samples_per_class
+  norm = np.linalg.norm(weights)
+  normalized_weights = weights / norm
+  normalized_weights_tensor = torch.from_numpy(normalized_weights).float().to(device)
+
+  # add normalized_weights_tensor as input to loss_func if weighted loss is desired
+  loss_func = nn.CrossEntropyLoss(weight=normalized_weights_tensor)
+  optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay) # torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-6)
+  scheduler = lr_scheduler.StepLR(optimizer, 3, gamma=0.5) #lr_scheduler.CyclicLR(optimizer, base_lr=1e-6, max_lr=lr, step_size_up = 2500, mode='triangular2')
+
   dataLoaders = {
     "training": train_dataloader,
     "validation": val_dataloader
   }
+
   metrics, last_epoch = load_training_checkpoint(model, CHECKPOINT_SAVE_PATH, optimizer, scheduler)
   print("next epoch:", last_epoch + 1)
   print("resuming training...\n")

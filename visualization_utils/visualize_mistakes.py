@@ -26,7 +26,7 @@ IMAGES_PER_COL = 3
 IMAGE_SIZE = 5
 IMAGES_PER_PLOT = IMAGES_PER_ROW * IMAGES_PER_COL
 label_types = {
-    0: 'null',
+    0: 'negative',
     1: 'curb ramp',
     2: 'missing curb ramp',
     3: 'obstacle', 
@@ -79,12 +79,10 @@ def make_plots(mistakes, num_plots, mistake_type):
             add_border(image, mistake_type)
 
             path = mistake["image path"][len(args.image_base_path):]
-            predicted = label_types[mistake['prediction']]
-            actual = label_types[mistake['ground truth']]
             confidence = mistake['confidence']
             ax = plt.subplot(IMAGES_PER_COL, IMAGES_PER_ROW, i+1)
             plt.axis('off')
-            ax.set_title(f'{path}\npred: {predicted}, actual: {actual}\n confidence: {confidence:.4f}', fontsize=15)
+            ax.set_title(f'{path}\n confidence: {confidence:.4f}', fontsize=15)
             ax.spines['bottom'].set_color('0.5')
             plt.imshow(image)
         save_path = FALSE_POSITIVES_SAVE_PATH if mistake_type == 'false positives' else FALSE_NEGATIVES_SAVE_PATH
@@ -100,5 +98,5 @@ if __name__ == '__main__':
     false_negatives = all_mistakes[all_mistakes['prediction'] == 0]
     false_positives = all_mistakes[all_mistakes['prediction'] != 0]
 
-    make_plots(false_negatives, args.num_plots, 'false negatives')
-    make_plots(false_positives, args.num_plots, 'false positives')
+    make_plots(false_negatives, args.num_plots, 'false negatives (predicted negative, actual positive)')
+    make_plots(false_positives, args.num_plots, 'false positives (predicted positive, actual negative)')
