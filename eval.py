@@ -103,7 +103,8 @@ plt.savefig(os.path.join(args.visualizations_path, "precision_recall_" + args.se
 plt.clf()
 
 false_positive_rates, true_positive_rates, _ = roc_curve(corresponding_ground_truths, output_probabilities)
-pr_roc_data[args.session_name + "_fpr_tpr"] = (false_positive_rates, true_positive_rates)
+pr_roc_data[args.session_name + "_fprs_tprs"] = (false_positive_rates, true_positive_rates)
+
 plt.plot(false_positive_rates, true_positive_rates)
 plt.xlabel("false positive rate")
 plt.ylabel("true positive rate")

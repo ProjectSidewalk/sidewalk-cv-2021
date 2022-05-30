@@ -17,7 +17,7 @@ for key in pr_roc_data:
     print(key)
     if "precisions_recalls" in key:
         precisions, recalls = pr_roc_data[key]
-        plt.plot(recalls, precisions, label=key)
+        plt.plot(recalls, precisions, label=key[:key.index("precisions_recalls") - 1])
 plt.xlabel("recall")
 plt.ylabel("precision")
 plt.xlim([0, 1])
@@ -31,12 +31,12 @@ for key in pr_roc_data:
     print(key)
     if "fprs_tprs" in key:
         fprs, tprs = pr_roc_data[key]
-        plt.plot(fprs, tprs, label=key)
+        plt.plot(fprs, tprs, label=key[:key.index("fprs_tprs") - 1])
 
 plt.xlabel("false positive rate")
 plt.ylabel("true positive rate")
 plt.xlim([0, 1])
 plt.ylim([0, 1])
 plt.title("ROC " + args.eval_session_group_name)
-plt.legend(loc="lower left", prop={'size': 6})
+plt.legend(loc="lower right", prop={'size': 6})
 plt.savefig(os.path.join(args.visualizations_path, "roc_" + args.eval_session_group_name))
