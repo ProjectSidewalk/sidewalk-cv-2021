@@ -132,16 +132,14 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
       <h3 style="display: flex; justify-content: center;">Image Name: {img_id}</h3>
       <div style="display: flex; justify-content: center;">
         <img src="/{img_id}.jpg" width="{image_diameter}" height="{image_diameter}"></img>
-        <div 
-          style="
+        <div style="
             opacity=0;
             position: absolute;
             margin-top: {(image_diameter - bounding_box_diameter) / 2}px;
             width: {bounding_box_diameter}px;
             height: {bounding_box_diameter}px;
             outline: {(image_diameter - bounding_box_diameter) / 2 + 1}px solid white;
-          "
-        ></div>
+          "></div>
       </div>
       <div style="display: flex; justify-content: center; margin-top: 15px;">
         <a href="/crop_viewer/{index - 1 if index > 0 else index}" style="margin-right: 125px;">Prev</a>
