@@ -1,5 +1,4 @@
 import argparse
-# import csv
 import http.server
 import io
 import os
@@ -23,11 +22,6 @@ def generate_label_ids_to_csv_indices_map(csv_df):
   filenames = csv_df['image_name']
   label_ids_to_csv_indices = dict()
   for index, filename in filenames.items():
-    # filename = row[0]
-    # label_ids = eval(row[1])
-    # pano_id = row[2]
-    # csv_list.append([filename, label_ids, pano_id])
-
     # different filename formats that are accepted by search tool
     acceptable_filenames = [filename]
     # without extension
@@ -47,11 +41,6 @@ def generate_label_ids_to_csv_indices_map(csv_df):
   return label_ids_to_csv_indices
 
 def save_to_file():
-  # csv_out = open(csv_path, "w")
-  # csv_writer = csv.writer(csv_out)
-  # csv_writer.writerow(["image_name", "label_set", "pano_id"])
-  # for row in csv_list:
-  #   csv_writer.writerow(row)
   csv_df.to_csv(csv_path, index=False)
 
 class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
