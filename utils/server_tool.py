@@ -138,7 +138,7 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
             margin-top: {(image_diameter - bounding_box_diameter) / 2}px;
             width: {bounding_box_diameter}px;
             height: {bounding_box_diameter}px;
-            outline: {(image_diameter - bounding_box_diameter) / 2 + 1}px solid white;
+            outline: {(image_diameter - bounding_box_diameter) / 2 + 1}px solid black;
           "></div>
       </div>
       <div style="display: flex; justify-content: center; margin-top: 15px;">
