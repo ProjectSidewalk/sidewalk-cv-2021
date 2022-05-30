@@ -59,12 +59,17 @@ for label in {1..4}; do
   for city in ${cities[@]}; do
     echo "testing label ${labels[$label - 1]} classifier on $city..."
     # evaluate model on each city
-    python ../eval.py "${experiment}_${model_name}_${labels[$label - 1]}" "$image_base_path" "$csv_base_path/tmp/$city/test_set_${labels[$label - 1]}.csv" "$model_name" "$model_save_folder/$experiment" "$visualizations_path/$experiment/$city" "$crop_size"
+    python ../eval.py ${experiment}_${model_name}_${city} ${experiment}_${model_name}_${labels[$label - 1]} $image_base_path $csv_base_path/"tmp/"$city/"test_set_"${labels[$label - 1]}".csv" $model_name $model_save_folder/$experiment $visualizations_path/$experiment/$city $crop_size
     # analyze results
     python ../visualization_utils/analyze_results.py "${experiment}_${model_name}_${labels[$label - 1]}" "$model_save_folder/$experiment" "$visualizations_path/$experiment/$city"
     # visualize mistakes
     python ../visualization_utils/visualize_mistakes.py "${experiment}_${model_name}_${labels[$label - 1]}" "$image_base_path" "$visualizations_path/$experiment/$city" "$crop_size" "$num_plots"
   done
 done
+
+for city in ${cities[@]}; do
+  python ../visualization_utils/plot_pr_roc.py ${experiment}_${model_name}_${city} $visualizations_path/$experiment/$city
+done
+
 
 echo "Finished Experiment 3.1!"
