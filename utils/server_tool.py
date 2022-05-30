@@ -120,7 +120,7 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
       <h2 style="display: flex; justify-content: center; margin-top: 25px;">Crop #{index + 1}/{len(csv_df)}</h2>
       <h3 style="display: flex; justify-content: center;">Image Name: {img_id}</h3>
       <div style="display: flex; justify-content: center;">
-        <img src="../{img_id}.jpg" width="500" height="500"></img>
+        <img src="/{img_id}.jpg" width="500" height="500"></img>
       </div>
       <div style="display: flex; justify-content: center; margin-top: 15px;">
         <a href="/crop_viewer/{index - 1 if index > 0 else index}" style="margin-right: 125px;">Prev</a>
