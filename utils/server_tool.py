@@ -126,7 +126,7 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
       image_diameter = 500
       bounding_box_diameter = args.crop_size / 1500 * image_diameter
-      
+
       text = f"""
       <h2 style="display: flex; justify-content: center; margin-top: 25px;">Crop #{index + 1}/{len(csv_df)}</h2>
       <h3 style="display: flex; justify-content: center;">Image Name: {img_id}</h3>
@@ -139,7 +139,7 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
             margin-top: {(image_diameter - bounding_box_diameter) / 2}px;
             width: {bounding_box_diameter}px;
             height: {bounding_box_diameter}px;
-            outline: 2px dashed yellow;
+            outline: {(image_diameter - bounding_box_diameter) / 2 + 1}px solid white;
           "
         ></div>
       </div>
