@@ -18,6 +18,13 @@ from http import HTTPStatus
 #    Clicking "Save" saves and goes to the next crop.
 # 4. Use Ctrl+C to exit.
 
+parser = argparse.ArgumentParser()
+parser.add_argument('csv_path', type=str, help="csv_path - path to the dataset csv")
+parser.add_argument('crops_dir', type=str, help="crops_dir - path to directory containing crop jpgs")
+parser.add_argument('port', type=int, help="port - port from which to serve the tool from")
+parser.add_argument('crop_size', type=int, help="crop_size - diameter of bounding box to apply to crops")
+args = parser.parse_args()
+
 def generate_label_ids_to_csv_indices_map(csv_df):
   filenames = csv_df['image_name']
   label_ids_to_csv_indices = dict()
@@ -116,11 +123,25 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
       else:
         index = int(self.path.replace("/crop_viewer/", "").partition("?")[0])
       img_id = csv_df.at[index, 'image_name'].replace(".jpg", "")
+
+      image_diameter = 500
+      bounding_box_diameter = args.crop_size / 1500 * image_diameter
+      
       text = f"""
       <h2 style="display: flex; justify-content: center; margin-top: 25px;">Crop #{index + 1}/{len(csv_df)}</h2>
       <h3 style="display: flex; justify-content: center;">Image Name: {img_id}</h3>
       <div style="display: flex; justify-content: center;">
-        <img src="/{img_id}.jpg" width="500" height="500"></img>
+        <img src="/{img_id}.jpg" width="{image_diameter}" height="{image_diameter}"></img>
+        <div 
+          style="
+            opacity=0;
+            position: absolute;
+            margin-top: {(image_diameter - bounding_box_diameter) / 2}px;
+            width: {bounding_box_diameter}px;
+            height: {bounding_box_diameter}px;
+            outline: 2px dashed yellow;
+          "
+        ></div>
       </div>
       <div style="display: flex; justify-content: center; margin-top: 15px;">
         <a href="/crop_viewer/{index - 1 if index > 0 else index}" style="margin-right: 125px;">Prev</a>
@@ -170,12 +191,6 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
       return f
     else:
       return http.server.SimpleHTTPRequestHandler.send_head(self)
-
-parser = argparse.ArgumentParser()
-parser.add_argument('csv_path', type=str, help="csv_path - path to the dataset csv")
-parser.add_argument('crops_dir', type=str, help="crops_dir - path to directory containing crop jpgs")
-parser.add_argument('port', type=int, help="port - port from which to serve the tool from")
-args = parser.parse_args()
 
 csv_path = args.csv_path
 crops_dir = args.crops_dir
