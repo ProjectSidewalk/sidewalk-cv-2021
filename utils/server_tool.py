@@ -192,7 +192,7 @@ class MyHTTPHandler(http.server.SimpleHTTPRequestHandler):
     else:
       return http.server.SimpleHTTPRequestHandler.send_head(self)
 
-csv_df = pd.read_csv(args.__contains__csv_path, converters={'label_set': literal_eval})
+csv_df = pd.read_csv(args.csv_path, converters={'label_set': literal_eval})
 label_ids_to_csv_indices = generate_label_ids_to_csv_indices_map(csv_df)
 
 Handler = MyHTTPHandler
