@@ -11,7 +11,8 @@ import os
 import pandas as pd
 import re
 
-from CropRunner import bulk_extract_crops
+from CropRunner import bulk_extract_crops, compute_sv_image_coords
+from datatypes.panorama import Panorama
 from PanoScraper import bulk_scrape_panos
 from time import perf_counter
 
@@ -55,7 +56,7 @@ def label_metadata_from_api(sidewalk_server_fqdn):
     # ]
     return pd.DataFrame.from_records(pano_info)
 
-def get_nearest_label_types(crop_info, panos, city, threshold=750):
+def get_nearest_label_types(crop_info, panos, city, threshold=300):
     # remove the suffix we append to get image name by splitting
     # at first occurence of non-digit character.
     # TODO: Note this will likely only work for crops prefixed with the label_id.
@@ -65,12 +66,12 @@ def get_nearest_label_types(crop_info, panos, city, threshold=750):
     res = re.search(r'\D+', crop_base_name).start()
     label_id = int(crop_base_name[:res])
     # print(label_id)
-    current_label_type = crop_info[1]
     pano_id = crop_info[2]
     curr_pano = panos[pano_id]
 
     # Work with the assumption that current label will have finalized sv positions
     current_label = curr_pano.feats[label_id]
+    current_label_type = current_label.label_type
     curr_label_point = current_label.point()
 
     # set to hold our labels for this crop
@@ -125,6 +126,9 @@ if __name__ ==  '__main__':
         # no option to read data
         print("No options from which to read data")
         os._exit(0)
+    
+    print("CPU count: ", mp.cpu_count())
+    print()
 
     # label_metadata = label_metadata.head(40)
     total_metadata_size = len(label_metadata)
@@ -140,8 +144,6 @@ if __name__ ==  '__main__':
     # finalized crop info csv
     final_crop_csv = f'{base_crops_path}/{city}_crop_info.csv'  
 
-    print("CPU count: ", mp.cpu_count())
-
     # local directory to write to (relative to shell root)
     if not os.path.isdir(local_dir):
         os.makedirs(local_dir)
@@ -155,30 +157,59 @@ if __name__ ==  '__main__':
 
         # TODO: update validation counts here
 
-    # filter out labels that already have crops for them
-    label_metadata = label_metadata[~label_metadata['label_id'].isin(existing_label_ids)]
-
-    crop_already_exists_count = total_metadata_size - len(label_metadata)
-
-    # filter out deleted or tutorial labels from data chunk
-    # label_metadata = label_metadata[(~label_metadata['deleted']) & (~label_metadata['tutorial'])]
-
-    # deleted_or_tutorial_count = total_metadata_size - crop_already_exists_count - len(label_metadata)
-
     # filter out labels from panos with missing pano metadata
     has_image_size_filter = pd.notnull(label_metadata['image_width']) 
     label_metadata = label_metadata[has_image_size_filter]
 
-    missing_pano_metadata_count = total_metadata_size - crop_already_exists_count -len(label_metadata) #- deleted_or_tutorial_count - len(label_metadata)
+    missing_pano_metadata_count = total_metadata_size - len(label_metadata)
+    print(f'Missing pano metadata: {missing_pano_metadata_count}')
+
+    # filter out deleted and tutorial labels from data chunk if those columns exist in metadata
+    if 'deleted' in label_metadata:
+        curr_count = len(label_metadata)
+        label_metadata = label_metadata[~label_metadata['deleted']]
+        deleted_count = curr_count - len(label_metadata)
+        print(f'Deleted: {deleted_count}')
+
+    if 'tutorial' in label_metadata:
+        curr_count = len(label_metadata)
+        label_metadata = label_metadata[~label_metadata['tutorial']]
+        tutorial_count = curr_count - len(label_metadata)
+        print(f'Tutorial: {tutorial_count}')
 
     # A datastructure containing panorama and associated label data
     panos = {}
 
+    # TODO: compute x y positions of all labels
+    df_dict = label_metadata.to_dict('records')
+    for row in df_dict:
+        # print(row['gsv_panorama_id'])
+        pano_id = row['gsv_panorama_id']
+        if pano_id != 'tutorial':
+            if not pano_id in panos:
+                # create new Panorama object for new pano id and store pano size
+                panos[pano_id] = Panorama()
+                panos[pano_id].update_pano_size(row['image_width'], row['image_height'])
+            panos[pano_id].add_feature(row)
+
+            # compute (sv_x, sv_y) coords
+            sv_x, sv_y = compute_sv_image_coords(panos[pano_id].feats[row['label_id']])
+            panos[pano_id].feats[row['label_id']].finalize_sv_position(sv_x, sv_y)
+
+    # filter out labels that already have crops for them
+    curr_count = len(label_metadata)
+    label_metadata = label_metadata[~label_metadata['label_id'].isin(existing_label_ids)]
+
+    crop_already_exists_count = curr_count - len(label_metadata)
+    print(f'Crop already exists: {crop_already_exists_count}')
+
+    total_prefiltered_labels = total_metadata_size - len(label_metadata)
+    print(f'Total prefiltered labels: {total_prefiltered_labels}')
+    print()
+
     # stores intermediary metadata info about crops
     crop_info = []
 
-    assert crop_already_exists_count + missing_pano_metadata_count == total_metadata_size - len(label_metadata) # deleted_or_tutorial_count + missing_pano_metadata_count == total_metadata_size - len(label_metadata)
-    total_prefiltered_labels = total_metadata_size - len(label_metadata)
     total_successful_extractions = 0
     total_failed_extractions = 0
 
@@ -189,7 +220,7 @@ if __name__ ==  '__main__':
         print(f'Iteration {i + 1}/{math.ceil(len(label_metadata) / batch_size)}')
 
         # gather panos for current data batch then scrape panos from SFTP server
-        pano_set_size, scraper_exec_time = bulk_scrape_panos(chunk, panos, local_dir, remote_dir)
+        pano_set_size, scraper_exec_time = bulk_scrape_panos(chunk, local_dir, remote_dir)
 
         # make crops for current batch
         metrics = bulk_extract_crops(chunk, local_dir, crop_destination_path, crop_info, panos)
@@ -219,21 +250,28 @@ if __name__ ==  '__main__':
     total_execution_time = t_stop - t_start
 
     # make sure crops have label sets rather than single labels
-    crop_df = pd.DataFrame.from_records(crop_info)
+    crop_df = []
+    for crop in crop_info:
+        label = crop['label']
+        image_name = crop['image_name']
+        crop_metadata = {
+            "image_name": f'{city}/{image_name}',
+            "label_set": [label.label_type],
+            "pano_id": label.pano_id,
+            "agree_count": label.agree_count,
+            "disagree_count": label.disagree_count,
+            "notsure_count": label.notsure_count
+        }
+        crop_df.append(crop_metadata)
+    crop_df = pd.DataFrame.from_records(crop_df)
+    if existing_crops is not None:
+        crop_df = pd.concat([existing_crops, crop_df]) # TODO: finish
     if 'label_set' in crop_df.columns:
         crop_df['label_set'] = crop_df.apply(lambda x: get_nearest_label_types(x, panos, city), axis=1)
-    if existing_crops is not None:
-        crop_df = pd.concat([existing_crops, crop_df])
     crop_df.to_csv(final_crop_csv, index=False)
 
     print()
     print("====================================================================================================")
-    print(f'Total prefiltered labels: {total_prefiltered_labels}')
-    print("Prefilter counts:")
-    print(f'Crop already exists: {crop_already_exists_count}')
-    # print(f'Deleted or tutorial: {deleted_or_tutorial_count}')
-    print(f'Missing pano metadata: {missing_pano_metadata_count}')
-    print()
     print(f'Total successful crop extractions: {total_successful_extractions}')
     print(f'Total failed extractions: {total_failed_extractions}')
     print(f'Total execution time in seconds: {total_execution_time}')

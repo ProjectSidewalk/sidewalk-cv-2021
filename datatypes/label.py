@@ -47,6 +47,8 @@ class Label(object):
         row.append(self.notsure_count)
         # row.append(self.deleted)
         # row.append(self.tutorial)
+        row.append(self.image_width)
+        row.append(self.image_height)
         return row
 
     def finalize_sv_position(self, x, y):
