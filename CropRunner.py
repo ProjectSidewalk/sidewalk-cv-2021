@@ -17,6 +17,8 @@ from time import perf_counter
 # The scale factor for each multicrop
 # MULTICROP_SCALE_FACTOR = 1.5
 
+CROP_WIDTH = CROP_HEIGHT = 1500
+
 class CropFailureReason(int, Enum):
     MISSING_PANO_JPG = 1
     OUT_OF_BOUNDS = 2
@@ -134,16 +136,15 @@ def label_point(label_pov, photographer_pov, img_dim):
 
     return round(final_point[0]), round(final_point[1])
 
-def make_crop(pano_info, label_pov, destination_dir, label_id, lock, multicrop=True, draw_mark=True):
+def make_crop(label, pano_img_path, destination_dir, lock, multicrop=True, draw_mark=True):
     # crop_names = []
     try:
-        pano_img_path = pano_info["pano_img_path"]
         im = Image.open(pano_img_path)
         draw = ImageDraw.Draw(im)
 
         # use metadata sizes even if the downloaded pano isn't correct size
-        im_width = pano_info["image_width"]
-        im_height = pano_info["image_height"]
+        im_width = label.image_width
+        im_height = label.image_height
         img_dim = (im_width, im_height)
         # print(img_dim)
 
@@ -153,28 +154,29 @@ def make_crop(pano_info, label_pov, destination_dir, label_id, lock, multicrop=T
         # predicted_crop_size = predict_crop_size(sv_image_y)
         # crop_width = int(predicted_crop_size)
         # crop_height = int(predicted_crop_size)
-        crop_width = 1500
-        crop_height = 1500
+        # crop_width = 1500
+        # crop_height = 1500
         
-        photographer_pov = {
-            "heading": pano_info["photographer_heading"],
-            "pitch": pano_info["photographer_pitch"]
-        }
+        # photographer_pov = {
+        #     "heading": pano_info["photographer_heading"],
+        #     "pitch": pano_info["photographer_pitch"]
+        # }
 
-        x, y = label_point(label_pov, photographer_pov, img_dim)
+        # x, y = label_point(label_pov, photographer_pov, img_dim)
         # print(x, y)
+        x, y = label.final_sv_image_x, label.final_sv_image_y
 
-        top_left_x = int(x - crop_width / 2)
-        top_left_y = int(y - crop_height / 2)
-        bottom_right_x = int(x + crop_width / 2)
-        bottom_right_y = int(y + crop_width / 2)
+        top_left_x = int(x - CROP_WIDTH / 2)
+        top_left_y = int(y - CROP_HEIGHT / 2)
+        bottom_right_x = int(x + CROP_WIDTH / 2)
+        bottom_right_y = int(y + CROP_HEIGHT / 2)
 
         # if the actual image size is less than the metadata size, only include the crop if all dimensions are within the actual pano dims
         if actual_img_dim < img_dim:
             # make sure entire crop can fit in actual image
             if top_left_x < 0 or top_left_y < 0 or bottom_right_x > actual_img_dim[0] or bottom_right_y > actual_img_dim[1]:
-                logging.info(f'{label_id}, {CropFailureReason.OUT_OF_BOUNDS}, actual pano too small')
-                return None, None, None
+                logging.info(f'{label.label_id}, {CropFailureReason.OUT_OF_BOUNDS}, actual pano too small')
+                return None
 
         r = 20
         if draw_mark:
@@ -184,35 +186,35 @@ def make_crop(pano_info, label_pov, destination_dir, label_id, lock, multicrop=T
             lock.release()
 
         # for i in range(MULTICROP_COUNT):
-        top_left_x = int(x - crop_width / 2)
-        top_left_y = int(y - crop_height / 2)
+        top_left_x = int(x - CROP_WIDTH / 2)
+        top_left_y = int(y - CROP_HEIGHT / 2)
             # if multicrop:
             #     crop_name = label_name + "_" + str(i) + ".jpg"
             # else:
-        crop_name = f'{label_id}.jpg'
+        crop_name = f'{label.label_id}.jpg'
         crop_destination = os.path.join(destination_dir, crop_name)
-        if not os.path.exists(crop_destination) and  0 <= top_left_y and top_left_y + crop_height <= actual_img_dim[1]:
-            crop = Image.new('RGB', (crop_width, crop_height))
+        if not os.path.exists(crop_destination) and  0 <= top_left_y and top_left_y + CROP_HEIGHT <= actual_img_dim[1]:
+            crop = Image.new('RGB', (CROP_WIDTH, CROP_HEIGHT))
             if top_left_x < 0:
-                crop_1 = im.crop((top_left_x + actual_img_dim[0], top_left_y, actual_img_dim[0], top_left_y + crop_height))
-                crop_2 = im.crop((0, top_left_y, top_left_x + crop_width, top_left_y + crop_height))
+                crop_1 = im.crop((top_left_x + actual_img_dim[0], top_left_y, actual_img_dim[0], top_left_y + CROP_HEIGHT))
+                crop_2 = im.crop((0, top_left_y, top_left_x + CROP_WIDTH, top_left_y + CROP_HEIGHT))
                 crop.paste(crop_1, (0,0))
                 crop.paste(crop_2, (- top_left_x, 0))
-            elif top_left_x + crop_width > actual_img_dim[0]:
-                crop_1 = im.crop((top_left_x, top_left_y, actual_img_dim[0], top_left_y + crop_height))
-                crop_2 = im.crop((0, top_left_y, top_left_x + crop_width - actual_img_dim[0], top_left_y + crop_height))
+            elif top_left_x + CROP_WIDTH > actual_img_dim[0]:
+                crop_1 = im.crop((top_left_x, top_left_y, actual_img_dim[0], top_left_y + CROP_HEIGHT))
+                crop_2 = im.crop((0, top_left_y, top_left_x + CROP_WIDTH - actual_img_dim[0], top_left_y + CROP_HEIGHT))
                 crop.paste(crop_1, (0,0))
                 crop.paste(crop_2, (actual_img_dim[0] - top_left_x, 0))
             else:
-                crop = im.crop((top_left_x, top_left_y, top_left_x + crop_width, top_left_y + crop_height))
+                crop = im.crop((top_left_x, top_left_y, top_left_x + CROP_WIDTH, top_left_y + CROP_HEIGHT))
             crop.save(crop_destination)
             # print("Successfully extracted crop to " + crop_name)
             # crop_names.append(crop_name)
-            return crop_name, (x, y), img_dim
+            return crop_name
         elif os.path.exists(crop_destination):
-            logging.info(f'{label_id}, {CropFailureReason.SKIPPED}')
+            logging.info(f'{label.label_id}, {CropFailureReason.SKIPPED}')
         else:
-            logging.info(f'{label_id}, {CropFailureReason.OUT_OF_BOUNDS}')
+            logging.info(f'{label.label_id}, {CropFailureReason.OUT_OF_BOUNDS}')
         # if not multicrop:
         #     break
         # crop_width = int(crop_width * MULTICROP_SCALE_FACTOR)
@@ -221,9 +223,9 @@ def make_crop(pano_info, label_pov, destination_dir, label_id, lock, multicrop=T
     except Exception as e:
         print(e)
         print("Error for {}".format(pano_img_path))
-        logging.info(f'{label_id}, {CropFailureReason.IO}')
+        logging.info(f'{label.label_id}, {CropFailureReason.IO}')
 
-    return None, None, None
+    return None
 
 def bulk_extract_crops(data_chunk, path_to_gsv_scrapes, destination_dir, crop_info, panos):
     t_start = perf_counter()
@@ -248,7 +250,7 @@ def bulk_extract_crops(data_chunk, path_to_gsv_scrapes, destination_dir, crop_in
         while i < row_count:
             chunk_size = (row_count - i) // cpu_count
             labels = data_chunk.iloc[i:i + chunk_size, :]
-            process = mp.Process(target=crop_label_subset, args=(labels, output_rows, path_to_gsv_scrapes, destination_dir, lock))
+            process = mp.Process(target=crop_label_subset, args=(labels, panos, output_rows, path_to_gsv_scrapes, destination_dir, lock))
             processes.append(process)
             cpu_count -= 1
             i += chunk_size
@@ -264,23 +266,19 @@ def bulk_extract_crops(data_chunk, path_to_gsv_scrapes, destination_dir, crop_in
         successful_crop_count = len(output_rows)
         crop_fail_count = row_count - successful_crop_count # (row_count * MULTICROP_COUNT) - successful_crop_count
         for row in output_rows:
-            # row format: [crop_name, primary_label_type, pano_id, label_id, final_sv_position, pano_size, agree_count, disagree_count, notsure_count]
+            # row format: [label, crop_name]
             crop_info.append({
-                'image_name': row[0],
-                'label_set': row[1],
-                'pano_id': row[2],
-                'agree_count': row[-3],
-                'disagree_count': row[-2],
-                'notsure_count': row[-1]
+                'label': row[0],
+                'image_name': row[1]  # TODO: city here?
             })
 
             # update final sv position per label
-            if row[2] in panos and row[3] in panos[row[2]].feats:
-                if panos[row[2]].width is None and panos[row[2]].height is None:
-                    panos[row[2]].update_pano_size(row[5][0], row[5][1])
+            # if row[2] in panos and row[3] in panos[row[2]].feats:
+            #     if panos[row[2]].width is None and panos[row[2]].height is None:
+            #         panos[row[2]].update_pano_size(row[5][0], row[5][1])
 
-                label = panos[row[2]].feats[row[3]]
-                label.finalize_sv_position(row[4][0], row[4][1])
+            #     label = panos[row[2]].feats[row[3]]
+            #     label.finalize_sv_position(row[4][0], row[4][1])
 
         t_stop = perf_counter()
         execution_time = t_stop - t_start
@@ -290,43 +288,51 @@ def bulk_extract_crops(data_chunk, path_to_gsv_scrapes, destination_dir, crop_in
         
         return [row_count, successful_crop_count, crop_fail_count, execution_time]
 
-def crop_label_subset(input_rows, output_rows, path_to_gsv_scrapes, destination_dir, lock):
+def crop_label_subset(input_rows, panos, output_rows, path_to_gsv_scrapes, destination_dir, lock):
     counter = 0
     # process_pid = os.getpid()
     input_rows_dict = input_rows.to_dict('records')
     for row in input_rows_dict:
         counter += 1
-        label = Label(row)
+        pano_id = row['gsv_panorama_id']
+        label_id = row['label_id']
+        label = panos[pano_id].feats[label_id]
+        if label.final_sv_image_x is None and label.final_sv_image_y is None:
+            # finalize sv_x, sv_y coords
+            sv_x, sv_y = compute_sv_image_coords(label)
+            label.finalize_sv_position(sv_x, sv_y)
+                    
+        # label = Label(row)
 
         pano_img_path = os.path.join(path_to_gsv_scrapes, label.pano_id + ".jpg")
 
-        pano_info = {
-            "pano_img_path": pano_img_path,
-            "image_width": label.image_width,
-            "image_height": label.image_height,
-            "photographer_heading": label.photographer_heading,
-            "photographer_pitch": label.photographer_pitch
-        }
+        # pano_info = {
+        #     "pano_img_path": pano_img_path,
+        #     "image_width": label.image_width,
+        #     "image_height": label.image_height,
+        #     "photographer_heading": label.photographer_heading,
+        #     "photographer_pitch": label.photographer_pitch
+        # }
 
-        camera_pov = {
-            "heading": label.heading,
-            "pitch": label.pitch,
-            "zoom": label.zoom
-        }
+        # camera_pov = {
+        #     "heading": label.heading,
+        #     "pitch": label.pitch,
+        #     "zoom": label.zoom
+        # }
 
-        canvas_dim = {
-            "width": label.canvas_width,
-            "height": label.canvas_height
-        }
+        # canvas_dim = {
+        #     "width": label.canvas_width,
+        #     "height": label.canvas_height
+        # }
 
-        label_pov = calculatePointPov(label.canvas_x, label.canvas_y, camera_pov, canvas_dim)
+        # label_pov = calculatePointPov(label.canvas_x, label.canvas_y, camera_pov, canvas_dim)
 
         # Extract the crop
         if os.path.exists(pano_img_path):
             # crop_names = []
             # if not label_type == 0:
                 # TODO: currently the only case being supported
-            crop_name, pos, pano_size = make_crop(pano_info, label_pov, destination_dir, label.label_id, lock, False, False)
+            crop_name = make_crop(label, pano_img_path, destination_dir, lock, False, False)
             # else:
             #     # TODO: this may need to be its own function since null cropping should be independent
             #     # In order to uniquely identify null crops, we concatenate the pid of process they
@@ -335,7 +341,7 @@ def crop_label_subset(input_rows, output_rows, path_to_gsv_scrapes, destination_
             #     crop_names, pos, pano_size = make_crop(pano_img_path, label_pov, photographer_heading, photographer_pitch, destination_dir, label_name, lock, False, False)
 
             if crop_name is not None:
-                output_rows.append([crop_name, label.label_type, label.pano_id, int(label.label_id), pos, pano_size, label.agree_count, label.disagree_count, label.notsure_count])
+                output_rows.append([label, crop_name])
         else:
             print("Panorama image not found.")
             logging.info(f'{label.label_id}, {CropFailureReason.MISSING_PANO_JPG}')
@@ -343,3 +349,30 @@ def crop_label_subset(input_rows, output_rows, path_to_gsv_scrapes, destination_
             #     logging.warning("Skipped label id " + label_name + " due to missing image.")
             # except NameError:
             #     logging.warning("Skipped null crop " + str(process_pid) + " " + str(counter) + " due to missing image.")
+
+def compute_sv_image_coords(label):
+    camera_pov = {
+        "heading": label.heading,
+        "pitch": label.pitch,
+        "zoom": label.zoom
+    }
+
+    canvas_dim = {
+        "width": label.canvas_width,
+        "height": label.canvas_height
+    }
+
+    label_pov = calculatePointPov(label.canvas_x, label.canvas_y, camera_pov, canvas_dim)
+
+    # use metadata sizes even if the downloaded pano isn't correct size
+    im_width = label.image_width
+    im_height = label.image_height
+    img_dim = (im_width, im_height)
+    # print(img_dim)
+    
+    photographer_pov = {
+        "heading": label.photographer_heading,
+        "pitch": label.photographer_pitch
+    }
+
+    return label_point(label_pov, photographer_pov, img_dim)

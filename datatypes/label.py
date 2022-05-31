@@ -19,8 +19,8 @@ class Label(object):
         self.agree_count = int(row['agree_count']) if row['agree_count'] is not None else None
         self.disagree_count = int(row['disagree_count']) if row['disagree_count'] is not None else None
         self.notsure_count = int(row['notsure_count']) if row['notsure_count'] is not None else None
-        self.deleted = row['deleted'] if row['deleted'] is not None else None
-        self.tutorial = row['tutorial'] if row['tutorial'] is not None else None
+        # self.deleted = row['deleted'] if row['deleted'] is not None else None
+        # self.tutorial = row['tutorial'] if row['tutorial'] is not None else None
         self.image_width = int(row['image_width']) if row['image_width'] is not None else None
         self.image_height = int(row['image_height']) if row['image_height'] is not None else None
         self.final_sv_image_x = None
@@ -45,8 +45,10 @@ class Label(object):
         row.append(self.agree_count)
         row.append(self.disagree_count)
         row.append(self.notsure_count)
-        row.append(self.deleted)
-        row.append(self.tutorial)
+        # row.append(self.deleted)
+        # row.append(self.tutorial)
+        row.append(self.image_width)
+        row.append(self.image_height)
         return row
 
     def finalize_sv_position(self, x, y):

@@ -1,7 +1,5 @@
-import glob
 import multiprocessing as mp
 import os
-import random
 import subprocess
 
 from datatypes.panorama import Panorama
@@ -19,7 +17,7 @@ BLACK_THRESHOLD = (10, 10, 10)
 
 BATCH_TXT_FOLDER = "batches"
 
-def bulk_scrape_panos(data_chunk, panos, local_dir, remote_dir):
+def bulk_scrape_panos(data_chunk, local_dir, remote_dir):
     t_start = perf_counter()
 
     pano_set = set()
@@ -32,13 +30,8 @@ def bulk_scrape_panos(data_chunk, panos, local_dir, remote_dir):
     for row in df_dict:
         # print(row['gsv_panorama_id'])
         pano_id = row['gsv_panorama_id']
-        pano_set.add(pano_id)
         if pano_id != 'tutorial':
-            if not pano_id in panos:
-                # create new Panorama object for new pano id and store pano size
-                panos[pano_id] = Panorama()
-                panos[pano_id].update_pano_size(row['image_width'], row['image_height'])
-            panos[pano_id].add_feature(row)
+            pano_set.add(pano_id)
     
     # get available cpu_count
     cpu_count = mp.cpu_count() if mp.cpu_count() <= 8 else 8
