@@ -22,7 +22,7 @@ plt.xlabel("recall")
 plt.ylabel("precision")
 plt.xlim([0, 1])
 plt.ylim([0, 1])
-plt.title("ROC " + args.eval_session_group_name)
+plt.title("precision vs recall " + args.eval_session_group_name)
 plt.legend(loc="lower left", prop={'size': 6})
 plt.savefig(os.path.join(args.visualizations_path, "precision_recall_" + args.eval_session_group_name))
 
