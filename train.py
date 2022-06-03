@@ -79,17 +79,17 @@ if __name__ == "__main__":
 
   # weight using inverse of each sample size
   # acquire label sample sizes from train csv
-  train_classes = [train_val_dataset.targets[i] for i in train_dataset.indices]
-  class_counts = Counter(train_classes)
-  print(class_counts)
-  samples_per_class = np.array([class_counts[0], class_counts[1]])
-  weights = 1.0 / samples_per_class
-  norm = np.linalg.norm(weights)
-  normalized_weights = weights / norm
-  normalized_weights_tensor = torch.from_numpy(normalized_weights).float().to(device)
+  # train_classes = [train_val_dataset.targets[i] for i in train_dataset.indices]
+  # class_counts = Counter(train_classes)
+  # print(class_counts)
+  # samples_per_class = np.array([class_counts[0], class_counts[1]])
+  # weights = 1.0 / samples_per_class
+  # norm = np.linalg.norm(weights)
+  # normalized_weights = weights / norm
+  # normalized_weights_tensor = torch.from_numpy(normalized_weights).float().to(device)
 
   # add normalized_weights_tensor as input to loss_func if weighted loss is desired
-  loss_func = nn.CrossEntropyLoss(weight=normalized_weights_tensor)
+  loss_func = nn.CrossEntropyLoss()
   optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay) # torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-6)
   scheduler = lr_scheduler.StepLR(optimizer, 3, gamma=0.5) #lr_scheduler.CyclicLR(optimizer, base_lr=1e-6, max_lr=lr, step_size_up = 2500, mode='triangular2')
 
