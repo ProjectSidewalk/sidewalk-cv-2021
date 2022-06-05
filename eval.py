@@ -120,8 +120,8 @@ print("recall at default cutoff: " + str(recall_default_cutoff))
 metrics = [{"precision_default_cutoff":precision_default_cutoff.item(), "recall_default_cutoff": recall_default_cutoff.item(),
 "average_loss":loss, "accuracy": accuracy }]
 metrics_df = pd.DataFrame(metrics)
-metrics_path = os.path.join(args.visualizations_path, "metrics_" + args.session_name + ".csv") 
-metrics_df.to_csv(metrics_path, index=False)
+metrics_path = os.path.join(args.visualizations_path, "metrics_" + args.eval_session_group_name + ".csv") 
+metrics_df.to_csv(metrics_path, mode='a', header=not os.path.exists(metrics_path), index=False)
 
 print(pr_roc_save_path)
 torch.save(pr_roc_data, pr_roc_save_path)
