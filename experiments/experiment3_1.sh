@@ -3,7 +3,7 @@ echo "Starting Experiment 3.1"
 
 experiment="3_1"
 # city names
-cities=("seattle")
+cities=("spgg")
 # label types
 labels=("curb_ramp" "missing_curb_ramp" "obstacle" "surface_problem")
 # path to train/test CSV data
@@ -21,7 +21,7 @@ model_save_folder="../models/"
 # save path the visualizations
 visualizations_path="../visualizations/"
 # number of epochs for training
-num_epochs="10"
+num_epochs="7"
 # crop size
 crop_size="1000"
 # number of plots for mistake visualization
@@ -51,7 +51,7 @@ for label in {1..4}; do
   for city in ${cities[@]}; do
     arguments+="$csv_base_path/tmp/$city/train_set_${labels[$label - 1]}.csv "
   done
-  python ../utils/dataset_creator.py "combine" "$arguments" "$csv_base_path/tmp/all_cities/train_set_${labels[$label - 1]}.csv"
+  python ../utils/dataset_creator.py "combine" $arguments "$csv_base_path/tmp/all_cities/train_set_${labels[$label - 1]}.csv"
 
   # train model on combined train set
   python ../train.py "${experiment}_${model_name}_${labels[$label - 1]}" "$image_base_path" "$csv_base_path/tmp/all_cities/train_set_${labels[$label - 1]}.csv" "$model_name" "$model_save_folder/$experiment" "$num_epochs" "$crop_size"
@@ -70,6 +70,5 @@ done
 for city in ${cities[@]}; do
   python ../visualization_utils/plot_pr_roc.py ${experiment}_${model_name}_${city} $visualizations_path/$experiment/$city
 done
-
 
 echo "Finished Experiment 3.1!"

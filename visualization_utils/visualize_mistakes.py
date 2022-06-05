@@ -33,10 +33,10 @@ label_types = {
     4: 'surface problem'
 }
 
-def add_border(image, mistake_type):
+def add_border(image, title):
     width, height = image.size
     pixels = image.load()
-    color = (255, 0, 0) if mistake_type == 'false positives' else (255, 215, 0)
+    color = (255, 0, 0) if 'false positives' in title else (255, 215, 0)
 
     for y in range(0, 20):
         for x in range(0, width):
@@ -64,19 +64,19 @@ def crop(image):
     # Crop the center of the image
     return image.crop((left, top, right, bottom))
 
-def make_plots(mistakes, num_plots, mistake_type):
+def make_plots(mistakes, num_plots, save_path, title):
     for plot_idx in range(num_plots):
         start_row = IMAGES_PER_PLOT * plot_idx
         end_row = start_row + IMAGES_PER_PLOT # exclusive
         plot_rows = mistakes.iloc[start_row:end_row]
         plot_rows.reset_index(drop=True, inplace=True)
         fig = plt.figure(num=1, figsize=(IMAGES_PER_ROW * IMAGE_SIZE, IMAGES_PER_COL * IMAGE_SIZE))
-        fig.suptitle(f'{args.session_name} {mistake_type} {plot_idx}', fontsize=30)
+        fig.suptitle(f'{args.session_name} {title} {plot_idx}', fontsize=30)
         for i, mistake in plot_rows.iterrows():
             image = Image.open(f'{mistake["image path"]}')
 
             image = crop(image)
-            add_border(image, mistake_type)
+            add_border(image, title)
 
             path = mistake["image path"][len(args.image_base_path):]
             confidence = mistake['confidence']
@@ -85,7 +85,6 @@ def make_plots(mistakes, num_plots, mistake_type):
             ax.set_title(f'{path}\n confidence: {confidence:.4f}', fontsize=15)
             ax.spines['bottom'].set_color('0.5')
             plt.imshow(image)
-        save_path = FALSE_POSITIVES_SAVE_PATH if mistake_type == 'false positives' else FALSE_NEGATIVES_SAVE_PATH
         plt.savefig(f'{save_path}{plot_idx}.png', bbox_inches='tight')
         plt.clf()
 
@@ -98,5 +97,5 @@ if __name__ == '__main__':
     false_negatives = all_mistakes[all_mistakes['prediction'] == 0]
     false_positives = all_mistakes[all_mistakes['prediction'] != 0]
 
-    make_plots(false_negatives, args.num_plots, 'false negatives (predicted negative, actual positive)')
-    make_plots(false_positives, args.num_plots, 'false positives (predicted positive, actual negative)')
+    make_plots(false_negatives, args.num_plots, FALSE_NEGATIVES_SAVE_PATH, 'false negatives (predicted negative, actual positive)')
+    make_plots(false_positives, args.num_plots, FALSE_POSITIVES_SAVE_PATH, 'false positives (predicted positive, actual negative)')
