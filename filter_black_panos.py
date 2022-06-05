@@ -20,6 +20,7 @@ logging.info(f'FILTER SESSION TIMESTAMP: {datetime.datetime.now().strftime("%d %
 FILTERED_PANOS_CSV = "filtered_panos.csv"
 BATCH_TXT_FOLDER = "batches"
 REMOTE_DIR = "sidewalk_panos/Panoramas/"
+SFTP_KEY_PATH = "alphie-sftp/alphie_pano"
 
 def acquire_n_panos(remote_dir, local_dir, pano_subdirs, thread_id):
     sftp_command_list = ['cd {}'.format(remote_dir), 'lcd {}'.format(local_dir)]
@@ -30,7 +31,7 @@ def acquire_n_panos(remote_dir, local_dir, pano_subdirs, thread_id):
         sftp_command_list.append(f'-get {os.path.join(pano_subdir, "*.jpg")}')
     
     thread_batch_txt = f'{BATCH_TXT_FOLDER}/batch{thread_id}.text'
-    bash_command = f'sftp -b {thread_batch_txt} -P 9000 -i alphie-sftp/alphie_pano ml-sftp@sftp.cs.washington.edu'
+    bash_command = f'sftp -b {thread_batch_txt} -P 9000 -i {SFTP_KEY_PATH} ml-sftp@sftp.cs.washington.edu'
     with open(thread_batch_txt, 'w', newline='') as sftp_file:
         for sftp_command in sftp_command_list:
             sftp_file.write("%s\n" % sftp_command)

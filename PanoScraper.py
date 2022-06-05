@@ -17,6 +17,8 @@ BLACK_THRESHOLD = (10, 10, 10)
 
 BATCH_TXT_FOLDER = "batches"
 
+SFTP_KEY_PATH = "alphie-sftp/alphie_pano"
+
 def bulk_scrape_panos(data_chunk, local_dir, remote_dir):
     t_start = perf_counter()
 
@@ -99,7 +101,7 @@ def acquire_n_panos(remote_dir, local_dir, pano_ids, thread_id):
         sftp_command_list.append('-get ./{prefix}/{full_id}.jpg'.format(prefix=two_chars, full_id=pano_id))
     
     thread_batch_txt = f'{BATCH_TXT_FOLDER}/batch{thread_id}.text'
-    bash_command = f'sftp -b {thread_batch_txt} -P 9000 -i alphie-sftp/alphie_pano ml-sftp@sftp.cs.washington.edu'
+    bash_command = f'sftp -b {thread_batch_txt} -P 9000 -i {SFTP_KEY_PATH} ml-sftp@sftp.cs.washington.edu'
     with open(thread_batch_txt, 'w', newline='') as sftp_file:
         for sftp_command in sftp_command_list:
             sftp_file.write("%s\n" % sftp_command)
