@@ -126,6 +126,14 @@ if __name__ ==  '__main__':
         # no option to read data
         print("No options from which to read data")
         os._exit(0)
+
+    # add validation counts if they don't exist
+    if 'agree_count' not in label_metadata:
+        label_metadata['agree_count'] = 0
+    if 'disagree_count' not in label_metadata:
+        label_metadata['disagree_count'] = 0
+    if 'notsure_count' not in label_metadata:
+        label_metadata['notsure_count'] = 0
     
     print("CPU count: ", mp.cpu_count())
     print()
