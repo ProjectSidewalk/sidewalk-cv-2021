@@ -126,6 +126,14 @@ if __name__ ==  '__main__':
         # no option to read data
         print("No options from which to read data")
         os._exit(0)
+
+    # add validation counts if they don't exist
+    if 'agree_count' not in label_metadata:
+        label_metadata['agree_count'] = 0
+    if 'disagree_count' not in label_metadata:
+        label_metadata['disagree_count'] = 0
+    if 'notsure_count' not in label_metadata:
+        label_metadata['notsure_count'] = 0
     
     print("CPU count: ", mp.cpu_count())
     print()
@@ -158,11 +166,12 @@ if __name__ ==  '__main__':
         # TODO: update validation counts here
 
     # filter out labels from panos with missing pano metadata
-    has_image_size_filter = pd.notnull(label_metadata['image_width']) 
-    label_metadata = label_metadata[has_image_size_filter]
+    # has_image_size_filter = pd.notnull(label_metadata['image_width']) 
+    # has_complete_metadata_filter = pd.notnull(label_metadata)
+    label_metadata = label_metadata.dropna()
 
-    missing_pano_metadata_count = total_metadata_size - len(label_metadata)
-    print(f'Missing pano metadata: {missing_pano_metadata_count}')
+    missing_metadata_count = total_metadata_size - len(label_metadata)
+    print(f'Missing pano metadata: {missing_metadata_count}')
 
     # filter out deleted and tutorial labels from data chunk if those columns exist in metadata
     if 'deleted' in label_metadata:
