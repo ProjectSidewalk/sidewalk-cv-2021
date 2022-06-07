@@ -20,7 +20,7 @@ logging.info(f'FILTER SESSION TIMESTAMP: {datetime.datetime.now().strftime("%d %
 FILTERED_PANOS_CSV = "filtered_panos.csv"
 BATCH_TXT_FOLDER = "batches"
 REMOTE_DIR = "sidewalk_panos/Panoramas/"
-SFTP_KEY_PATH = "alphie-sftp/alphie_pano"
+SFTP_KEY_PATH = "PATH TO SFTP KEY"
 
 def acquire_n_panos(remote_dir, local_dir, pano_subdirs, thread_id):
     sftp_command_list = ['cd {}'.format(remote_dir), 'lcd {}'.format(local_dir)]
