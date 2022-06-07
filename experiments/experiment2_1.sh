@@ -1,4 +1,4 @@
-# Script for Experiment 3.1
+# Script for Experiment 2.1
 echo "Starting Experiment 2.1"
 
 experiment="2_1"
