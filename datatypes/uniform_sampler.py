@@ -17,7 +17,7 @@ class UniformSampler(Sampler):
         uniform_indices = []
         for label in self.label_indices:
             uniform_indices.extend(random.sample(self.label_indices[label], self.num_samples_per_class))
-
+        random.shuffle(uniform_indices)
         return iter(uniform_indices)
 
     def __len__(self):

@@ -73,13 +73,13 @@ if __name__ == "__main__":
   
   # compute set of indices in train set for uniform sampling
   train_class_indices = {}
-  for i in train_dataset.indices:
-    label = train_val_dataset.targets[i]
-    if i not in train_class_indices:
-      train_class_indices[i] = []
-    train_class_indices[i].append(i)
+  for idx, data_idx in enumerate(train_dataset.indices):
+    label = train_val_dataset.targets[data_idx]
+    if label not in train_class_indices:
+      train_class_indices[label] = []
+    train_class_indices[label].append(idx)
   uniform_sampler = UniformSampler(train_class_indices)
-  train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=8, sampler=uniform_sampler)
+  train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, num_workers=8, sampler=uniform_sampler)
   val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
 
   # =================================================================================================
