@@ -228,8 +228,6 @@ if __name__ == "__main__":
                     output_df = subset(output_df, subset_size)
                     print("subsetted")
             elif operation == Operations.FILTER:
-                label_type = arguments[0]
-                # is_label_set = int(arguments[1]) if len(arguments) > 1 else True
                 filter_column = arguments[0]
                 label_type = None
                 if len(arguments) > 1:
@@ -294,6 +292,17 @@ if __name__ == "__main__":
             output_path = args.arguments[2]
             dataframe = pd.read_csv(csv_path)
             output(subset(dataframe, subset_size), output_path)
+        elif operation == Operations.FILTER:
+            csv_path = args.arguments[0]
+            output_path = args.arguments[1]
+            filter_column = args.arguments[2]
+            label_type = None
+            if len(args.arguments) > 3:
+                label_type = args.arguments[3]
+            
+            df = pd.read_csv(csv_path)      
+            filtered_df = filter(df, filter_column, label_type)
+            output(filtered_df, output_path)
         elif operation == Operations.SETDIFF:
             df1_path = args.arguments[0]
             df2_path = args.arguments[1]
@@ -301,5 +310,11 @@ if __name__ == "__main__":
             df1 = pd.read_csv(df1_path)
             df2 = pd.read_csv(df2_path)
             output(setdiff(df1, df2), output_path)
+        elif operation == Operations.VALIDATE:
+            csv_path = args.arguments[0]
+            output_path = args.arguments[1]
+            df = pd.read_csv(csv_path)
+            validate(df)
+            output(df, output_path)
         else:
             print("Unrecognized operation")
