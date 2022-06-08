@@ -45,7 +45,7 @@ for label in {1..4}; do
   # compose list of train set csvs to combine
 
   # train model on combined train set
-  python ../train.py "$experiment_$model_name_${labels[$label - 1]}" "$image_base_path" "$csv_base_path/tmp/$city/train_set_${labels[$label - 1]}.csv" "$model_name" "$model_save_folder/$experiment" "$num_epochs" "$crop_size"
+  python ../train.py "${experiment}_${model_name}_${labels[$label - 1]}" "$image_base_path" "$csv_base_path/tmp/$city/train_set_${labels[$label - 1]}.csv" "$model_name" "$model_save_folder/$experiment" "$num_epochs" "$crop_size"
   echo "testing label ${labels[$label - 1]} classifier on $city..."
     # evaluate model on each city
   python ../eval.py ${experiment}_${model_name}_$city ${experiment}_${model_name}_${labels[$label - 1]} $image_base_path $csv_base_path/"tmp/"$city/"test_set_"${labels[$label - 1]}".csv" $model_name $model_save_folder/$experiment $visualizations_path/$experiment/$city $crop_size
