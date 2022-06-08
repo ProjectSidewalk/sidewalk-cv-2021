@@ -21,6 +21,7 @@ parser.add_argument('crop_size', type=int)
 args = parser.parse_args()
 
 NUM_CLASSES = 2
+UNIFORM_SAMPLING = False
 
 if not os.path.isdir(args.model_save_folder):
   os.makedirs(args.model_save_folder)
@@ -52,7 +53,7 @@ if __name__ == "__main__":
   ])
 
   # having issues with CUDA running out of memory, so lowering batch size
-  batch_size = 128
+  batch_size = 4
 
   train_labels_csv_path = args.train_set_csv
   train_img_dir = args.image_base_path
@@ -78,8 +79,12 @@ if __name__ == "__main__":
     if label not in train_class_indices:
       train_class_indices[label] = []
     train_class_indices[label].append(idx)
-  uniform_sampler = UniformSampler(train_class_indices)
-  train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, num_workers=8, sampler=uniform_sampler)
+
+  if UNIFORM_SAMPLING:
+    uniform_sampler = UniformSampler(train_class_indices)
+    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, num_workers=8, sampler=uniform_sampler)
+  else:
+    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
   val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
 
   # =================================================================================================

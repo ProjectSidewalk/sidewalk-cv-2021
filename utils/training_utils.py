@@ -138,7 +138,7 @@ def train(model, num_classes, is_inception, optimizer, scheduler, loss_func, epo
         model.eval()
 
       # get length of dataset for current mode
-      n = len(datasetLoaders[mode].dataset)
+      n = len(datasetLoaders[mode].sampler)
 
       # sum of losses over batches.
       total_loss = 0
