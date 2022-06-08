@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 from collections import Counter
 from datatypes.dataset import SidewalkCropsDataset
+from datatypes.uniform_sampler import UniformSampler
 from utils.training_utils import get_pretrained_model, load_training_checkpoint, train
 from torch.optim import lr_scheduler
 from torchvision import transforms
@@ -69,7 +70,16 @@ if __name__ == "__main__":
 
   torch.manual_seed(0)
   train_dataset, val_dataset = torch.utils.data.random_split(train_val_dataset, [train_size, val_size])
-  train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
+  
+  # compute set of indices in train set for uniform sampling
+  train_class_indices = {}
+  for idx, data_idx in enumerate(train_dataset.indices):
+    label = train_val_dataset.targets[data_idx]
+    if label not in train_class_indices:
+      train_class_indices[label] = []
+    train_class_indices[label].append(idx)
+  uniform_sampler = UniformSampler(train_class_indices)
+  train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, num_workers=8, sampler=uniform_sampler)
   val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
 
   # =================================================================================================
@@ -79,10 +89,7 @@ if __name__ == "__main__":
 
   # weight using inverse of each sample size
   # acquire label sample sizes from train csv
-  # train_classes = [train_val_dataset.targets[i] for i in train_dataset.indices]
-  # class_counts = Counter(train_classes)
-  # print(class_counts)
-  # samples_per_class = np.array([class_counts[0], class_counts[1]])
+  # samples_per_class = np.array([len(train_class_indices[0]), len(train_class_indices[1])])
   # weights = 1.0 / samples_per_class
   # norm = np.linalg.norm(weights)
   # normalized_weights = weights / norm

@@ -25,7 +25,7 @@ def get_pretrained_model(model_name, num_classes, use_pretrained=True):
       """ Resnet50
       """
       model = torchvision.models.resnet50(pretrained=use_pretrained)
-      num_ftrs = model_ft.fc.in_features
+      num_ftrs = model.fc.in_features
       model.fc = nn.Linear(num_ftrs, num_classes)
       input_size = 224
 
@@ -35,7 +35,7 @@ def get_pretrained_model(model_name, num_classes, use_pretrained=True):
       """
       model = torchvision.models.inception_v3(pretrained=use_pretrained)
       # Handle the auxilary net
-      num_ftrs = model_ft.AuxLogits.fc.in_features
+      num_ftrs = model.AuxLogits.fc.in_features
       model.AuxLogits.fc = nn.Linear(num_ftrs, num_classes)
       # Handle the primary net
       num_ftrs = model.fc.in_features
