@@ -15,7 +15,7 @@ train_set_csv="train_set.csv"
 # test set CSV filename
 test_set_csv="test_set.csv"
 # path to train/test image data
-image_base_path="/mnt/disks/shared-disk/crops/"
+image_base_path="/mnt/disks/shared_disk/crops/"
 # name of model architecture
 model_name="hrnet"
 # save path for model weights
@@ -23,7 +23,7 @@ model_save_folder="../models/"
 # save path the visualizations
 visualizations_path="../visualizations/"
 # number of epochs for training
-num_epochs="2"
+num_epochs="7"
 # crop size
 crop_size="1000"
 # number of plots for mistake visualization
@@ -56,8 +56,6 @@ for label in {1..4}; do
   python ../visualization_utils/visualize_mistakes.py "${experiment}_${session_name}_${labels[$label - 1]}" "$image_base_path" "$visualizations_path/$experiment/$city" "$crop_size" "$num_plots"
 done
 
-for city in ${cities[@]}; do
-  python ../visualization_utils/plot_pr_roc.py ${experiment}_${session_name}_${city} $visualizations_path/$experiment/$city
-done
+python ../visualization_utils/plot_pr_roc.py ${experiment}_${session_name}_${city} $visualizations_path/$experiment/$city
 
 echo "Finished Experiment 3.0!"
