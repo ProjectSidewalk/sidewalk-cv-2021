@@ -38,7 +38,7 @@ for label in {1..4}; do
 done
 
 # make relevant directories
-mkdir -p $model_save_folder/$experiment
+mkdir -p $model_save_folder/$experiment/$city
 mkdir -p $visualizations_path/$experiment/$city
 
 for label in {1..4}; do
@@ -46,12 +46,12 @@ for label in {1..4}; do
   # compose list of train set csvs to combine
 
   # train model on combined train set
-  python ../train.py ${experiment}_${session_name}_${labels[$label - 1]} $image_base_path $csv_base_path/tmp/$city/train_set_${labels[$label - 1]}.csv $model_name $model_save_folder/$experiment $num_epochs $crop_size
+  python ../train.py ${experiment}_${session_name}_${labels[$label - 1]} $image_base_path $csv_base_path/tmp/$city/train_set_${labels[$label - 1]}.csv $model_name $model_save_folder/$experiment/$city $num_epochs $crop_size
   echo testing label ${labels[$label - 1]} classifier on $city...
     # evaluate model on each city
-  python ../eval.py ${experiment}_${session_name}_${city} ${experiment}_${session_name}_${labels[$label - 1]} $image_base_path $csv_base_path/tmp/$city/test_set_${labels[$label - 1]}.csv $model_name $model_save_folder/$experiment $visualizations_path/$experiment/$city $crop_size
+  python ../eval.py ${experiment}_${session_name}_${city} ${experiment}_${session_name}_${labels[$label - 1]} $image_base_path $csv_base_path/tmp/$city/test_set_${labels[$label - 1]}.csv $model_name $model_save_folder/$experiment/$city $visualizations_path/$experiment/$city $crop_size
     # analyze results
-  python ../visualization_utils/analyze_results.py ${experiment}_${session_name}_${labels[$label - 1]} $model_save_folder/$experiment $visualizations_path/$experiment/$city
+  python ../visualization_utils/analyze_results.py ${experiment}_${session_name}_${labels[$label - 1]} $model_save_folder/$experiment/$city $visualizations_path/$experiment/$city
     # visualize mistakes
   python ../visualization_utils/visualize_mistakes.py ${experiment}_${session_name}_${labels[$label - 1]} $image_base_path $visualizations_path/$experiment/$city $crop_size $num_plots
 done
