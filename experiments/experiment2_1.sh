@@ -54,11 +54,11 @@ for label in {1..4}; do
   # train model on combined train set
   python ../train.py "${experiment}_${session_name}_${labels[$label - 1]}" "$image_base_path" "$csv_base_path/tmp/$city/train_set_${labels[$label - 1]}.csv" "$model_name" "$model_save_folder/$experiment/$city" "$num_epochs" "$crop_size"
   echo "testing label ${labels[$label - 1]} classifier on $city..."
-    # evaluate model on each city
+  # evaluate model on each city
   python ../eval.py ${experiment}_${session_name}_${city} ${experiment}_${session_name}_${labels[$label - 1]} $image_base_path $csv_base_path/"tmp/"$city/"test_set_"${labels[$label - 1]}".csv" $model_name $model_save_folder/$experiment/$city $visualizations_path/$experiment/$city $crop_size
-    # analyze results
+  # analyze results
   python ../visualization_utils/analyze_results.py "${experiment}_${session_name}_${labels[$label - 1]}" "$model_save_folder/$experiment/$city" "$visualizations_path/$experiment/$city"
-    # visualize mistakes
+  # visualize mistakes
   python ../visualization_utils/visualize_mistakes.py "${experiment}_${session_name}_${labels[$label - 1]}" "$image_base_path" "$visualizations_path/$experiment/$city" "$crop_size" "$num_plots"
 done
 
