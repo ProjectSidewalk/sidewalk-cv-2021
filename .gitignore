@@ -23,7 +23,7 @@ crop_logs
 datasets/*
 
 # Except train/test sets for ASSETS2022
-!datasets/assets-2022/
+!datasets/assets-2022/*
 
 # Ignore models folder
 models
