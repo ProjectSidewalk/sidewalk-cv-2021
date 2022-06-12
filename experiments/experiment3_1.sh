@@ -2,6 +2,8 @@
 echo "Starting Experiment 3.1"
 
 experiment="3_1"
+# the paper this experiment is being run for
+paper="assets-2022"
 # session name to uniquely identify an experiment run
 session_name="session_name"
 # city names
@@ -34,8 +36,8 @@ echo "initializing..."
 for city in ${cities[@]}; do
   mkdir -p $csv_base_path/tmp/$city
   for label in {1..4}; do
-    python ../utils/dataset_creator.py binarize $csv_base_path/$city/${city}_$train_set_csv $label $csv_base_path/tmp/$city/train_set_${labels[$label - 1]}.csv
-    python ../utils/dataset_creator.py binarize $csv_base_path/$city/${city}_$test_set_csv $label $csv_base_path/tmp/$city/test_set_${labels[$label - 1]}.csv
+    python ../utils/dataset_creator.py binarize $csv_base_path/$paper/$city/${city}_$train_set_csv $label $csv_base_path/tmp/$city/train_set_${labels[$label - 1]}.csv
+    python ../utils/dataset_creator.py binarize $csv_base_path/$paper/$city/${city}_$test_set_csv $label $csv_base_path/tmp/$city/test_set_${labels[$label - 1]}.csv
   done
 done
 

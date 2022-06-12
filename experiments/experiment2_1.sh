@@ -2,6 +2,8 @@
 echo "Starting Experiment 2.1"
 
 experiment="2_1"
+# the paper this experiment is being run for
+paper="assets-2022"
 # session name to uniquely identify an experiment run
 session_name="session_name"
 # city name
@@ -34,13 +36,13 @@ echo "initializing..."
 mkdir -p "$csv_base_path/tmp/$city"
 for label in {1..4}; do
   # binarize train set
-  python ../utils/dataset_creator.py "binarize" "$csv_base_path/$city/${city}_$train_set_csv" "$label" "$csv_base_path/tmp/$city/train_set_${labels[$label - 1]}.csv"
+  python ../utils/dataset_creator.py "binarize" "$csv_base_path/$paper/$city/${city}_$train_set_csv" "$label" "$csv_base_path/tmp/$city/train_set_${labels[$label - 1]}.csv"
   # validate and filter on pv for train set
   python ../utils/dataset_creator.py "validate" "$csv_base_path/tmp/$city/train_set_${labels[$label - 1]}.csv" "$csv_base_path/tmp/$city/train_set_${labels[$label - 1]}.csv"
   python ../utils/dataset_creator.py "filter" "$csv_base_path/tmp/$city/train_set_${labels[$label - 1]}.csv" "$csv_base_path/tmp/$city/train_set_${labels[$label - 1]}.csv" "pv"
 
   # binarize test set
-  python ../utils/dataset_creator.py "binarize" "$csv_base_path/$city/${city}_$test_set_csv" "$label" "$csv_base_path/tmp/$city/test_set_${labels[$label - 1]}.csv"
+  python ../utils/dataset_creator.py "binarize" "$csv_base_path/$paper/$city/${city}_$test_set_csv" "$label" "$csv_base_path/tmp/$city/test_set_${labels[$label - 1]}.csv"
 done
 
 # make relevant directories
