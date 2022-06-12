@@ -21,7 +21,7 @@ parser.add_argument('crop_size', type=int)
 args = parser.parse_args()
 
 NUM_CLASSES = 2
-UNIFORM_SAMPLING = False
+UNIFORM_SAMPLING = True
 
 if not os.path.isdir(args.model_save_folder):
   os.makedirs(args.model_save_folder)
@@ -53,7 +53,7 @@ if __name__ == "__main__":
   ])
 
   # having issues with CUDA running out of memory, so lowering batch size
-  batch_size = 4
+  batch_size = 64
 
   train_labels_csv_path = args.train_set_csv
   train_img_dir = args.image_base_path
