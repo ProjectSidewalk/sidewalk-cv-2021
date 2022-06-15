@@ -43,6 +43,7 @@ for city in ${cities[@]}; do
 done
 
 # binarize test set for exluded city
+mkdir -p $csv_base_path/tmp/$excluded_city
 for label in {1..4}; do
   python ../utils/dataset_creator.py binarize $csv_base_path/$paper/$excluded_city/${excluded_city}_$test_set_csv $label $csv_base_path/tmp/$excluded_city/test_set_${labels[$label - 1]}.csv
 done
