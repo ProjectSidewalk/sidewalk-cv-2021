@@ -1,3 +1,11 @@
+This repository is for the paper:
+
+> Michael Duan, Shosuke Kiami, Logan Milandin, Johnson Kuang, Michael Saugstad, Maryam Hosseini, and Jon E. Froehlich. 2022. Scaling Crowd+AI Sidewalk Accessibility Assessments: Initial Experiments Examining Label Quality and Cross-city Training on Performance. In Proceedings of the 24th International ACM SIGACCESS Conference on Computers and Accessibility (ASSETS '22). Association for Computing Machinery, New York, NY, USA, Article 82, 1–5. https://doi.org/10.1145/3517428.3550381
+
+Which builds on our previous work:
+
+> Galen Weld, Esther Jang, Anthony Li, Aileen Zeng, Kurtis Heimerl, and Jon E. Froehlich. 2019. Deep Learning for Automatically Detecting Sidewalk Accessibility Problems Using Streetscape Imagery. In Proceedings of the 21st International ACM SIGACCESS Conference on Computers and Accessibility (ASSETS '19). Association for Computing Machinery, New York, NY, USA, 196–209. https://doi.org/10.1145/3308561.3353798
+
 # Assessing Sidewalk Quality With Deep Learning
 
 Sidewalks are supposed to provide a safe, environmentally-friendly means for pedestrians to move about the city landscape. As such, for people with disabilities, poor sidewalk quality can have a detrimental impact on independence, quality of life, and overall physical activity. Unfortunately, sidewalk accessibility issues are extremely common, but in recent years there has been much progress in collecting data on these issues and making it transparent/available. Most of this data is crowdsourced, and only recently have people begun investigating the application of machine learning in automatically performing these data collection/analyses. One region of particular interest is the application of AI assistance in the validation of crowdsourced accessibility labels, whether it be automatic or in collaboration with human validation. Manual validation is a laborious task, but has immense applications in data quality and also in increasing the amount of data that can be brought to governmental bodies who can take action in improving sidewalk infrastructure (consider this [resource](https://sidewalk-sea.cs.washington.edu/gallery)). As a result, alleviating the labor that accompanies validation is critical.
